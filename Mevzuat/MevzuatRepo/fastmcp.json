@@ -1,0 +1,17 @@
+{
+  "entrypoint": "mevzuat_mcp_server.py",
+  "environment": {
+    "dependencies": [
+      "httpx",
+      "beautifulsoup4",
+      "lxml",
+      "markitdown",
+      "pypdf"
+    ]
+  },
+  "transport": "stdio",
+  "metadata": {
+    "name": "MevzuatGovTrMCP",
+    "description": "MCP server for Adalet Bakanlığı Mevzuat Bilgi Sistemi"
+  }
+}

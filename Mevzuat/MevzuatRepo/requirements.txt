@@ -1,0 +1,9 @@
+fastmcp
+pydantic
+httpx
+beautifulsoup4
+lxml
+markitdown
+pypdf
+pytest
+pytest-asyncio
