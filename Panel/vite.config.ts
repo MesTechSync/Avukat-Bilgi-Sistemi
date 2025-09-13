@@ -12,25 +12,13 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     proxy: {
-      // Proxy backend endpoints to FastAPI on 8000, enabling single-port dev
+      // Proxy endpoints to UDF API on 8010 (independent from Yargı)
       '/health': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:8011',
         changeOrigin: true,
       },
-      '/status': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
-      '/mcp': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
-      '/mcp-server': {
-        target: 'http://127.0.0.1:8000',
+      '/api/convert-udf': {
+        target: 'http://127.0.0.1:8011',
         changeOrigin: true,
       },
     },
