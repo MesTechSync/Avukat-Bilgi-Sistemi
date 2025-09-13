@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "git-fix-and-status",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"cd C:\\Mevzuat\\Avukat-Bilgi-Sistemi; git rebase --abort 2>$null; git merge --abort 2>$null; git reset --merge 2>$null; git status -sb --porcelain; git remote -v; git rev-parse --abbrev-ref HEAD"
+			]
+		}
+	]
+}
