@@ -8,6 +8,7 @@ import AdvancedSearch from './components/AdvancedSearch';
 import PetitionWriter from './components/PetitionWriter';
 import ContractGenerator from './components/ContractGenerator';
 import WhatsAppIntegration from './components/WhatsAppIntegration';
+import FileConverter from './components/FileConverter';
 import Dashboard from './components/Dashboard';
 import CaseManagement from './components/CaseManagement';
 import ClientManagement from './components/ClientManagement';
@@ -55,7 +56,8 @@ function App() {
     { id: 'search', label: 'İçtihat Arama', icon: Search, color: 'text-green-600', badge: 'AI' },
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
-    { id: 'whatsapp', label: 'WhatsApp Destek', icon: Phone, color: 'text-green-500', badge: '7/24' },
+  { id: 'whatsapp', label: 'WhatsApp Destek', icon: Phone, color: 'text-green-500', badge: '7/24' },
+  { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
     { id: 'cases', label: 'Dava Yönetimi', icon: Gavel, color: 'text-red-600' },
     { id: 'clients', label: 'Müvekkil Yönetimi', icon: Users, color: 'text-blue-500' },
     { id: 'appointments', label: 'Randevu Yönetimi', icon: Calendar, color: 'text-purple-500' },
@@ -78,6 +80,8 @@ function App() {
         return <ContractGenerator />;
       case 'whatsapp':
         return <WhatsAppIntegration />;
+      case 'file-converter':
+        return <FileConverter />;
       case 'cases':
         return <CaseManagement />;
       case 'clients':
