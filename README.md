@@ -42,24 +42,24 @@ Statik Panel varsa (Panel/dist mevcut), tek porttan başlatın:
 ```powershell
 # Statik mod: Vite kapalı, Panel/dist servis edilir
 $env:ENABLE_VITE = '0'
-$env:PORT = '4001'
+$env:PORT = '8000'
 $env:HOST = '127.0.0.1'
 node .\server\server.js
 ```
 
-Tarayıcı: <http://127.0.0.1:4001>  • Sağlık: <http://127.0.0.1:4001/health>
+Tarayıcı: <http://127.0.0.1:8000>  • Sağlık: <http://127.0.0.1:8000/health>
 
 Kolay başlatma:
 
 ```powershell
-./start-oneport.ps1 -Port 4001 -Host 127.0.0.1 -EnableVite:$false -OpenBrowser
+./start-oneport.ps1 -Port 8000 -Host 127.0.0.1 -EnableVite:$false -OpenBrowser
 ```
 
 Geliştirme (Vite açık, HMR):
 
 ```powershell
 $env:ENABLE_VITE = '1'
-$env:PORT = '4001'
+$env:PORT = '8000'
 $env:HOST = '127.0.0.1'
 node .\server\server.js
 ```
@@ -76,7 +76,7 @@ npm run build
 
 `server/.env.example` dosyasını referans alın:
 
-- `PORT` (örn. 4001) • `HOST` (örn. 127.0.0.1)
+- `PORT` (örn. 8000) • `HOST` (örn. 127.0.0.1)
 - `ENABLE_VITE` = 0 (statik) / 1 (Vite dev)
 - İleri düzey arama/OCR için opsiyoneller: `ENABLE_FTS`, `ENABLE_OCR`, `ENABLE_PDF_OCR`, `MEILISEARCH_URL`, `MEILISEARCH_API_KEY`
 

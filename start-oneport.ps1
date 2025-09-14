@@ -1,5 +1,5 @@
 param(
-  [int]$Port = 4001,
+  [int]$Port = 8000,
   [string]$BindHost = '127.0.0.1',
   [Parameter(Position=2)][Alias('EnableVite')][object]$EnableViteParam = $false,
   [Parameter(Position=3)][Alias('OpenBrowser')][object]$OpenBrowserParam = $true,

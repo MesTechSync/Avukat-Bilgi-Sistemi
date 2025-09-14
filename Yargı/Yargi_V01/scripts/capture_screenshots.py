@@ -3,9 +3,9 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 
 URLS = [
-    ("root", "http://127.0.0.1:4001/"),
-    ("health", "http://127.0.0.1:4001/health"),
-    ("mcp", "http://127.0.0.1:4001/mcp"),
+    ("root", "http://127.0.0.1:8000/"),
+    ("health", "http://127.0.0.1:8000/health"),
+    ("mcp", "http://127.0.0.1:8000/mcp"),
 ]
 
 OUT_DIR = Path(__file__).resolve().parents[1] / "screenshots"
