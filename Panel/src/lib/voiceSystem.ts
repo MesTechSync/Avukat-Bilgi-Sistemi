@@ -93,12 +93,24 @@ export class VoiceManager {
     }
   }
 
-  private handleTranscript(transcript: string) {
+  private async handleTranscript(transcript: string) {
     if (this.onResult) this.onResult(transcript);
-  const intent = analyzeIntent(transcript);
-    window.dispatchEvent(
-      new CustomEvent('voice-command', { detail: { transcript, intent } })
-    );
+    const intent = analyzeIntent(transcript);
+    window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
+    // Persist to Supabase (best-effort)
+    try {
+      const { supabase } = await import('./supabase');
+      const payload = {
+        command: transcript,
+        intent: intent.action ? `${intent.category}:${intent.action}` : null,
+        parameters: intent.parameters || null,
+        success: true,
+      } as any;
+      // Insert without blocking UI; ignore result in demo/mock mode
+      void (supabase as any).from('voice_command_history').insert(payload);
+    } catch {
+      // no-op if supabase not available
+    }
   }
 
   // analyzeIntent fonksiyonu artık ayrı bir saf fonksiyon olarak ihrac ediliyor.
