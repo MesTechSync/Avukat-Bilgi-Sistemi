@@ -1,10 +1,17 @@
 // Avukat Bilgi Sistemi - Ses Yöneticisi (Web Speech API)
 
 import { matchCommand, matchExtendedCommand } from './voiceCommands';
+import { COMMANDS } from './voiceCommands';
+import { findBestMatches, ContextAwareCorrector } from './voicePhonetics';
+import { DynamicCommandGenerator } from './extendedVoiceCommands';
 
 export type VoiceIntent = { category: string; action: string; parameters: Record<string, any> };
 
 // Pure analyzer used in tests and by the runtime
+const contextCorrector = new ContextAwareCorrector();
+const commandGenerator = new DynamicCommandGenerator();
+const allCommands = commandGenerator.generateAll();
+
 export function analyzeIntent(transcript: string): VoiceIntent {
   const matched = matchCommand(transcript);
   if (matched) return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
@@ -31,8 +38,61 @@ export function analyzeIntent(transcript: string): VoiceIntent {
     return { category: 'ARAMA_SORGULAMA', action: 'SEARCH', parameters: query ? { query } : {} };
   }
 
-  // Unknown extended command falls back to empty intent
+  // Son çare: fonetik/donanımlı bulanık eşleşme
+  const suggestions = findBestMatches(transcript, allCommands, 0.6);
+  if (suggestions.length > 0) {
+    const best = suggestions[0];
+    if (best.score > 0.85) {
+      contextCorrector.addToHistory(transcript);
+      return {
+        category: best.category,
+        action: best.action,
+        parameters: extractParameters(transcript, best.command),
+      };
+    }
+    if (best.score > 0.7) {
+      const contextHints = contextCorrector.suggestBasedOnContext();
+      for (const hint of contextHints) {
+        if (transcript.includes(hint)) {
+          return { category: best.category, action: best.action, parameters: { context: hint, query: transcript } };
+        }
+      }
+    }
+  }
+
+  // Unknown command
   return { category: '', action: '', parameters: {} };
+}
+
+function extractParameters(transcript: string, pattern: string): Record<string, any> {
+  const params: Record<string, any> = {};
+  
+  // Transcript'ten pattern'i çıkar, kalanı parametre olarak al
+  const cleanedTranscript = transcript.toLowerCase().trim();
+  const cleanedPattern = pattern.toLowerCase().trim();
+  
+  if (cleanedTranscript.includes(cleanedPattern)) {
+    const remaining = cleanedTranscript.replace(cleanedPattern, '').trim();
+    if (remaining) {
+      params.query = remaining;
+    }
+  }
+  
+  // Tarih çıkarımı
+  const datePatterns = [
+    { pattern: /(\d{1,2})\.(\d{1,2})\.(\d{4})/g, type: 'date' },
+    { pattern: /(bugün|yarın|dün)/gi, type: 'relative_date' },
+    { pattern: /(\d{1,2}:\d{2})/g, type: 'time' }
+  ];
+  
+  datePatterns.forEach(({ pattern, type }) => {
+    const matches = cleanedTranscript.match(pattern);
+    if (matches) {
+      params[type] = matches[0];
+    }
+  });
+  
+  return params;
 }
 
 class VoiceManager {
