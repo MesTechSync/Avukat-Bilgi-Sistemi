@@ -207,9 +207,9 @@ function App() {
                     <span className="font-medium">{item.label}</span>
                     {item.badge && (
                       <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
-                        item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                        item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                        item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                        item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                        item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
                         'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                       }`}>
                         {item.badge}
@@ -344,12 +344,12 @@ function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
           {/* Backend status banner */}
           {backendStatus === 'error' && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200 border border-red-200/50 dark:border-red-800/50">
+            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100 border border-red-200/50 dark:border-red-800/50">
               Backend'e bağlanılamadı. Lütfen {backendUrl} adresini kontrol edin.
             </div>
           )}
           {backendStatus === 'ok' && backendInfo && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200 border border-green-200/50 dark:border-green-800/50 text-sm">
+            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-100 border border-green-200/50 dark:border-green-800/50 text-sm">
               <span className="font-medium">Backend Sağlıklı</span> · {backendInfo.service || 'Service'} v{backendInfo.version || ''} · Araçlar: {backendInfo.tools_count ?? '—'}
             </div>
           )}
