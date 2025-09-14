@@ -1,14 +1,38 @@
 // Avukat Bilgi Sistemi - Ses Yöneticisi (Web Speech API)
 
-import { matchCommand } from './voiceCommands';
+import { matchCommand, matchExtendedCommand } from './voiceCommands';
 
 export type VoiceIntent = { category: string; action: string; parameters: Record<string, any> };
 
 // Pure analyzer used in tests and by the runtime
 export function analyzeIntent(transcript: string): VoiceIntent {
   const matched = matchCommand(transcript);
-  if (!matched) return { category: '', action: '', parameters: {} };
-  return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
+  if (matched) return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
+
+  // Fallback: try extended registry for broader coverage and map to app actions
+  const ext = matchExtendedCommand(transcript);
+  if (!ext) return { category: '', action: '', parameters: {} };
+
+  // Map extended IDs/categories to core actions used by the app
+  const id = ext.id;
+  if (id.startsWith('nav_')) {
+    if (id === 'nav_dashboard') return { category: 'NAVIGASYON', action: 'NAV_DASHBOARD', parameters: {} };
+    if (id === 'nav_cases') return { category: 'NAVIGASYON', action: 'NAV_CASES', parameters: {} };
+    if (id === 'nav_clients') return { category: 'NAVIGASYON', action: 'NAV_CLIENTS', parameters: {} };
+    if (id === 'nav_calendar' || id === 'nav_appointments') return { category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', parameters: {} };
+    if (id === 'nav_settings') return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: {} };
+  }
+  if (id === 'sys_theme_dark' || id === 'view_dark') return { category: 'GORUNUM', action: 'DARK_MODE', parameters: {} };
+  if (id === 'sys_theme_light' || id === 'view_light') return { category: 'GORUNUM', action: 'LIGHT_MODE', parameters: {} };
+  if (id === 'search_global') {
+    const t = transcript.toLowerCase().trim();
+    const maybe = t.replace(/^(ara|arama yap|bul|sorgula)\s+/, '').trim();
+    const query = maybe && maybe !== t ? maybe : '';
+    return { category: 'ARAMA_SORGULAMA', action: 'SEARCH', parameters: query ? { query } : {} };
+  }
+
+  // Unknown extended command falls back to empty intent
+  return { category: '', action: '', parameters: {} };
 }
 
 class VoiceManager {
