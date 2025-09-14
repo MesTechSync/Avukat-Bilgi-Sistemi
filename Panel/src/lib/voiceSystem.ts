@@ -1,167 +1,62 @@
-// Avukat Bilgi Sistemi - Basit Ses Yöneticisi (Web Speech API)
+// Avukat Bilgi Sistemi - Ses Yöneticisi (Web Speech API)
 
-export type VoiceIntent = {
-  category:
-    | 'DAVA_YONETIMI'
-    | 'MUVEKKIL_ISLEMLERI'
-    | 'BELGE_ISLEMLERI'
-    | 'TAKVIM_YONETIMI'
-    | 'ARAMA_SORGULAMA'
-    | 'NAVIGASYON'
-    | 'GORUNUM'
-    | '';
-  action: string;
-  parameters?: Record<string, any>;
-};
+import { matchCommand } from './voiceCommands';
 
+export type VoiceIntent = { category: string; action: string; parameters: Record<string, any> };
+
+// Pure analyzer used in tests and by the runtime
 export function analyzeIntent(transcript: string): VoiceIntent {
-  const t = transcript;
-  const intent: VoiceIntent = { category: '', action: '', parameters: {} };
-
-  // Görünüm
-  if (t.includes('karanlık') || t.includes('gece')) {
-    return { category: 'GORUNUM', action: 'DARK_MODE', parameters: {} };
-  }
-  if (t.includes('aydınlık') || t.includes('gündüz')) {
-    return { category: 'GORUNUM', action: 'LIGHT_MODE', parameters: {} };
-  }
-
-  // Arama (öncelikli: navigasyondan önce değerlendirilir)
-  if (t.startsWith('ara ') || t.includes('arama yap')) {
-    let query = t;
-    if (t.startsWith('ara ')) {
-      query = t.replace(/^ara\s+/, '');
-    } else if (t.includes('arama yap')) {
-      query = t.replace(/.*?arama yap\s*/,'');
-    }
-    return { category: 'ARAMA_SORGULAMA', action: 'SEARCH', parameters: { query: query.trim() } };
-  }
-
-  // Navigasyon
-  if (t.includes('ana sayfa')) return { category: 'NAVIGASYON', action: 'NAV_DASHBOARD', parameters: {} };
-  if (t.includes('dava')) return { category: 'NAVIGASYON', action: 'NAV_CASES', parameters: {} };
-  if (t.includes('müvekkil')) return { category: 'NAVIGASYON', action: 'NAV_CLIENTS', parameters: {} };
-  if (t.includes('takvim') || t.includes('randevu')) return { category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', parameters: {} };
-  if (t.includes('ayar')) return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: {} };
-
-  return intent;
+  const matched = matchCommand(transcript);
+  if (!matched) return { category: '', action: '', parameters: {} };
+  return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
 }
 
-export class VoiceManager {
+class VoiceManager {
   private recognition: any | null = null;
-  private listening = false;
-  public onResult?: (finalTranscript: string) => void;
-  // Offline queue (localStorage)
-  private static QUEUE_KEY = 'voice_command_queue_v1';
-  private flushTimer: any = null;
 
   constructor() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SR) {
-      this.recognition = new SR();
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.lang = 'tr-TR';
-      this.recognition.onresult = (event: any) => {
-        const last = event.results.length - 1;
-        const res = event.results[last];
-        const transcript = String(res[0]?.transcript || '').trim();
-        if (res.isFinal && transcript) {
-          try {
-            this.handleTranscript(transcript.toLowerCase());
-          } catch {
-            // no-op
-          }
-        }
-      };
-      this.recognition.onerror = () => {};
-    }
-    // Start periodic flush if in browser
     if (typeof window !== 'undefined') {
-      this.flushQueue();
-      this.flushTimer = setInterval(() => this.flushQueue(), 30000);
-      window.addEventListener('online', () => this.flushQueue());
+      const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      if (SR) {
+        const rec = new SR();
+        rec.lang = 'tr-TR';
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.onresult = (event: any) => {
+          let finalText = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const res = event.results[i];
+            if (res.isFinal) finalText += res[0].transcript;
+          }
+          const transcript = finalText.trim();
+          if (!transcript) return;
+          const intent = analyzeIntent(transcript);
+          window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
+        };
+        rec.onerror = () => {};
+        rec.onend = () => {};
+        this.recognition = rec;
+      }
     }
   }
 
-  public isSupported(): boolean {
-    return !!this.recognition;
+  isSupported(): boolean {
+    return typeof window !== 'undefined' && !!(this.recognition);
   }
 
-  public start() {
-    if (this.recognition && !this.listening) {
-      this.recognition.start();
-      this.listening = true;
-    }
-  }
-
-  public stop() {
-    if (this.recognition && this.listening) {
-      this.recognition.stop();
-      this.listening = false;
-    }
-  }
-
-  private async handleTranscript(transcript: string) {
-    if (this.onResult) this.onResult(transcript);
-    const intent = analyzeIntent(transcript);
-    window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
-    // Persist to Supabase (best-effort)
-    const payload = {
-      command: transcript,
-      intent: intent.action ? `${intent.category}:${intent.action}` : null,
-      parameters: intent.parameters || null,
-      success: true,
-      executed_at: new Date().toISOString(),
-    } as any;
+  start() {
     try {
-      const { supabase } = await import('./supabase');
-      const { error } = await (supabase as any).from('voice_command_history').insert(payload);
-      if (error) throw error;
-    } catch {
-      this.enqueue(payload);
-    }
+      this.recognition?.start?.();
+    } catch {}
   }
 
-  // Queue helpers
-  private enqueue(item: any) {
+  stop() {
     try {
-      const raw = localStorage.getItem(VoiceManager.QUEUE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      arr.push(item);
-      localStorage.setItem(VoiceManager.QUEUE_KEY, JSON.stringify(arr));
-    } catch {
-      // ignore quota/json errors
-    }
+      this.recognition?.stop?.();
+    } catch {}
   }
-
-  private async flushQueue() {
-    try {
-      const raw = localStorage.getItem(VoiceManager.QUEUE_KEY);
-      if (!raw) return;
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr) || arr.length === 0) return;
-      const { supabase } = await import('./supabase');
-      const { error } = await (supabase as any).from('voice_command_history').insert(arr);
-      if (!error) localStorage.removeItem(VoiceManager.QUEUE_KEY);
-    } catch {
-      // keep queue for next attempt
-    }
-  }
-
-  // analyzeIntent fonksiyonu artık ayrı bir saf fonksiyon olarak ihrac ediliyor.
 }
 
-// Export a safe singleton for browser; provide a no-op stub for non-browser (e.g., Vitest/node)
-export const voiceManager: {
-  isSupported: () => boolean;
-  start: () => void;
-  stop: () => void;
-  onResult?: (finalTranscript: string) => void;
-} = typeof window !== 'undefined'
-  ? new VoiceManager()
-  : {
-      isSupported: () => false,
-      start: () => {},
-      stop: () => {},
-    };
+// Tarayıcı-dışı güvenli singleton
+export const voiceManager: { isSupported: () => boolean; start: () => void; stop: () => void } =
+  typeof window !== 'undefined' ? new VoiceManager() : { isSupported: () => false, start: () => {}, stop: () => {} };

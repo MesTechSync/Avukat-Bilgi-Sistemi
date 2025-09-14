@@ -1,13 +1,40 @@
-export const voiceConfig = {
-  recognition: {
-    language: 'tr-TR',
-    continuous: true,
-    interimResults: true,
-    maxAlternatives: 3,
+export const VOICE_CONFIG = {
+  // Dil ayarları
+  languages: {
+    primary: 'tr-TR',
+    fallback: 'en-US',
+    supported: ['tr-TR', 'en-US', 'de-DE', 'fr-FR'],
   },
-  commands: {
-    prefixes: ['hey avukat', 'asistan', 'yardım'],
-    timeout: 5000,
-    confirmationRequired: ['sil', 'kaldır', 'iptal'],
+
+  // Performans ayarları
+  performance: {
+    maxConcurrentCommands: 3,
+    commandTimeout: 5000,
+    debounceDelay: 300,
+    cacheSize: 100,
+  },
+
+  // Güvenlik ayarları
+  security: {
+    requireConfirmation: ['DELETE', 'LOGOUT', 'BACKUP'],
+    sensitiveActions: ['PAYMENT', 'INVOICE', 'CONTRACT'],
+    maxAttempts: 3,
+    sessionTimeout: 30 * 60 * 1000, // 30 dakika
+  },
+
+  // Ses kalitesi
+  audio: {
+    noiseSupression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+    sampleRate: 16000,
+  },
+
+  // Özelleştirme
+  customization: {
+    shortcuts: true,
+    macros: true,
+    customCommands: true,
+    voiceProfiles: true,
   },
 };
