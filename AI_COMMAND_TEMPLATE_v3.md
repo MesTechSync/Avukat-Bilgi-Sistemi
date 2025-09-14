@@ -49,12 +49,58 @@ Bu şablon, Avukat Bilgi Sistemi için yapay zekâ destekli geliştirme, test, d
 3) Listeleme, filtreleme (müvekkil, durum, tarih), sıralama performansı.
 4) Kanıt: UI screen, Supabase sorgu süreleri, RLS testleri.
 
+Örnek Supabase Şeması (SQL):
+
+```sql
+-- clients
+create table if not exists clients (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  email text unique,
+  phone text,
+  created_at timestamptz default now()
+);
+
+-- cases
+create table if not exists cases (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  status text not null default 'active',
+  client_id uuid references clients(id) on delete set null,
+  hearing_date timestamptz,
+  owner uuid not null references auth.users(id),
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table clients enable row level security;
+alter table cases enable row level security;
+
+-- Policies: Only owner can see their cases; clients are readable by case owners via join in RPC layer if needed
+create policy "case_owner_read" on cases for select using (auth.uid() = owner);
+create policy "case_owner_write" on cases for insert with check (auth.uid() = owner);
+create policy "case_owner_update" on cases for update using (auth.uid() = owner);
+create policy "case_owner_delete" on cases for delete using (auth.uid() = owner);
+```
+
+Örnek İstemci Akış Görevleri:
+
+- [ ] CaseList: sayfalama, arama (title/status/client), boş durum ekranları
+- [ ] CaseDetail: metadata, ilişkili evraklar, duruşma tarihi düzenleme
+- [ ] CaseForm: yup/zod doğrulama, optimistic UI, hata yakalama
+
 ### 5.2) Duruşma Takvimi
 
 1) Takvim görünümü, günlük/haftalık/aylık görünüm.
 2) Hatırlatma ve bildirim (email/push tercihe bağlı).
 3) Çakışma/çifte rezervasyon uyarıları.
 4) Kanıt: test verileriyle render, bildirim provası (dry-run).
+
+Örnek Görevler:
+
+- [ ] CalendarView: month/week/day modları, hızlı ekleme modalı
+- [ ] Reminders: cron/tabanlı job hazırlığı (gelecek), iCal export (opsiyonel)
+- [ ] Conflict detection: aynı tarih/saatte çakışma uyarısı
 
 ### 5.3) Evrak/Delil Yönetimi
 
@@ -63,11 +109,30 @@ Bu şablon, Avukat Bilgi Sistemi için yapay zekâ destekli geliştirme, test, d
 3) Önizleme (PDF/image) ve sürümleme kurgusu.
 4) Kanıt: yükleme/indirme testleri, erişim kontrolü senaryoları.
 
+Örnek Storage Yapılandırması:
+
+```sql
+-- bucket: case-files (private)
+-- Policy: only case owner can read/write files under path cases/{case_id}/
+```
+
+Örnek UI Görevleri:
+
+- [ ] Upload with drag&drop, progress bar
+- [ ] Type/size validation, user-friendly error messages
+- [ ] Preview (PDF/image) with fallback
+
 ### 5.4) Müvekkil Yönetimi
 
 1) Profil, iletişim bilgileri, ilişkili dosyalar.
 2) KVKK’ya uygun veri maskeleme ve export/delete talepleri (opsiyonel yol haritası).
 3) Kanıt: UI/UX akış testleri, veri anonimleştirme örneği.
+
+Örnek Görevler:
+
+- [ ] ClientList + search
+- [ ] ClientDetail: ilişkili davalar
+- [ ] GDPR/KVKK export & delete (yol haritası)
 
 ### 5.5) Faturalama (Opsiyonel Yol Haritası)
 
@@ -117,6 +182,12 @@ npm run test
 npx cypress run
 ```
 
+Asgari E2E Senaryoları:
+
+- [ ] Dosya oluştur → evrak ekle → takvime duruşma ekle → listele
+- [ ] Yetkisiz erişim testi (başka kullanıcının dosyasını görememe)
+- [ ] Env değişkeni yoksa demo modunun hata vermeden çalışması
+
 ---
 
 ## 🌐 8) Deployment (Coolify + Docker)
@@ -141,6 +212,14 @@ docker build -t avukat-bilgi-sistemi .
 docker run -p 8080:80 avukat-bilgi-sistemi
 ```
 
+Sürüm/Yayın Planı (Playbook):
+
+1) Release branch oluştur (örn. release/x.y.z)
+2) CHANGELOG güncelle, versiyon etiketle (git tag x.y.z)
+3) Staging deploy ve smoke test
+4) Production deploy (Coolify) + migration (varsa)
+5) Rollback planı: bir önceki image tag’ine dönüş adımları hazır
+
 ---
 
 ## 🔍 9) İzleme ve Doğrulama
@@ -161,6 +240,12 @@ Kontrol listesi:
 - [ ] Env ile gerçek Supabase bağlantısı sağlandı
 - [ ] Tarayıcı konsolunda kritik hata yok
 
+Gözlemlenebilirlik (Observability):
+
+- [ ] Basit client-side error logger (Sentry vb. opsiyonel)
+- [ ] Network hata oranı izleme (fetch wrapper ile)
+- [ ] Kullanıcı etkileşim metrikleri (sayfa/komponent yüklenme süreleri)
+
 ---
 
 ## 🛡️ 10) Güvenlik Kontrolleri
@@ -170,6 +255,13 @@ Kontrol listesi:
 - Input validation; XSS/CSRF önlemleri ve güvenli header’lar (nginx).
 - Loglarda kişisel veri sızıntısı olmamalı.
 
+Ek Güvenlik Kontrol Listesi:
+
+- [ ] `VITE_*` dışında gizli anahtar sızmıyor (frontend yalnız public keys)
+- [ ] Supabase RLS politikaları tüm tablo ve view’lar için açıkça tanımlı
+- [ ] CORS ve domain izinleri (nginx/vite preview allowedHosts) doğru
+- [ ] Third-party script’lerde integrity/allowed list politikası (opsiyonel)
+
 ---
 
 ## 🧯 11) Sorun Giderme
@@ -178,6 +270,12 @@ Kontrol listesi:
 - Deploy başarısız: Coolify loglarına bakın, Dockerfile adımlarını doğrulayın.
 - “Blocked request/host”: vite preview allowedHosts ve nginx server_name ayarlı mı?
 - Beyaz sayfa: network tab’da asset 404 var mı; base yolu doğru mu; dist içerikleri kopyalandı mı?
+
+Ek Vakalar:
+
+- Supabase 401/403: anon key/domain izinleri ya da RLS; Policy test edin.
+- Büyük dosya yükleme: nginx client_max_body_size (opsiyonel) ve timeout değerleri.
+- Cache sorunları: nginx cache headers ve index.html no-cache ayarı (opsiyonel).
 
 ---
 
