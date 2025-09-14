@@ -74,6 +74,18 @@ export const EXTENDED_COMMAND_PATTERNS = {
     otomatik: ['otomatik', 'oto', 'kendiliğinden', 'auto'],
     şablon: ['şablon', 'template', 'taslak', 'örnek'],
     // ... 150+ daha fazla kısayol
+  },
+
+  // SAYFALAR / ROUTE ID BAĞLANTISI (NAV)
+  PAGES: {
+    dashboard: ['ana sayfa', 'dashboard', 'kontrol paneli', 'özet ekran', 'başlangıç'],
+    cases: ['davalar', 'dava dosyaları', 'dosyalar', 'dava ekranı', 'dosya listesi'],
+    clients: ['müvekkiller', 'müşteriler', 'danışanlar', 'müvekkil listesi', 'müşteri listesi'],
+    calendar: ['takvim', 'ajanda', 'randevular', 'duruşmalar', 'program'],
+    settings: ['ayarlar', 'tercihler', 'sistem ayarları', 'profil ayarları'],
+    documents: ['belgeler', 'dokümanlar', 'evraklar', 'belge listesi', 'dosya yönetimi'],
+    finance: ['finans', 'muhasebe', 'ödemeler', 'faturalar', 'tahsilat'],
+    reports: ['raporlar', 'analizler', 'istatistikler', 'performans', 'grafikler'],
   }
 };
 
@@ -96,6 +108,8 @@ export class DynamicCommandGenerator {
     const actions = (EXTENDED_COMMAND_PATTERNS as any).ACTIONS?.ara || [];
     const docTypes = (EXTENDED_COMMAND_PATTERNS as any).DOCUMENT_TYPES?.dilekçe || [];
     const timeExpr = (EXTENDED_COMMAND_PATTERNS as any).TIME_EXPRESSIONS?.bugün || [];
+  const openActions = (EXTENDED_COMMAND_PATTERNS as any).ACTIONS?.aç || [];
+  const pages = (EXTENDED_COMMAND_PATTERNS as any).PAGES || {};
 
     if (actions.length && docTypes.length) {
       const aPlusD = actions.flatMap((a: string) => docTypes.map((d: string) => `${a} ${d}`));
@@ -106,6 +120,17 @@ export class DynamicCommandGenerator {
         docTypes.flatMap((d: string) => timeExpr.map((t: string) => `${t} ${d} ${a}`))
       );
       groups.push({ patterns: aPlusDPlusT, category: 'COMBINED', action: 'SEARCH_DOC_TIME' });
+    }
+
+    // NAV kombinasyonları: "aç" + sayfa adı (ve ters dizilimler)
+    if (openActions.length && Object.keys(pages).length) {
+      Object.entries(pages as Record<string, string[]>).forEach(([pageId, pats]) => {
+        const combos = [
+          ...openActions.flatMap((o: string) => pats.map((p: string) => `${o} ${p}`)),
+          ...pats.flatMap((p: string) => openActions.map((o: string) => `${p} ${o}`)),
+        ];
+        groups.push({ patterns: combos, category: 'NAV', action: `NAV_PAGE_${pageId}` });
+      });
     }
     return groups;
   }
