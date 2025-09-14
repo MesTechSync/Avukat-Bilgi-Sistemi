@@ -17,6 +17,7 @@ import AppointmentManagement from './components/AppointmentManagement';
 import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
+import VoiceControl from './components/VoiceControl';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -143,6 +144,51 @@ function App() {
     checkBackend();
   }, [checkBackend]);
 
+  // Voice commands handler (minimal, safe wiring)
+  React.useEffect(() => {
+    const onVoice = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { intent?: { category?: string; action?: string; parameters?: any } };
+      const intent = detail?.intent;
+      if (!intent) return;
+      switch (intent.action) {
+        case 'DARK_MODE':
+          if (!darkMode) {
+            setDarkMode(true);
+            localStorage.setItem('darkMode', 'true');
+          }
+          break;
+        case 'LIGHT_MODE':
+          if (darkMode) {
+            setDarkMode(false);
+            localStorage.setItem('darkMode', 'false');
+          }
+          break;
+        case 'NAV_DASHBOARD':
+          setActiveTab('dashboard');
+          break;
+        case 'NAV_CASES':
+          setActiveTab('cases');
+          break;
+        case 'NAV_CLIENTS':
+          setActiveTab('clients');
+          break;
+        case 'NAV_APPOINTMENTS':
+          setActiveTab('appointments');
+          break;
+        case 'NAV_SETTINGS':
+          setActiveTab('settings');
+          break;
+        case 'SEARCH':
+          setActiveTab('search');
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('voice-command', onVoice as any);
+    return () => window.removeEventListener('voice-command', onVoice as any);
+  }, [darkMode]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -230,9 +276,9 @@ function App() {
                     <span className="font-medium">{item.label}</span>
                     {item.badge && (
                       <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
-                        item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                        item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                        item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                        item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                        item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
                         'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                       }`}>
                         {item.badge}
@@ -368,15 +414,17 @@ function App() {
           {/* Backend status banner */}
           {backendStatus === 'error' && (
             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200 border border-red-200/50 dark:border-red-800/50">
-                  Backend'e bağlanılamadı. Lütfen sunucunun çalıştığını ve erişilebilir olduğunu kontrol edin.
+              Backend'e bağlanılamadı. Lütfen sunucunun çalıştığını ve erişilebilir olduğunu kontrol edin{backendUrl ? ` (Ayar: ${backendUrl})` : ''}.
             </div>
           )}
           {backendStatus === 'ok' && backendInfo && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200 border border-green-200/50 dark:border-green-800/50 text-sm">
+            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-100 border border-green-200/50 dark:border-green-800/50 text-sm">
               <span className="font-medium">Backend Sağlıklı</span> · {backendInfo.service || 'Service'} v{backendInfo.version || ''} · Araçlar: {backendInfo.tools_count ?? '—'}
             </div>
           )}
           {renderContent()}
+          {/* Floating voice control */}
+          <VoiceControl />
         </main>
       </div>
     </div>
