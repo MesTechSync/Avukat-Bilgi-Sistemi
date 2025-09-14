@@ -7,6 +7,15 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 5175,
