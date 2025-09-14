@@ -16,6 +16,7 @@ import AppointmentManagement from './components/AppointmentManagement';
 import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
+import VoiceControl from './components/VoiceControl';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -119,6 +120,51 @@ function App() {
   React.useEffect(() => {
     checkBackend();
   }, []);
+
+  // Voice commands handler (minimal, safe wiring)
+  React.useEffect(() => {
+    const onVoice = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { intent?: { category?: string; action?: string; parameters?: any } };
+      const intent = detail?.intent;
+      if (!intent) return;
+      switch (intent.action) {
+        case 'DARK_MODE':
+          if (!darkMode) {
+            setDarkMode(true);
+            localStorage.setItem('darkMode', 'true');
+          }
+          break;
+        case 'LIGHT_MODE':
+          if (darkMode) {
+            setDarkMode(false);
+            localStorage.setItem('darkMode', 'false');
+          }
+          break;
+        case 'NAV_DASHBOARD':
+          setActiveTab('dashboard');
+          break;
+        case 'NAV_CASES':
+          setActiveTab('cases');
+          break;
+        case 'NAV_CLIENTS':
+          setActiveTab('clients');
+          break;
+        case 'NAV_APPOINTMENTS':
+          setActiveTab('appointments');
+          break;
+        case 'NAV_SETTINGS':
+          setActiveTab('settings');
+          break;
+        case 'SEARCH':
+          setActiveTab('search');
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('voice-command', onVoice as any);
+    return () => window.removeEventListener('voice-command', onVoice as any);
+  }, [darkMode]);
 
   if (loading) {
     return (
@@ -354,6 +400,8 @@ function App() {
             </div>
           )}
           {renderContent()}
+          {/* Floating voice control */}
+          <VoiceControl />
         </main>
       </div>
     </div>
