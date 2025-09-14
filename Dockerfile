@@ -1,45 +1,53 @@
-FROM node:20-alpine AS builder
+###############################
+# Stage 1 - Build Panel (Vite)
+###############################
+FROM node:20-alpine AS panel-builder
 
-WORKDIR /app
+WORKDIR /app/Panel
 
-# Copy package files
+# Install Panel dependencies
 COPY Panel/package.json Panel/package-lock.json* ./
-RUN npm install
+RUN npm ci --no-audit --prefer-offline
 
-# Copy source code
+# Copy Panel source
 COPY Panel/ ./
 
-# Build with environment variables (if provided)
+# Build with optional envs
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_BACKEND_URL
-
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+    VITE_BACKEND_URL=$VITE_BACKEND_URL
 
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+########################################
+# Stage 2 - Runtime with Node/Express
+########################################
+FROM node:20-alpine AS runtime
 
-# Copy built files
-COPY --from=builder /app/dist /usr/share/nginx/html
+ENV NODE_ENV=production \
+    PORT=8000 \
+    HOST=0.0.0.0 \
+    ENABLE_VITE=0
 
-# Create nginx configuration
-RUN echo 'server { \
-    listen 80; \
-    server_name avukat-bilgi-sistemi.hidlightmedya.tr localhost; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html; \
-        try_files $uri $uri/ /index.html; \
-    } \
-    # Security headers \
-    add_header X-Frame-Options "SAMEORIGIN" always; \
-    add_header X-Content-Type-Options "nosniff" always; \
-    add_header X-XSS-Protection "1; mode=block" always; \
-}' > /etc/nginx/conf.d/default.conf
+# Create app directory
+WORKDIR /app/server
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Install server dependencies first (better layer cache)
+COPY server/package.json server/package-lock.json* ./
+RUN npm ci --omit=dev --no-audit --prefer-offline
+
+# Copy server source
+COPY server/ ./
+
+# Copy built Panel into expected path (../Panel/dist relative to server.js)
+COPY --from=panel-builder /app/Panel/dist /app/Panel/dist
+
+# Healthcheck for orchestrators (Coolify can also use /health)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:${PORT}/health || exit 1
+
+EXPOSE 8000
+CMD ["node", "server.js"]
