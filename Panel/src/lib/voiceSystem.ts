@@ -51,6 +51,9 @@ export class VoiceManager {
   private recognition: any | null = null;
   private listening = false;
   public onResult?: (finalTranscript: string) => void;
+  // Offline queue (localStorage)
+  private static QUEUE_KEY = 'voice_command_queue_v1';
+  private flushTimer: any = null;
 
   constructor() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -72,6 +75,12 @@ export class VoiceManager {
         }
       };
       this.recognition.onerror = () => {};
+    }
+    // Start periodic flush if in browser
+    if (typeof window !== 'undefined') {
+      this.flushQueue();
+      this.flushTimer = setInterval(() => this.flushQueue(), 30000);
+      window.addEventListener('online', () => this.flushQueue());
     }
   }
 
@@ -98,18 +107,45 @@ export class VoiceManager {
     const intent = analyzeIntent(transcript);
     window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
     // Persist to Supabase (best-effort)
+    const payload = {
+      command: transcript,
+      intent: intent.action ? `${intent.category}:${intent.action}` : null,
+      parameters: intent.parameters || null,
+      success: true,
+      executed_at: new Date().toISOString(),
+    } as any;
     try {
       const { supabase } = await import('./supabase');
-      const payload = {
-        command: transcript,
-        intent: intent.action ? `${intent.category}:${intent.action}` : null,
-        parameters: intent.parameters || null,
-        success: true,
-      } as any;
-      // Insert without blocking UI; ignore result in demo/mock mode
-      void (supabase as any).from('voice_command_history').insert(payload);
+      const { error } = await (supabase as any).from('voice_command_history').insert(payload);
+      if (error) throw error;
     } catch {
-      // no-op if supabase not available
+      this.enqueue(payload);
+    }
+  }
+
+  // Queue helpers
+  private enqueue(item: any) {
+    try {
+      const raw = localStorage.getItem(VoiceManager.QUEUE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push(item);
+      localStorage.setItem(VoiceManager.QUEUE_KEY, JSON.stringify(arr));
+    } catch {
+      // ignore quota/json errors
+    }
+  }
+
+  private async flushQueue() {
+    try {
+      const raw = localStorage.getItem(VoiceManager.QUEUE_KEY);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || arr.length === 0) return;
+      const { supabase } = await import('./supabase');
+      const { error } = await (supabase as any).from('voice_command_history').insert(arr);
+      if (!error) localStorage.removeItem(VoiceManager.QUEUE_KEY);
+    } catch {
+      // keep queue for next attempt
     }
   }
 
