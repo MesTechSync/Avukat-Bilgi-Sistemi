@@ -1,0 +1,14 @@
+{
+  "name": "avukat-bilgi-sistemi",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "cd Panel && npm run dev",
+    "build": "cd Panel && npm run build",
+    "preview": "cd Panel && npm run preview",
+    "install": "cd Panel && npm install"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

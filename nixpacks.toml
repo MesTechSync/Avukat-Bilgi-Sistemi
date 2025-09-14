@@ -1,0 +1,14 @@
+[variables]
+NODE_VERSION = "18"
+
+[phases.setup]
+nixpkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = ["cd Panel && npm ci"]
+
+[phases.build]
+cmds = ["cd Panel && npm run build"]
+
+[start]
+cmd = "cd Panel && npm run preview -- --port $PORT --host 0.0.0.0"
