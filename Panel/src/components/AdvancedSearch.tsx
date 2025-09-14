@@ -14,7 +14,7 @@ interface SearchResult {
   caseNumber: string;
   courtName: string;
   courtType: string;
-  decisionDate: string;
+  decisionDate?: string;
   subject: string;
   content: string;
   relevanceScore: number;
@@ -35,49 +35,39 @@ export default function AdvancedSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchStats, setSearchStats] = useState({ total: 0, time: 0 });
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for demonstration
-  const mockResults: SearchResult[] = [
-    {
-      id: '1',
-      caseNumber: '2023/1234',
-      courtName: 'Yargıtay 4. Hukuk Dairesi',
-      courtType: 'yargitay',
-      decisionDate: '2023-06-15',
-      subject: 'İş Sözleşmesinin Feshi ve Tazminat',
-      content: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda...',
-      relevanceScore: 95,
-      legalAreas: ['İş Hukuku', 'Tazminat'],
-      keywords: ['işten çıkarma', 'tazminat', 'haklı sebep'],
-      highlight: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda kıdem ve ihbar tazminatı...'
-    },
-    {
-      id: '2',
-      caseNumber: '2023/5678',
-      courtName: 'Danıştay 5. Dairesi',
-      courtType: 'danistay',
-      decisionDate: '2023-08-22',
-      subject: 'İdari İşlemin İptali',
-      content: 'İdari işlemin hukuka aykırılığı nedeniyle iptali...',
-      relevanceScore: 87,
-      legalAreas: ['İdare Hukuku'],
-      keywords: ['idari işlem', 'iptal', 'hukuka aykırılık'],
-      highlight: 'İdari işlemin hukuka aykırılığı nedeniyle iptali talep edilmiş...'
-    },
-    {
-      id: '3',
-      caseNumber: '2023/9012',
-      courtName: 'İstanbul BAM 15. Hukuk Dairesi',
-      courtType: 'bam',
-      decisionDate: '2023-09-03',
-      subject: 'Ticari Alacak Davası',
-      content: 'Ticari sözleşmeden doğan alacağın tahsili...',
-      relevanceScore: 82,
-      legalAreas: ['Ticaret Hukuku', 'Borçlar Hukuku'],
-      keywords: ['ticari alacak', 'sözleşme', 'tahsil'],
-      highlight: 'Ticari sözleşmeden doğan alacağın tahsili için açılan davada...'
-    }
-  ];
+  // Helper to strip simple HTML tags from backend highlights (e.g., <mark>)
+  const stripHtml = (s: string) => s.replace(/<[^>]+>/g, '');
+
+  interface BackendSearchItem {
+    path: string;
+    source: string;
+    title?: string;
+    snippet?: string;
+    rank?: number;
+    score?: number;
+  }
+
+  // Map backend search result to UI result
+  function mapBackendToResult(item: unknown): SearchResult {
+    const it = (item ?? {}) as Partial<BackendSearchItem>;
+    const source = String(it.source || '').toLowerCase();
+    // Group all judicial decisions under 'yargitay' badge for now; regulations under 'mevzuat'
+    const isYargi = source === 'yargi';
+    return {
+      id: String(it.path || crypto.randomUUID()),
+      caseNumber: '',
+      courtName: isYargi ? 'Yargı Kararı' : 'Mevzuat',
+      courtType: isYargi ? 'yargitay' : 'mevzuat',
+      subject: String(it.title || it.path || 'Belge'),
+      content: String(it.snippet || ''),
+      relevanceScore: Math.max(1, Math.min(100, Math.round((100 - (it.rank ?? 0)) || (it.score ?? 50)))) ,
+      legalAreas: [],
+      keywords: [],
+      highlight: it.snippet ? stripHtml(String(it.snippet)) : undefined,
+    };
+  }
 
   const courtTypes = [
     { value: 'yargitay', label: 'Yargıtay' },
@@ -95,15 +85,49 @@ export default function AdvancedSearch() {
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-
     setIsSearching(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setResults(mockResults);
-      setSearchStats({ total: mockResults.length, time: 0.23 });
+    setError(null);
+    const t0 = performance.now();
+    try {
+      const params = new URLSearchParams({ q: query.trim() });
+      // Map selected court types to backend source filter when possible
+      // Backend understands source = yargi | mevzuat
+      if (filters.courtType) {
+        const src = 'yargi'; // all specific courts map to yargı index for now
+        params.set('source', src);
+      }
+      const res = await fetch(`/legal/search?${params.toString()}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      let data = await res.json();
+      let items = Array.isArray(data?.results) ? data.results : [];
+      // Fallback: if no results, retry with LIKE-based search on server
+      if ((Number(data?.total) || 0) === 0) {
+        const fallback = new URLSearchParams(params);
+        fallback.set('mode', 'like');
+        try {
+          const res2 = await fetch(`/legal/search?${fallback.toString()}`, { headers: { 'Accept': 'application/json' } });
+          if (res2.ok) {
+            const data2 = await res2.json();
+            if ((Number(data2?.total) || 0) > 0) {
+              data = data2; items = Array.isArray(data2?.results) ? data2.results : [];
+            }
+          }
+        } catch { /* ignore fallback errors */ }
+      }
+      const mapped: SearchResult[] = items.map(mapBackendToResult);
+      const t = (performance.now() - t0) / 1000;
+      setResults(mapped);
+      setSearchStats({ total: Number(data?.total ?? mapped.length), time: Number(t.toFixed(2)) });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Arama sırasında hata oluştu';
+      setError(msg);
+      setResults([]);
+      setSearchStats({ total: 0, time: 0 });
+    } finally {
       setIsSearching(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -118,7 +142,8 @@ export default function AdvancedSearch() {
       danistay: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       bam: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       aym: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      sayistay: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      sayistay: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+      mevzuat: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
     };
     return colors[courtType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -182,9 +207,12 @@ export default function AdvancedSearch() {
               Mahkeme Türü
             </label>
             <select
+              id="courtType"
               value={filters.courtType}
               onChange={(e) => setFilters(prev => ({ ...prev, courtType: e.target.value }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Mahkeme Türü"
+              title="Mahkeme Türü"
             >
               <option value="">Tümü</option>
               {courtTypes.map(court => (
@@ -201,9 +229,12 @@ export default function AdvancedSearch() {
               Hukuk Alanı
             </label>
             <select
+              id="legalArea"
               value={filters.legalArea}
               onChange={(e) => setFilters(prev => ({ ...prev, legalArea: e.target.value }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Hukuk Alanı"
+              title="Hukuk Alanı"
             >
               <option value="">Tümü</option>
               {legalAreas.map(area => (
@@ -220,6 +251,7 @@ export default function AdvancedSearch() {
               Başlangıç Tarihi
             </label>
             <input
+              id="dateFrom"
               type="date"
               value={filters.dateRange.from}
               onChange={(e) => setFilters(prev => ({ 
@@ -227,6 +259,8 @@ export default function AdvancedSearch() {
                 dateRange: { ...prev.dateRange, from: e.target.value }
               }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Başlangıç Tarihi"
+              title="Başlangıç Tarihi"
             />
           </div>
 
@@ -236,6 +270,7 @@ export default function AdvancedSearch() {
               Bitiş Tarihi
             </label>
             <input
+              id="dateTo"
               type="date"
               value={filters.dateRange.to}
               onChange={(e) => setFilters(prev => ({ 
@@ -243,13 +278,15 @@ export default function AdvancedSearch() {
                 dateRange: { ...prev.dateRange, to: e.target.value }
               }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Bitiş Tarihi"
+              title="Bitiş Tarihi"
             />
           </div>
         </div>
       </div>
 
       {/* Search Results */}
-      {(results.length > 0 || isSearching) && (
+      {(results.length > 0 || isSearching || error) && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {/* Results Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -258,9 +295,14 @@ export default function AdvancedSearch() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Arama Sonuçları
                 </h3>
-                {!isSearching && (
+                {!isSearching && !error && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {searchStats.total} sonuç bulundu ({searchStats.time} saniye)
+                  </p>
+                )}
+                {error && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
                   </p>
                 )}
               </div>
@@ -297,9 +339,11 @@ export default function AdvancedSearch() {
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {result.caseNumber}
                       </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(result.decisionDate).toLocaleDateString('tr-TR')}
-                      </span>
+                      {result.decisionDate && (
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(result.decisionDate).toLocaleDateString('tr-TR')}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
@@ -308,7 +352,7 @@ export default function AdvancedSearch() {
                           %{result.relevanceScore}
                         </span>
                       </div>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      <button type="button" aria-label="Detayı gör" title="Detayı gör" className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>

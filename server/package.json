@@ -1,0 +1,28 @@
+{
+  "name": "one-port-server",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.15.0",
+    "compression": "^1.7.4",
+    "dotenv": "^17.2.2",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "mammoth": "^1.6.0",
+    "meilisearch": "^0.40.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "qrcode": "^1.5.3",
+    "tesseract.js": "^5.1.0",
+    "vite": "^7.1.5",
+    "whatsapp-web.js": "^1.26.0"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.5.0"
+  }
+}

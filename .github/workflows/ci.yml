@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Panel deps
+        working-directory: Avukat-Bilgi-Sistemi/Panel
+        run: |
+          npm ci
+      - name: Build Panel
+        working-directory: Avukat-Bilgi-Sistemi/Panel
+        run: |
+          npm run build
+      - name: Server deps install
+        working-directory: Avukat-Bilgi-Sistemi/server
+        run: |
+          if not exist node_modules ( npm install )
+      - name: List outputs
+        run: |
+          dir Avukat-Bilgi-Sistemi\Panel\dist
