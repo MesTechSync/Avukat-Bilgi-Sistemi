@@ -3,7 +3,7 @@ import { Mic, MicOff } from 'lucide-react';
 import { useVoiceControl } from '../hooks/useVoiceControl';
 
 export default function VoiceControl() {
-  const { supported, listening, start, stop, lastTranscript } = useVoiceControl();
+  const { supported, listening, start, stop, lastTranscript, lastIntent } = useVoiceControl();
 
   if (!supported) return null;
 
@@ -19,6 +19,12 @@ export default function VoiceControl() {
         >
           {listening ? <MicOff className="text-white" /> : <Mic className="text-white" />}
         </button>
+        {/* Erişilebilirlik: son niyet/komutu ekran okuyucuya duyur */}
+        <div aria-live="polite" role="status" className="sr-only">
+          {lastIntent?.category && lastIntent?.action
+            ? `Son komut: ${lastIntent.category} - ${lastIntent.action}`
+            : ''}
+        </div>
         {lastTranscript && (
           <div className="mt-2 max-w-[280px] text-xs text-gray-700 dark:text-gray-200 line-clamp-3">
             "{lastTranscript}"
