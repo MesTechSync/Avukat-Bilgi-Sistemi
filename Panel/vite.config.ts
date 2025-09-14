@@ -16,6 +16,11 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: ['avukat-bilgi-sistemi.hidlightmedya.tr', '.hidlightmedya.tr'],
+  },
   server: {
     host: '0.0.0.0',
     port: 5175,
