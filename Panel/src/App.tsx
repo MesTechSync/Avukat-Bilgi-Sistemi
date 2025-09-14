@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Phone, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2 } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 
@@ -9,6 +9,7 @@ import PetitionWriter from './components/PetitionWriter';
 import ContractGenerator from './components/ContractGenerator';
 import WhatsAppIntegration from './components/WhatsAppIntegration';
 import FileConverter from './components/FileConverter';
+import NotebookLLM from './components/NotebookLLM';
 import Dashboard from './components/Dashboard';
 import CaseManagement from './components/CaseManagement';
 import ClientManagement from './components/ClientManagement';
@@ -32,24 +33,43 @@ function App() {
   const { loading, error } = useSupabase();
 
   // Backend health check state
-  // Single-port dev: prefer same-origin proxy paths; fallback to .env for direct URL
-  const backendUrl = '';
+  // Prefer same-origin paths; if Panel runs on a different origin (Vite dev), use VITE_BACKEND_URL
+  const backendUrl: string = (import.meta as unknown as { env?: { VITE_BACKEND_URL?: string } }).env?.VITE_BACKEND_URL || '';
   const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('checking');
   const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number } | null>(null);
 
-  const checkBackend = async () => {
-    try {
-      setBackendStatus('checking');
-  const res = await fetch(`/health`, { headers: { 'Accept': 'application/json' } });
+  const checkBackend = useCallback(async () => {
+    setBackendStatus('checking');
+    const tryHealth = async (base: string) => {
+      const url = base ? `${base.replace(/\/$/, '')}/health` : `/health`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setBackendInfo(data);
-      setBackendStatus('ok');
+      return res.json();
+    };
+    try {
+      const base = typeof backendUrl === 'string' ? backendUrl : '';
+      // 1) Try same-origin first (single-port)
+      try {
+        const data = await tryHealth('');
+        setBackendInfo(data);
+        setBackendStatus('ok');
+        return;
+      } catch {
+        // ignore and try configured URL next
+      }
+      // 2) If same-origin failed and VITE_BACKEND_URL is provided, try it
+      if (base) {
+        const data = await tryHealth(base);
+        setBackendInfo(data);
+        setBackendStatus('ok');
+        return;
+      }
+      throw new Error('No backend reachable');
     } catch {
       setBackendInfo(null);
       setBackendStatus('error');
     }
-  };
+  }, [backendUrl]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: BarChart3, color: 'text-blue-600' },
@@ -58,6 +78,7 @@ function App() {
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
   { id: 'whatsapp', label: 'WhatsApp Destek', icon: Phone, color: 'text-green-500', badge: '7/24' },
+  { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
   { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
     { id: 'cases', label: 'Dava Yönetimi', icon: Gavel, color: 'text-red-600' },
     { id: 'clients', label: 'Müvekkil Yönetimi', icon: Users, color: 'text-blue-500' },
@@ -83,6 +104,8 @@ function App() {
         return <WhatsAppIntegration />;
       case 'file-converter':
         return <FileConverter />;
+      case 'notebook-llm':
+        return <NotebookLLM />;
       case 'cases':
         return <CaseManagement />;
       case 'clients':
@@ -119,7 +142,7 @@ function App() {
   // Run initial backend health check once on mount
   React.useEffect(() => {
     checkBackend();
-  }, []);
+  }, [checkBackend]);
 
   // Voice commands handler (minimal, safe wiring)
   React.useEffect(() => {
@@ -390,8 +413,8 @@ function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
           {/* Backend status banner */}
           {backendStatus === 'error' && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100 border border-red-200/50 dark:border-red-800/50">
-              Backend'e bağlanılamadı. Lütfen {backendUrl} adresini kontrol edin.
+            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200 border border-red-200/50 dark:border-red-800/50">
+              Backend'e bağlanılamadı. Lütfen sunucunun çalıştığını ve erişilebilir olduğunu kontrol edin{backendUrl ? ` (Ayar: ${backendUrl})` : ''}.
             </div>
           )}
           {backendStatus === 'ok' && backendInfo && (
