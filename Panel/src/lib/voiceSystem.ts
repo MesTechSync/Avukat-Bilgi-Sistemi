@@ -4,6 +4,7 @@ import { matchCommand, matchExtendedCommand } from './voiceCommands';
 import { COMMANDS } from './voiceCommands';
 import { findBestMatches, ContextAwareCorrector } from './voicePhonetics';
 import { DynamicCommandGenerator } from './extendedVoiceCommands';
+import { VOICE_FUZZY_ENABLED, VOICE_FUZZY_THRESHOLD, VOICE_FUZZY_STRICT_SCORE, VOICE_FUZZY_CONTEXT_SCORE } from './voiceConfig';
 
 export type VoiceIntent = { category: string; action: string; parameters: Record<string, any> };
 
@@ -38,23 +39,25 @@ export function analyzeIntent(transcript: string): VoiceIntent {
     return { category: 'ARAMA_SORGULAMA', action: 'SEARCH', parameters: query ? { query } : {} };
   }
 
-  // Son çare: fonetik/donanımlı bulanık eşleşme
-  const suggestions = findBestMatches(transcript, allCommands, 0.6);
-  if (suggestions.length > 0) {
-    const best = suggestions[0];
-    if (best.score > 0.85) {
-      contextCorrector.addToHistory(transcript);
-      return {
-        category: best.category,
-        action: best.action,
-        parameters: extractParameters(transcript, best.command),
-      };
-    }
-    if (best.score > 0.7) {
-      const contextHints = contextCorrector.suggestBasedOnContext();
-      for (const hint of contextHints) {
-        if (transcript.includes(hint)) {
-          return { category: best.category, action: best.action, parameters: { context: hint, query: transcript } };
+  // Son çare: fonetik/donanımlı bulanık eşleşme (opsiyonel)
+  if (VOICE_FUZZY_ENABLED) {
+    const suggestions = findBestMatches(transcript, allCommands, VOICE_FUZZY_THRESHOLD);
+    if (suggestions.length > 0) {
+      const best = suggestions[0];
+      if (best.score > VOICE_FUZZY_STRICT_SCORE) {
+        contextCorrector.addToHistory(transcript);
+        return {
+          category: best.category,
+          action: best.action,
+          parameters: extractParameters(transcript, best.command),
+        };
+      }
+      if (best.score > VOICE_FUZZY_CONTEXT_SCORE) {
+        const contextHints = contextCorrector.suggestBasedOnContext();
+        for (const hint of contextHints) {
+          if (transcript.includes(hint)) {
+            return { category: best.category, action: best.action, parameters: { context: hint, query: transcript } };
+          }
         }
       }
     }
