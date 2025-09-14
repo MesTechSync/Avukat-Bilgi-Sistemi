@@ -40,28 +40,17 @@ Yerel geliştirme için opsiyonel tek-port Express sunucu: Panel (statik veya Vi
 Statik Panel varsa (Panel/dist mevcut), tek porttan başlatın:
 
 ```powershell
-# Statik mod: Vite kapalı, Panel/dist servis edilir
-$env:ENABLE_VITE = '0'
-$env:PORT = '8000'
-$env:HOST = '127.0.0.1'
-node .\server\server.js
+# Kolay başlatma: Panel'i build eder, server'ı tek portta açar
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Mevzuat\start-oneport.ps1 -Port 8000 -BindHost localhost
 ```
 
-Tarayıcı: <http://127.0.0.1:8000>  • Sağlık: <http://127.0.0.1:8000/health>
-
-Kolay başlatma:
-
-```powershell
-./start-oneport.ps1 -Port 8000 -Host 127.0.0.1 -EnableVite:$false -OpenBrowser
-```
+Tarayıcı: <http://localhost:8000>  • Sağlık: <http://localhost:8000/health>
 
 Geliştirme (Vite açık, HMR):
 
 ```powershell
-$env:ENABLE_VITE = '1'
-$env:PORT = '8000'
-$env:HOST = '127.0.0.1'
-node .\server\server.js
+# Vite ile geliştirme (isteğe bağlı)
+$env:ENABLE_VITE = '1'; $env:PORT = '8000'; $env:HOST = 'localhost'; node .\server\server.js
 ```
 
 Panel’i derlemek (statik servis için):
@@ -88,15 +77,23 @@ npm run build
 
 `Panel/.env.example` içinde örnekler mevcut.
 
+ 
 ## 🌐 Deployment (Coolify)
 
-- Branch: `main`
-- Build: Dockerfile (önerilir) veya Nixpacks
-- Node: 20.x
-- Ortam değişkenlerini Coolify Environment bölümüne ekleyin
-- Domain izinleri için:
-	- `vite.config.ts` içinde `preview.allowedHosts` listesinde domain mevcut
-	- Nginx `server_name` Dockerfile’da yapılandırıldı
+Tek container, tek port modeli ile Dockerfile kullanılır:
+
+- Branch: `main` (veya `fix-one-port-4001` PR birleşene kadar)
+- Build: Dockerfile (Node 20) Panel’i build eder ve Node/Express runtime’da hem Panel’i hem API’yi 8000’den servis eder.
+- Service Port: 8000
+- Healthcheck: /health
+- Env vars (runtime): HOST=0.0.0.0, PORT=8000, ENABLE_VITE=0
+- Env vars (build, opsiyonel): VITE_BACKEND_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+
+Coolify adımları:
+
+1) New App -> Repo -> Branch seçin
+2) Service Port = 8000, Healthcheck path = /health
+3) Deploy; yeşil olduktan sonra domain/SSL’i bağlayın
 
 ## 🧪 Test & Sağlık Kontrolleri
 
