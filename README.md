@@ -64,9 +64,7 @@ Hukuk büroları ve kurumsal hukuk ekipleri için geliştirilen, modern bir Reac
 
 MIT
 
-## 🤖 AI Komut Şablonları
+## 🤖 AI Komut Şablonu
 
-- Genel şablon: `AI_COMMAND_TEMPLATE.md`
-- Eğitim örnek şablon (referans): `AI_Command_Template_v2.md`
-- Hukuk odaklı şablon (önerilir): `AI_COMMAND_TEMPLATE_v3.md`
+- Hukuk odaklı şablon: `AI_COMMAND_TEMPLATE_v3.md`
 

@@ -198,8 +198,6 @@ curl -I https://avukat-bilgi-sistemi.hidlightmedya.tr
 
 ## 🔗 13) Bağlantılar
 
-- Genel AI Şablonu: AI_COMMAND_TEMPLATE.md
-- Eğitim Örneği (Referans): AI_Command_Template_v2.md
 - Hukuk v3 (Bu dosya): AI_COMMAND_TEMPLATE_v3.md
 
 ---
