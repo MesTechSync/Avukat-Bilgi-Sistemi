@@ -28,24 +28,14 @@ function WhatsAppIntegration() {
   const [waStatus, setWaStatus] = useState<'idle'|'qr'|'connecting'|'ready'|'disconnected'>('idle');
   const pollRef = useRef<number | null>(null);
   // Selected chat (left pane)
-  const [selectedChat, setSelectedChat] = useState<string>('client-1');
+  const [selectedChat, setSelectedChat] = useState<string>('');
 
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [chatList, setChatList] = useState<ChatListItem[]>([]);
   const quickReplies = ['🏛️ Ana Menü','📚 İçtihat Ara','📝 Dilekçe Hazırla','⚖️ Hukuki Danışmanlık','📞 Canlı Destek'];
 
-  // Sidebar chat list (mocked for now)
-  const mockChats = useMemo(() => ([
-    { id: 'client-1', name: '+90 555 123 4567', last: 'Anlaşmalı boşanma için...', unread: 0 },
-    { id: 'client-2', name: '+90 532 987 6543', last: 'Dava masrafları hakkında...', unread: 2 },
-    { id: 'client-3', name: '+90 533 222 3344', last: 'İcra takibi...', unread: 0 },
-  ] as Array<{id:string; name:string; last:string; unread:number}>), []);
-
-  // Filter messages for selected chat (simple heuristic by name/number)
-  const displayChats: ChatListItem[] = chatList.length > 0
-    ? chatList
-    : mockChats.map(c => ({ id: c.id, name: c.name, unread: c.unread }));
-  const currentPeer = displayChats.find(c => c.id === selectedChat)?.name || '';
+  // Use only real chats from backend; if empty, show proper empty state
+  const currentPeer = chatList.find(c => c.id === selectedChat)?.name || '';
   const currentMessages = useMemo(() => messages, [messages]);
 
   const handleConnect = () => {
@@ -235,18 +225,24 @@ function WhatsAppIntegration() {
           </div>
           {/* Chats */}
           <div className="flex-1 overflow-y-auto">
-            {displayChats.map(c => (
-              <button key={c.id} onClick={()=>setSelectedChat(c.id)} className={`w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedChat===c.id ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>
-                <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">{(c.name||'??').slice(0,2)}</div>
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.name||c.id}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{selectedChat===c.id ? 'Seçildi' : ''}</div>
-                </div>
-                {c.unread>0 && (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs bg-green-600 text-white rounded-full">{c.unread}</span>
-                )}
-              </button>
-            ))}
+            {chatList.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 px-4 text-center">
+                {waStatus === 'ready' ? 'Sohbet bulunamadı.' : 'WhatsApp bağlantısı kurulunca sohbetler burada görünecek.'}
+              </div>
+            ) : (
+              chatList.map(c => (
+                <button key={c.id} onClick={()=>setSelectedChat(c.id)} className={`w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedChat===c.id ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>
+                  <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">{(c.name||'??').slice(0,2)}</div>
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.name||c.id}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{selectedChat===c.id ? 'Seçildi' : ''}</div>
+                  </div>
+                  {c.unread>0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs bg-green-600 text-white rounded-full">{c.unread}</span>
+                  )}
+                </button>
+              ))
+            )}
           </div>
           {/* Footer settings */}
           <div className="p-3 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400">

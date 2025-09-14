@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 // Load .env from server directory (override any pre-set envs)
 dotenv.config({ path: path.join(__dirname, '.env'), override: true });
 
-const PORT = Number(process.env.PORT || 5175);
+const PORT = Number(process.env.PORT || 8000);
 const panelDir = path.resolve(__dirname, '..', 'Panel');
 const udfDir = path.resolve(__dirname, '..', 'UDF Dosya Sistemi');
 const mevzuatDir = path.resolve(__dirname, '..', 'Mevzuat');
@@ -87,7 +87,11 @@ async function start() {
 
   app.get('/wa/status', (req, res) => {
     console.log('GET /wa/status ->', waStatus);
-    res.json({ status: waStatus });
+    res.json({
+      status: waStatus,
+      isReady: waStatus === 'ready',
+      isConnecting: waStatus === 'connecting' || waStatus === 'qr'
+    });
   });
   app.get('/wa/qr', (req, res) => {
     ensureWa();
@@ -105,6 +109,7 @@ async function start() {
       if (!waClient || waStatus !== 'ready') {
         return res.status(503).json({ error: 'WhatsApp not ready' });
       }
+      console.log('[wa:chats] fetching chats...');
       // Some accounts may return empty chats just after ready; retry briefly
       let chats = await waClient.getChats();
       if (!Array.isArray(chats) || chats.length === 0) {
@@ -115,12 +120,23 @@ async function start() {
         }
       }
       // Map minimal fields to keep payload light
-      const data = chats.map((c) => ({
-        id: c.id?._serialized || c.id,
-        name: c.name || c.formattedTitle || (c.id?.user ? `+${c.id.user}` : (c.id?._serialized || 'Sohbet')),
-        isGroup: !!c.isGroup,
-        unreadCount: c.unreadCount ?? 0,
-      }));
+      const data = chats.map((c) => {
+        const id = c.id?._serialized || c.id;
+        const last = c.lastMessage ? {
+          body: c.lastMessage.body || '',
+          timestamp: c.lastMessage.timestamp || null
+        } : null;
+        const number = c.id?.user || '';
+        return {
+          id,
+          name: c.name || c.formattedTitle || (number ? `+${number}` : (id || 'Sohbet')),
+          isGroup: !!c.isGroup,
+          unreadCount: c.unreadCount ?? 0,
+          lastMessage: last,
+          number
+        };
+      });
+      console.log('[wa:chats] returning', data.length, 'chats');
       res.json({ chats: data });
     } catch (e) {
       console.error('[wa:chats]', e);
@@ -140,6 +156,7 @@ async function start() {
       if (!chatId || typeof chatId !== 'string') {
         return res.status(400).json({ error: 'chatId required' });
       }
+      console.log('[wa:messages] fetching messages for', chatId, 'limit', limit);
       const chat = await waClient.getChatById(chatId);
       const msgs = await chat.fetchMessages({ limit });
       const messages = msgs.map((m) => ({
@@ -156,6 +173,39 @@ async function start() {
       res.json({ messages });
     } catch (e) {
       console.error('[wa:messages]', e);
+      res.status(500).json({ error: 'Failed to get messages' });
+    }
+  });
+
+  // Alias route: /wa/messages/:chatId (same behavior, path param)
+  app.get('/wa/messages/:chatId', async (req, res) => {
+    try {
+      ensureWa();
+      if (!waClient || waStatus !== 'ready') {
+        return res.status(503).json({ error: 'WhatsApp not ready' });
+      }
+      const chatId = req.params.chatId;
+      const limit = Math.max(1, Math.min(200, Number(req.query.limit || 50)));
+      if (!chatId || typeof chatId !== 'string') {
+        return res.status(400).json({ error: 'chatId required' });
+      }
+      console.log('[wa:messages:param] fetching messages for', chatId, 'limit', limit);
+      const chat = await waClient.getChatById(chatId);
+      const msgs = await chat.fetchMessages({ limit });
+      const messages = msgs.map((m) => ({
+        id: m.id?._serialized || m.id,
+        chatId: chatId,
+        from: m.from,
+        to: m.to,
+        body: m.body,
+        fromMe: !!m.fromMe,
+        timestamp: (m.timestamp ? m.timestamp * 1000 : Date.now()),
+        type: m.type,
+        ack: m.ack,
+      }));
+      res.json({ messages });
+    } catch (e) {
+      console.error('[wa:messages:param]', e);
       res.status(500).json({ error: 'Failed to get messages' });
     }
   });
@@ -1011,7 +1061,7 @@ async function start() {
     }
   });
 
-  const ENABLE_VITE = process.env.ENABLE_VITE !== '0';
+  const ENABLE_VITE = process.env.ENABLE_VITE === '1';
   if (ENABLE_VITE) {
     // Vite in middleware mode for React panel
     const vite = await createViteServer({
