@@ -1,0 +1,21 @@
+# Git & VCS
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+
+# Panel app artifacts
+Panel/node_modules
+Panel/dist
+Panel/.vite
+Panel/.env*
+
+# OS/editor
+.DS_Store
+.vscode
+
+# Supabase local configs
+Panel/supabase/.temp
+Panel/supabase/.branches
