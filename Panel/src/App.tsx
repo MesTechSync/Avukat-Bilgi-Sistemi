@@ -17,6 +17,7 @@ import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
 import VoiceControl from './components/VoiceControl';
+import { COMMIT_SHA, BUILD_TIME } from './lib/version';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -40,10 +41,20 @@ function App() {
   const checkBackend = async () => {
     try {
       setBackendStatus('checking');
-  const res = await fetch(`/health`, { headers: { 'Accept': 'application/json' } });
+      const res = await fetch(`/health`, { headers: { 'Accept': 'application/json, text/plain' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setBackendInfo(data);
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const data = await res.json();
+        setBackendInfo(data);
+      } else {
+        const text = await res.text();
+        if (text.trim().toLowerCase() === 'ok') {
+          setBackendInfo({ service: 'nginx', version: undefined, tools_count: undefined });
+        } else {
+          setBackendInfo(null);
+        }
+      }
       setBackendStatus('ok');
     } catch {
       setBackendInfo(null);
@@ -280,6 +291,9 @@ function App() {
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 7/24 hukuki destek için AI asistanınız hazır
+              </p>
+              <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
+                Build: {COMMIT_SHA.slice(0,7)}{BUILD_TIME ? ` · ${BUILD_TIME}` : ''}
               </p>
             </div>
           </div>
