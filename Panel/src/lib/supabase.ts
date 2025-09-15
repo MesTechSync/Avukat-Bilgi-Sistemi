@@ -116,6 +116,15 @@ export interface Financial {
   updated_at: string
 }
 
+export interface VoiceHistory {
+  id: number
+  transcript: string
+  category: string
+  action: string
+  parameters: Record<string, any> | null
+  created_at: string
+}
+
 // Typed helpers
 type TableMap = {
   cases: Case;
@@ -124,6 +133,7 @@ type TableMap = {
   documents: Document;
   financials: Financial;
   legal_research: LegalResearch;
+  voice_history: VoiceHistory;
 };
 
 export async function dbSelect<T extends keyof TableMap>(table: T, columns = '*'): Promise<{ data: TableMap[T][]; error: any }>{

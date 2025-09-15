@@ -87,7 +87,9 @@ function ngramSimilarity(s1: string, s2: string, n = 2): number {
 export function calculateSimilarity(input: string, target: string): number {
   if (!input || !target) return 0;
   if (input === target) return 1;
-  if (input.includes(target) || target.includes(input)) {
+  // Apply 'contains' boost only when matching whole word boundaries
+  const boundaryRe = new RegExp(`(^|\\b)${target}(\\b|$)`);
+  if (boundaryRe.test(input) || boundaryRe.test(target)) {
     return 0.9 - Math.min(0.2, Math.abs(input.length - target.length) * 0.02);
   }
   const phonIn = toPhonetic(input);
@@ -97,7 +99,12 @@ export function calculateSimilarity(input: string, target: string): number {
   const lev = 1 - (levenshtein(input, target) / maxLen);
   const phonLev = 1 - (levenshtein(phonIn, phonTg) / Math.max(phonIn.length, phonTg.length || 1));
   const ng = ngramSimilarity(input, target);
-  return (lev * 0.3) + (phonLev * 0.4) + (ng * 0.3);
+  let score = (lev * 0.3) + (phonLev * 0.4) + (ng * 0.3);
+  // Damp short target words (<=3) if input doesn't have word-boundary match (e.g., 'ara' vs 'araç')
+  if (target.length <= 3 && !boundaryRe.test(input)) {
+    score = Math.max(0, score - 0.25);
+  }
+  return score;
 }
 
 export function correctCommonMistakes(input: string): string[] {

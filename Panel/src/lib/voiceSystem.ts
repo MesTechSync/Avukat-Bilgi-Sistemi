@@ -13,6 +13,13 @@ const contextCorrector = new ContextAwareCorrector();
 const commandGenerator = new DynamicCommandGenerator();
 const allCommands = commandGenerator.generateAll();
 
+// Require at least one 3+ letter token from the command to appear in the transcript
+function hasTokenOverlap(transcript: string, command: string): boolean {
+  const t = transcript.toLowerCase();
+  const tokens = command.toLowerCase().split(/[^a-zçğıöşâîûü0-9]+/i).filter(w => w.length >= 3);
+  return tokens.some(tok => t.includes(tok));
+}
+
 export function analyzeIntent(transcript: string): VoiceIntent {
   const matched = matchCommand(transcript);
   if (matched) return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
@@ -44,14 +51,17 @@ export function analyzeIntent(transcript: string): VoiceIntent {
     const suggestions = findBestMatches(transcript, allCommands, VOICE_FUZZY_THRESHOLD);
     if (suggestions.length > 0) {
       const best = suggestions[0];
-      if (best.score > VOICE_FUZZY_STRICT_SCORE) {
+      // Prefer a safe high-confidence suggestion (not generic ACTIONS and not too short)
+  const safeStrict = suggestions.find(s => s.score > VOICE_FUZZY_STRICT_SCORE && s.category !== 'ACTIONS' && s.command.length >= 4 && hasTokenOverlap(transcript, s.command));
+      if (safeStrict) {
         contextCorrector.addToHistory(transcript);
         return {
-          category: best.category,
-          action: best.action,
-          parameters: extractParameters(transcript, best.command),
+          category: safeStrict.category,
+          action: safeStrict.action,
+          parameters: extractParameters(transcript, safeStrict.command),
         };
       }
+      // Otherwise, if the top is high-confidence but generic, do not accept; continue to context path
       if (best.score > VOICE_FUZZY_CONTEXT_SCORE) {
         const contextHints = contextCorrector.suggestBasedOnContext();
         for (const hint of contextHints) {
@@ -59,13 +69,29 @@ export function analyzeIntent(transcript: string): VoiceIntent {
             return { category: best.category, action: best.action, parameters: { context: hint, query: transcript } };
           }
         }
-        // No explicit context hint, but reasonably high score — proceed with best guess
-        return {
-          category: best.category,
-          action: best.action,
-          parameters: extractParameters(transcript, best.command),
-        };
+        // Try to find a next-best safe suggestion under context threshold
+  const safeContext = suggestions.find(s => s.category !== 'ACTIONS' && s.command.length >= 4 && hasTokenOverlap(transcript, s.command));
+        if (safeContext) {
+          return {
+            category: safeContext.category,
+            action: safeContext.action,
+            parameters: extractParameters(transcript, safeContext.command),
+          };
+        }
       }
+    }
+  }
+
+  // Conservative fallback: accept a non-generic, overlapping suggestion if score is reasonably high
+  if (VOICE_FUZZY_ENABLED) {
+    const suggestions = findBestMatches(transcript, allCommands, VOICE_FUZZY_THRESHOLD);
+    const safe = suggestions.find(s => s.category !== 'ACTIONS' && hasTokenOverlap(transcript, s.command) && s.score >= Math.max(VOICE_FUZZY_THRESHOLD + 0.05, 0.65));
+    if (safe) {
+      return {
+        category: safe.category,
+        action: safe.action,
+        parameters: extractParameters(transcript, safe.command),
+      };
     }
   }
 

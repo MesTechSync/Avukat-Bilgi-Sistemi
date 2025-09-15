@@ -3,6 +3,8 @@ import { voiceManager, VoiceIntent } from '../lib/voiceSystem';
 import { DynamicCommandGenerator } from '../lib/extendedVoiceCommands';
 import { findBestMatches } from '../lib/voicePhonetics';
 import { VOICE_FUZZY_ENABLED, VOICE_FUZZY_THRESHOLD } from '../lib/voiceConfig';
+import { recordVoiceEvent, flushVoiceQueue } from '../lib/voiceHistory';
+import { hasConsent, isRemoteLoggingEnabled } from '../lib/voicePrivacy';
 
 export interface VoiceControlHookResult {
   supported: boolean;
@@ -35,6 +37,15 @@ export function useVoiceControl(): VoiceControlHookResult {
       const detail = (e as CustomEvent).detail as { transcript: string; intent: VoiceIntent };
       setLastTranscript(detail.transcript);
       setLastIntent(detail.intent);
+      // Best-effort persist (KVKK consent + logging required)
+      if (hasConsent() && isRemoteLoggingEnabled()) {
+        recordVoiceEvent({
+          transcript: detail.transcript,
+          category: detail.intent.category,
+          action: detail.intent.action,
+          parameters: detail.intent.parameters,
+        });
+      }
       // compute lightweight suggestions if fuzzy is enabled
       if (VOICE_FUZZY_ENABLED && detail.transcript) {
         try {
@@ -65,7 +76,11 @@ export function useVoiceControl(): VoiceControlHookResult {
       setError(msg);
       setListening(false);
     };
-    window.addEventListener('voice-command', handler as any);
+  window.addEventListener('voice-command', handler as any);
+  // Attempt to flush any queued history entries on mount (only when consent/logging are enabled)
+  if (hasConsent() && isRemoteLoggingEnabled()) {
+    flushVoiceQueue();
+  }
     window.addEventListener('voice-error', onError as any);
     return () => {
       window.removeEventListener('voice-command', handler as any);

@@ -79,7 +79,10 @@ export interface VoiceCommand {
 }
 
 export function matchRegistry(transcript: string): { def: CommandDef; params?: Record<string, any> } | null {
-  const t = transcript.toLowerCase().trim();
+  // Normalize a few common mishears for strict path (conservative)
+  let t = transcript.toLowerCase().trim();
+  // e.g., 'arax' -> 'ara' to enable strict SEARCH matching without enabling broad fuzzy
+  t = t.replace(/\barax\b|\baray\b|\baro\b/g, 'ara');
   const containsPattern = (text: string, pat: string) => {
     const p = pat.toLowerCase();
     // Use word boundaries for short single-word patterns like 'ara', 'bul'
