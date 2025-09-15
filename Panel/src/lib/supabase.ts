@@ -115,3 +115,37 @@ export interface Financial {
   created_at: string
   updated_at: string
 }
+
+// Typed helpers
+type TableMap = {
+  cases: Case;
+  clients: Client;
+  appointments: Appointment;
+  documents: Document;
+  financials: Financial;
+  legal_research: LegalResearch;
+};
+
+export async function dbSelect<T extends keyof TableMap>(table: T, columns = '*'): Promise<{ data: TableMap[T][]; error: any }>{
+  // @ts-ignore - supabase type generic differs in mock
+  const { data, error } = await (supabase.from(table).select(columns));
+  return { data: (data ?? []) as TableMap[T][], error };
+}
+
+export async function dbInsert<T extends keyof TableMap>(table: T, row: Partial<TableMap[T]>): Promise<{ data: TableMap[T] | null; error: any }>{
+  // @ts-ignore
+  const { data, error } = await (supabase.from(table).insert(row).select().single());
+  return { data: (data ?? null) as TableMap[T] | null, error };
+}
+
+export async function dbUpdate<T extends keyof TableMap>(table: T, id: number | string, patch: Partial<TableMap[T]>): Promise<{ data: TableMap[T] | null; error: any }>{
+  // @ts-ignore
+  const { data, error } = await (supabase.from(table).update(patch).eq('id', id).select().single());
+  return { data: (data ?? null) as TableMap[T] | null, error };
+}
+
+export async function dbDelete<T extends keyof TableMap>(table: T, id: number | string): Promise<{ error: any }>{
+  // @ts-ignore
+  const { error } = await (supabase.from(table).delete().eq('id', id));
+  return { error };
+}
