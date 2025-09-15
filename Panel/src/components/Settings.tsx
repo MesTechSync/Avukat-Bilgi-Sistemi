@@ -42,7 +42,8 @@ export default function Settings() {
     { id: 'notifications', label: 'Bildirimler', icon: Bell },
     { id: 'security', label: 'Güvenlik', icon: Shield },
     { id: 'appearance', label: 'Görünüm', icon: Palette },
-    { id: 'system', label: 'Sistem', icon: Database }
+    { id: 'system', label: 'Sistem', icon: Database },
+    { id: 'voice', label: 'Ses', icon: Globe }
   ];
 
   const handleSettingChange = (key: string, value: any) => {
@@ -55,6 +56,119 @@ export default function Settings() {
   const handleSave = () => {
     // Save settings logic here
     alert('Ayarlar kaydedildi!');
+  };
+
+  const renderVoiceTab = () => {
+    const get = (k: string, fallback: string) => {
+      try { return localStorage.getItem(k) ?? fallback; } catch { return fallback; }
+    };
+    const set = (k: string, v: string) => {
+      try { localStorage.setItem(k, v); } catch {}
+    };
+    const [consent, setConsent] = useState(get('voice_privacy_consent_v1', 'false') === 'true');
+    const [remote, setRemote] = useState(get('voice_privacy_remote_logging_v1', 'false') === 'true');
+    const [pii, setPii] = useState(get('voice_privacy_pii_masking_v1', 'true') === 'true');
+    const [fuzzy, setFuzzy] = useState(get('VITE_VOICE_FUZZY', 'on') !== 'off');
+    const [th, setTh] = useState(get('VITE_VOICE_FUZZY_THRESHOLD', '0.6'));
+    const [strict, setStrict] = useState(get('VITE_VOICE_FUZZY_STRICT_SCORE', '0.85'));
+    const [ctx, setCtx] = useState(get('VITE_VOICE_FUZZY_CONTEXT_SCORE', '0.65'));
+  const [recLang, setRecLang] = useState(get('voice_recognition_lang', 'tr-TR'));
+
+    const saveAll = () => {
+      set('voice_privacy_consent_v1', consent ? 'true' : 'false');
+      set('voice_privacy_remote_logging_v1', remote ? 'true' : 'false');
+      set('voice_privacy_pii_masking_v1', pii ? 'true' : 'false');
+      set('VITE_VOICE_FUZZY', fuzzy ? 'on' : 'off');
+      set('VITE_VOICE_FUZZY_THRESHOLD', th);
+      set('VITE_VOICE_FUZZY_STRICT_SCORE', strict);
+      set('VITE_VOICE_FUZZY_CONTEXT_SCORE', ctx);
+  set('voice_recognition_lang', recLang);
+      alert('Ses ayarları kaydedildi. Değişiklikler bir sonraki ses oturumunda geçerli olacaktır.');
+    };
+
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ses ve Gizlilik</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">KVKK Onayı</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ses verilerinin işlenmesi için açık rıza</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Uzak Kayıt</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ses geçmişini sunucuya kaydet</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Kişisel Veri Maskeleme</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">E-posta, telefon, TCKN gibi verileri maskele</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={pii} onChange={e => setPii(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700"></div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Bulanık Eşleşme</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ses Tanıma Dili</label>
+              <select value={recLang} onChange={e => setRecLang(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white">
+                <option value="tr-TR">Türkçe (tr-TR)</option>
+                <option value="en-US">English (en-US)</option>
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tarayıcıdaki tanıma motoru bu dili kullanır.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Fuzzy Motoru</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Hatalı telaffuzlarda tolerans</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={fuzzy} onChange={e => setFuzzy(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Eşik</label>
+              <input type="number" min="0" max="1" step="0.01" value={th} onChange={e => setTh(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Katı Eşik</label>
+              <input type="number" min="0" max="1" step="0.01" value={strict} onChange={e => setStrict(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kontekst Eşiği</label>
+              <input type="number" min="0" max="1" step="0.01" value={ctx} onChange={e => setCtx(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button onClick={saveAll} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"><Save className="w-4 h-4" /> Kaydet</button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderProfileTab = () => (
@@ -511,6 +625,8 @@ export default function Settings() {
         return renderAppearanceTab();
       case 'system':
         return renderSystemTab();
+      case 'voice':
+        return renderVoiceTab();
       default:
         return renderProfileTab();
     }

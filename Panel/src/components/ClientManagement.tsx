@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { Plus, Search, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Calendar } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function ClientManagement() {
-  const { clients, addClient, updateClient, deleteClient, loading } = useSupabase();
+  const { clients, addClient, updateClient, deleteClient, restoreClient, loading } = useSupabase();
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'none' | 'name-asc' | 'name-desc'>('none');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<any | null>(null);
+  const [toast, setToast] = useState<{msg:string; action?:{label:string; onClick:()=>void}}|null>(null);
 
   const [newClient, setNewClient] = useState({
     name: '',
@@ -20,6 +25,42 @@ export default function ClientManagement() {
     client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const listedClients = React.useMemo(() => {
+    const base = [...filteredClients];
+    if (sortBy === 'name-asc') {
+      base.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    } else if (sortBy === 'name-desc') {
+      base.sort((a, b) => b.name.localeCompare(a.name, 'tr'));
+    }
+    return base;
+  }, [filteredClients, sortBy]);
+
+  // Apply list-filter/list-sort events
+  React.useEffect(() => {
+    const onFilter = (e: Event) => {
+      const page = (e as CustomEvent).detail?.page as string | undefined;
+      if (page && page !== 'clients') return;
+      // Demo: filter by leaving current searchTerm; could be extended to tags/status later
+      setSearchTerm((prev) => prev);
+    };
+    const onSort = (e: Event) => {
+      const detail = (e as CustomEvent).detail as any;
+      const page = detail?.page as string | undefined;
+      if (page && page !== 'clients') return;
+      const by = detail?.sort?.by as string | undefined;
+      const dir = (detail?.sort?.dir as string | undefined) || 'asc';
+      if (!by || by === 'name') {
+        setSortBy(dir === 'desc' ? 'name-desc' : 'name-asc');
+      }
+    };
+    window.addEventListener('list-filter', onFilter as any);
+    window.addEventListener('list-sort', onSort as any);
+    return () => {
+      window.removeEventListener('list-filter', onFilter as any);
+      window.removeEventListener('list-sort', onSort as any);
+    };
+  }, []);
 
   const handleAddClient = async (e) => {
     e.preventDefault();
@@ -36,6 +77,30 @@ export default function ClientManagement() {
     } catch (error) {
       console.error('Müvekkil eklenirken hata:', error);
     }
+  };
+
+  const askDelete = (c:any) => {
+    setPendingDelete(c);
+    setConfirmOpen(true);
+  };
+
+  const doDelete = async () => {
+    if (!pendingDelete) return;
+    const backup = pendingDelete;
+    setConfirmOpen(false);
+    setPendingDelete(null);
+    await deleteClient(backup.id);
+    setToast({
+      msg: 'Müvekkil silindi',
+      action: {
+        label: 'Geri Al',
+        onClick: async () => {
+          setToast(null);
+          await restoreClient(backup);
+        }
+      }
+    });
+    setTimeout(() => setToast(null), 5000);
   };
 
   return (
@@ -75,7 +140,7 @@ export default function ClientManagement() {
 
       {/* Clients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClients.map((client) => (
+  {listedClients.map((client) => (
           <div key={client.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -96,15 +161,17 @@ export default function ClientManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" aria-label="Görüntüle" title="Görüntüle">
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" aria-label="Düzenle" title="Düzenle">
                   <Edit className="w-4 h-4" />
                 </button>
                 <button 
-                  onClick={() => deleteClient(client.id)}
+                  onClick={() => askDelete(client)}
                   className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  aria-label="Sil"
+                  title="Sil"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -163,6 +230,29 @@ export default function ClientManagement() {
         </div>
       )}
 
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Müvekkil Silinsin mi?"
+        message="Bu işlem geri alınamaz. Silmek istediğinize emin misiniz?"
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        onConfirm={doDelete}
+        onCancel={() => { setConfirmOpen(false); setPendingDelete(null); }}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center gap-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg">
+            <span>{toast.msg}</span>
+            {toast.action && (
+              <button onClick={toast.action.onClick} className="underline font-medium">{toast.action.label}</button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Add Client Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -184,6 +274,9 @@ export default function ClientManagement() {
                   value={newClient.name}
                   onChange={(e) => setNewClient({...newClient, name: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="Ad Soyad"
+                  placeholder="Ad Soyad"
+                  title="Ad Soyad"
                 />
               </div>
 
@@ -197,6 +290,9 @@ export default function ClientManagement() {
                   value={newClient.email}
                   onChange={(e) => setNewClient({...newClient, email: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="E-posta"
+                  placeholder="ornek@eposta.com"
+                  title="E-posta"
                 />
               </div>
 
@@ -210,6 +306,9 @@ export default function ClientManagement() {
                   value={newClient.phone}
                   onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="Telefon"
+                  placeholder="05xx xxx xx xx"
+                  title="Telefon"
                 />
               </div>
 
@@ -222,6 +321,9 @@ export default function ClientManagement() {
                   value={newClient.company}
                   onChange={(e) => setNewClient({...newClient, company: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="Şirket"
+                  placeholder="Şirket"
+                  title="Şirket"
                 />
               </div>
 
@@ -234,6 +336,9 @@ export default function ClientManagement() {
                   value={newClient.address}
                   onChange={(e) => setNewClient({...newClient, address: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="Adres"
+                  placeholder="Adres"
+                  title="Adres"
                 />
               </div>
 

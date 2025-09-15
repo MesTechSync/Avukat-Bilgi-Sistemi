@@ -35,6 +35,9 @@ export default function AdvancedSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchStats, setSearchStats] = useState({ total: 0, time: 0 });
+  const [dictationOn, setDictationOn] = useState<boolean>(() => {
+    try { return localStorage.getItem('voice_dictation_enabled') === 'true'; } catch { return false; }
+  });
 
   // Mock data for demonstration
   const mockResults: SearchResult[] = [
@@ -121,7 +124,22 @@ export default function AdvancedSearch() {
       }
     };
     window.addEventListener('voice-command', onVoiceSearch as any);
-    return () => window.removeEventListener('voice-command', onVoiceSearch as any);
+    const onDictation = (e: Event) => {
+      if (!dictationOn) return;
+      const t = (e as CustomEvent).detail?.transcript as string;
+      if (t && t.trim()) setQuery(prev => (prev ? prev + ' ' : '') + t.trim());
+    };
+    window.addEventListener('voice-dictation', onDictation as any);
+    const onToggle = (e: Event) => {
+      const en = !!(e as CustomEvent).detail?.enabled;
+      setDictationOn(en);
+    };
+    window.addEventListener('voice-dictation-toggle', onToggle as any);
+    return () => {
+      window.removeEventListener('voice-command', onVoiceSearch as any);
+      window.removeEventListener('voice-dictation', onDictation as any);
+      window.removeEventListener('voice-dictation-toggle', onToggle as any);
+    };
   }, [query]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -190,6 +208,13 @@ export default function AdvancedSearch() {
           >
             {isSearching ? 'Aranıyor...' : 'Ara'}
           </button>
+          <button
+            onClick={() => { const nv = !dictationOn; setDictationOn(nv); try { localStorage.setItem('voice_dictation_enabled', nv ? 'true' : 'false'); } catch {} }}
+            className={`px-3 py-3 rounded-lg border ${dictationOn ? 'border-green-500 text-green-700' : 'border-gray-300 text-gray-700'} hover:bg-gray-50 dark:hover:bg-gray-700`}
+            title="Dikte Modu"
+          >
+            {dictationOn ? 'Dikte: Açık' : 'Dikte: Kapalı'}
+          </button>
         </div>
 
         {/* Advanced Filters */}
@@ -203,6 +228,8 @@ export default function AdvancedSearch() {
               value={filters.courtType}
               onChange={(e) => setFilters(prev => ({ ...prev, courtType: e.target.value }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Mahkeme Türü"
+              title="Mahkeme Türü"
             >
               <option value="">Tümü</option>
               {courtTypes.map(court => (
@@ -222,6 +249,8 @@ export default function AdvancedSearch() {
               value={filters.legalArea}
               onChange={(e) => setFilters(prev => ({ ...prev, legalArea: e.target.value }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Hukuk Alanı"
+              title="Hukuk Alanı"
             >
               <option value="">Tümü</option>
               {legalAreas.map(area => (
@@ -245,6 +274,8 @@ export default function AdvancedSearch() {
                 dateRange: { ...prev.dateRange, from: e.target.value }
               }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Başlangıç Tarihi"
+              title="Başlangıç Tarihi"
             />
           </div>
 
@@ -261,6 +292,8 @@ export default function AdvancedSearch() {
                 dateRange: { ...prev.dateRange, to: e.target.value }
               }))}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              aria-label="Bitiş Tarihi"
+              title="Bitiş Tarihi"
             />
           </div>
         </div>
@@ -326,7 +359,7 @@ export default function AdvancedSearch() {
                           %{result.relevanceScore}
                         </span>
                       </div>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Görüntüle" title="Görüntüle">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>

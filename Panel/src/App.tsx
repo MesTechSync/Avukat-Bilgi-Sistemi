@@ -18,6 +18,7 @@ import Settings from './components/Settings';
 import Profile from './components/Profile';
 import VoiceControl from './components/VoiceControl';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
+import { speak } from './lib/voiceTTS';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -144,27 +145,58 @@ function App() {
             setDarkMode(true);
             localStorage.setItem('darkMode', 'true');
           }
+          speak('Koyu tema açıldı');
           break;
         case 'LIGHT_MODE':
           if (darkMode) {
             setDarkMode(false);
             localStorage.setItem('darkMode', 'false');
           }
+          speak('Açık tema açıldı');
           break;
         case 'NAV_DASHBOARD':
           setActiveTab('dashboard');
+          speak('Ana sayfa');
           break;
         case 'NAV_CASES':
           setActiveTab('cases');
+          speak('Davalar');
           break;
         case 'NAV_CLIENTS':
           setActiveTab('clients');
+          speak('Müvekkiller');
           break;
         case 'NAV_APPOINTMENTS':
           setActiveTab('appointments');
+          speak('Randevular');
           break;
         case 'NAV_SETTINGS':
           setActiveTab('settings');
+          speak('Ayarlar');
+          break;
+        case 'NAV_FINANCIALS':
+          setActiveTab('financials');
+          speak('Mali İşler');
+          break;
+        case 'NAV_AI_ASSISTANT':
+          setActiveTab('ai-assistant');
+          speak('Yapay zeka asistanı');
+          break;
+        case 'NAV_CONTRACT_GENERATOR':
+          setActiveTab('contract-generator');
+          speak('Sözleşme oluşturucu');
+          break;
+        case 'NAV_WHATSAPP':
+          setActiveTab('whatsapp');
+          speak('WhatsApp desteği');
+          break;
+        case 'NAV_FILE_CONVERTER':
+          setActiveTab('file-converter');
+          speak('Dosya dönüştürücü');
+          break;
+        case 'NAV_PROFILE':
+          setActiveTab('profile');
+          speak('Hesabım');
           break;
         case 'SEARCH':
           setActiveTab('search');
@@ -173,6 +205,31 @@ function App() {
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('voice-command', { detail: { intent: intentCopy } }));
           }, 0);
+          speak('Arama yapılıyor');
+          break;
+        case 'FILTER':
+          setActiveTab(intent.parameters?.page || activeTab);
+          try {
+            window.dispatchEvent(new CustomEvent('list-filter', { detail: { page: intent.parameters?.page, filter: intent.parameters?.filter } }));
+          } catch {}
+          speak('Filtre uygulanıyor');
+          break;
+        case 'SORT':
+          setActiveTab(intent.parameters?.page || activeTab);
+          try {
+            window.dispatchEvent(new CustomEvent('list-sort', { detail: { page: intent.parameters?.page, sort: intent.parameters?.sort } }));
+          } catch {}
+          speak('Sıralama uygulanıyor');
+          break;
+        case 'DICTATE_START':
+          try { localStorage.setItem('voice_dictation_enabled', 'true'); } catch {}
+          try { window.dispatchEvent(new CustomEvent('voice-dictation-toggle', { detail: { enabled: true } })); } catch {}
+          speak('Dikte başlatıldı');
+          break;
+        case 'DICTATE_STOP':
+          try { localStorage.setItem('voice_dictation_enabled', 'false'); } catch {}
+          try { window.dispatchEvent(new CustomEvent('voice-dictation-toggle', { detail: { enabled: false } })); } catch {}
+          speak('Dikte durduruldu');
           break;
         default:
           break;

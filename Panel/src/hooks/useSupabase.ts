@@ -201,6 +201,37 @@ export const useSupabase = () => {
     }
   }
 
+  // Duplicate a case
+  const duplicateCase = async (id: number) => {
+    try {
+      const original = cases.find(c => c.id === id)
+      if (!original) throw new Error('Dava bulunamadı')
+      const clone: Case = {
+        ...original,
+        id: Date.now(),
+        title: `${original.title} (Kopya)`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      setCases(prev => [clone, ...prev])
+      return clone
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Dava kopyalanırken hata oluştu')
+      throw err
+    }
+  }
+
+  // Restore helpers (for undo)
+  const restoreCase = async (caseData: Case) => {
+    try {
+      setCases(prev => [caseData, ...prev])
+      return caseData
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Dava geri yüklenirken hata oluştu')
+      throw err
+    }
+  }
+
   // CRUD Operations for Clients
   const addClient = async (clientData: Omit<Client, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -239,6 +270,16 @@ export const useSupabase = () => {
       setClients(prev => prev.filter(c => c.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Müvekkil silinirken hata oluştu')
+      throw err
+    }
+  }
+
+  const restoreClient = async (clientData: Client) => {
+    try {
+      setClients(prev => [clientData, ...prev])
+      return clientData
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Müvekkil geri yüklenirken hata oluştu')
       throw err
     }
   }
@@ -300,11 +341,14 @@ export const useSupabase = () => {
     addCase,
     updateCase,
     deleteCase,
+    duplicateCase,
+    restoreCase,
     
     // Client methods
     addClient,
     updateClient,
     deleteClient,
+    restoreClient,
     
     // Appointment methods
     addAppointment,

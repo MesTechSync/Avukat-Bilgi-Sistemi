@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, DollarSign, AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, DollarSign, AlertTriangle, Copy, Users } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function CaseManagement() {
-  const { cases, clients, addCase, updateCase, deleteCase, loading } = useSupabase();
+  const { cases, clients, addCase, updateCase, deleteCase, duplicateCase, restoreCase, loading } = useSupabase();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<any | null>(null);
+  const [toast, setToast] = useState<{msg:string; action?:{label:string; onClick:()=>void}}|null>(null);
 
   const [newCase, setNewCase] = useState({
     title: '',
@@ -35,8 +41,59 @@ export default function CaseManagement() {
     const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          case_.case_type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || case_.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesPriority = !priorityFilter || case_.priority === priorityFilter;
+    const matchesType = !typeFilter || case_.case_type === typeFilter;
+    return matchesSearch && matchesStatus && matchesPriority && matchesType;
   });
+
+  // Apply list-filter/list-sort (basic: set status = Devam Ediyor for demo)
+  React.useEffect(() => {
+    const onFilter = (e: Event) => {
+      const detail = (e as CustomEvent).detail as any;
+      const page = detail?.page as string | undefined;
+      if (page && page !== 'cases') return;
+      const nextStatus = detail?.filter?.status as string | undefined;
+      if (nextStatus) setStatusFilter(nextStatus);
+      const nextPrio = detail?.filter?.priority as string | undefined;
+      if (nextPrio) setPriorityFilter(nextPrio);
+      const nextType = detail?.filter?.case_type as string | undefined;
+      if (nextType) setTypeFilter(nextType);
+      if (!nextStatus && !nextPrio && !nextType) setStatusFilter(prev => prev || 'Devam Ediyor');
+    };
+    const onSort = (e: Event) => {
+      // Sorting UI yok; gelecekte eklenecek
+    };
+    window.addEventListener('list-filter', onFilter as any);
+    window.addEventListener('list-sort', onSort as any);
+    return () => {
+      window.removeEventListener('list-filter', onFilter as any);
+      window.removeEventListener('list-sort', onSort as any);
+    };
+  }, []);
+
+  const askDelete = (c:any) => {
+    setPendingDelete(c);
+    setConfirmOpen(true);
+  };
+
+  const doDelete = async () => {
+    if (!pendingDelete) return;
+    const backup = pendingDelete;
+    setConfirmOpen(false);
+    setPendingDelete(null);
+    await deleteCase(backup.id);
+    setToast({
+      msg: 'Dava silindi',
+      action: {
+        label: 'Geri Al',
+        onClick: async () => {
+          setToast(null);
+          await restoreCase(backup);
+        }
+      }
+    });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const handleAddCase = async (e) => {
     e.preventDefault();
@@ -129,6 +186,8 @@ export default function CaseManagement() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            aria-label="Durum filtresi"
+            title="Durum filtresi"
           >
             <option value="">Tüm Durumlar</option>
             {statusOptions.map(status => (
@@ -157,15 +216,25 @@ export default function CaseManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" aria-label="Görüntüle" title="Görüntüle">
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" aria-label="Düzenle" title="Düzenle">
                   <Edit className="w-4 h-4" />
                 </button>
                 <button 
-                  onClick={() => deleteCase(case_.id)}
+                  onClick={() => duplicateCase(case_.id)}
+                  className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
+                  title="Kopyala"
+                  aria-label="Kopyala"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => askDelete(case_)}
                   className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  aria-label="Sil"
+                  title="Sil"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -228,6 +297,29 @@ export default function CaseManagement() {
         </div>
       )}
 
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Dava Silinsin mi?"
+        message="Bu işlem geri alınamaz. Silmek istediğinize emin misiniz?"
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        onConfirm={doDelete}
+        onCancel={() => { setConfirmOpen(false); setPendingDelete(null); }}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center gap-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg">
+            <span>{toast.msg}</span>
+            {toast.action && (
+              <button onClick={toast.action.onClick} className="underline font-medium">{toast.action.label}</button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Add Case Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -250,6 +342,8 @@ export default function CaseManagement() {
                     value={newCase.title}
                     onChange={(e) => setNewCase({...newCase, title: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Dava Başlığı"
+                    placeholder="Dava başlığı"
                   />
                 </div>
 
@@ -262,6 +356,8 @@ export default function CaseManagement() {
                     value={newCase.client_id}
                     onChange={(e) => setNewCase({...newCase, client_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Müvekkil"
+                    title="Müvekkil"
                   >
                     <option value="">Müvekkil Seçin</option>
                     {clients.map(client => (
@@ -281,6 +377,8 @@ export default function CaseManagement() {
                     value={newCase.case_type}
                     onChange={(e) => setNewCase({...newCase, case_type: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Dava Türü"
+                    title="Dava Türü"
                   >
                     <option value="">Dava Türü Seçin</option>
                     {caseTypes.map(type => (
@@ -297,6 +395,8 @@ export default function CaseManagement() {
                     value={newCase.status}
                     onChange={(e) => setNewCase({...newCase, status: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Durum"
+                    title="Durum"
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
@@ -313,6 +413,8 @@ export default function CaseManagement() {
                     value={newCase.deadline}
                     onChange={(e) => setNewCase({...newCase, deadline: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Son Tarih"
+                    title="Son Tarih"
                   />
                 </div>
 
@@ -324,6 +426,8 @@ export default function CaseManagement() {
                     value={newCase.priority}
                     onChange={(e) => setNewCase({...newCase, priority: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    aria-label="Öncelik"
+                    title="Öncelik"
                   >
                     {priorityOptions.map(priority => (
                       <option key={priority} value={priority}>{priority}</option>
@@ -341,6 +445,8 @@ export default function CaseManagement() {
                     onChange={(e) => setNewCase({...newCase, amount: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     placeholder="0"
+                    aria-label="Tutar"
+                    title="Tutar"
                   />
                 </div>
               </div>

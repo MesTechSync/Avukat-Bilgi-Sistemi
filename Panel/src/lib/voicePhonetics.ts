@@ -60,6 +60,10 @@ const COMMON_MISTAKES: Record<string, string[]> = {
   hakim: ['hakimi', 'hâkim', 'akim', 'hakem'],
   savcı: ['savcıy', 'savci', 'savcım', 'savçı'],
   noter: ['noteri', 'notere', 'moter', 'nöter'],
+  arama: ['arama', 'arama yap', 'aramak', 'aramam'],
+  randevu: ['randavu', 'randevü', 'randuvü', 'randavu'],
+  ödeme: ['odeme', 'ödmee', 'ödemee', 'ödemei'],
+  ayarlar: ['ayar', 'ayarla', 'ayarlarım', 'ayarlarr'],
 };
 
 export function toPhonetic(text: string): string {

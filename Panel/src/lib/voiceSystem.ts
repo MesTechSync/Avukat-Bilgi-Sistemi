@@ -21,6 +21,97 @@ function hasTokenOverlap(transcript: string, command: string): boolean {
 }
 
 export function analyzeIntent(transcript: string): VoiceIntent {
+  const tnorm = transcript.toLowerCase().trim();
+  // Heuristic: If transcript clearly asks for filtering or sorting on a known page, prefer LIST actions over NAV
+  const filterKeys = ['filtrele', 'filtre', 'filtreleme', 'filtre uygula', 'süz', 'süzgeç'];
+  const sortKeys = ['sırala', 'sıralama', 'sıralama yap', 'artan sırala', 'azalan sırala'];
+  const pageMap: Record<string, string> = {
+    // cases
+    'dava': 'cases', 'davalar': 'cases', 'dosya': 'cases', 'dosyalar': 'cases',
+    // clients
+    'müvekkil': 'clients', 'müvekkiller': 'clients', 'müşteri': 'clients', 'müşteriler': 'clients', 'danışan': 'clients', 'danışanlar': 'clients',
+    // calendar (kept for completeness)
+    'randevu': 'calendar', 'randevular': 'calendar', 'takvim': 'calendar', 'ajanda': 'calendar', 'duruşma': 'calendar', 'duruşmalar': 'calendar'
+  };
+  const hasAny = (keys: string[]) => keys.some(k => tnorm.includes(k));
+  const page = Object.keys(pageMap).find(k => tnorm.includes(k));
+  if (page) {
+    // Extract simple parameters
+    const parameters: any = { page: pageMap[page] };
+    if (pageMap[page] === 'cases') {
+      // Recognize common status words
+      const statusMap: Record<string, string> = {
+        'beklemede': 'Beklemede',
+        'devam': 'Devam Ediyor', 'devam ediyor': 'Devam Ediyor',
+        'inceleme': 'İnceleme', 'incelemede': 'İnceleme',
+        'tamamlandı': 'Tamamlandı', 'bitti': 'Tamamlandı',
+        'iptal': 'İptal', 'iptal edildi': 'İptal'
+      };
+      for (const k of Object.keys(statusMap)) {
+        if (tnorm.includes(k)) {
+          parameters.filter = { ...(parameters.filter || {}), status: statusMap[k] };
+          break;
+        }
+      }
+      // Priority
+      const prioMap: Record<string, string> = {
+        'acil': 'Acil', 'yüksek': 'Yüksek', 'orta': 'Orta', 'düşük': 'Düşük'
+      };
+      for (const k of Object.keys(prioMap)) {
+        if (tnorm.includes(k)) {
+          parameters.filter = { ...(parameters.filter || {}), priority: prioMap[k] };
+          break;
+        }
+      }
+      // Case type keywords
+      const typeMap: Record<string, string> = {
+        'ticari': 'Ticari Hukuk',
+        'iş': 'İş Hukuku',
+        'aile': 'Aile Hukuku',
+        'ceza': 'Ceza Hukuku',
+        'idare': 'İdare Hukuku',
+        'medeni': 'Medeni Hukuk',
+        'borçlar': 'Borçlar Hukuku',
+        'miras': 'Miras Hukuku'
+      };
+      for (const k of Object.keys(typeMap)) {
+        if (tnorm.includes(k)) {
+          parameters.filter = { ...(parameters.filter || {}), case_type: typeMap[k] };
+          break;
+        }
+      }
+    }
+    if (hasAny(filterKeys)) {
+      return { category: 'LIST', action: 'FILTER', parameters };
+    }
+    if (hasAny(sortKeys)) {
+      // Basic example: allow 'isim' or 'ad' ascending for clients
+      if (parameters.page === 'clients') {
+        const by = tnorm.includes('isim') || tnorm.includes('ad') ? 'name' : undefined;
+        const dir = tnorm.includes('azalan') ? 'desc' : 'asc';
+        parameters.sort = { by: by || 'name', dir };
+      }
+      return { category: 'LIST', action: 'SORT', parameters };
+    }
+  }
+
+  // Heuristic NAV for additional app pages
+  if (tnorm.includes('asistan') || tnorm.includes('ai asistan')) {
+    return { category: 'NAVIGASYON', action: 'NAV_AI_ASSISTANT', parameters: {} };
+  }
+  if (tnorm.includes('sözleşme') || tnorm.includes('kontrat')) {
+    return { category: 'NAVIGASYON', action: 'NAV_CONTRACT_GENERATOR', parameters: {} };
+  }
+  if (tnorm.includes('whatsapp')) {
+    return { category: 'NAVIGASYON', action: 'NAV_WHATSAPP', parameters: {} };
+  }
+  if (tnorm.includes('dönüştürücü') || tnorm.includes('dönüştür')) {
+    return { category: 'NAVIGASYON', action: 'NAV_FILE_CONVERTER', parameters: {} };
+  }
+  if (tnorm.includes('profil') || tnorm.includes('hesabım')) {
+    return { category: 'NAVIGASYON', action: 'NAV_PROFILE', parameters: {} };
+  }
+
   const matched = matchCommand(transcript);
   if (matched) return { category: matched.category, action: matched.action, parameters: matched.params ?? {} };
 
@@ -34,15 +125,35 @@ export function analyzeIntent(transcript: string): VoiceIntent {
       if (id === 'nav_cases') return { category: 'NAVIGASYON', action: 'NAV_CASES', parameters: {} };
       if (id === 'nav_clients') return { category: 'NAVIGASYON', action: 'NAV_CLIENTS', parameters: {} };
       if (id === 'nav_calendar' || id === 'nav_appointments') return { category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', parameters: {} };
+    if (id === 'nav_finance') return { category: 'NAVIGASYON', action: 'NAV_FINANCIALS', parameters: {} };
       if (id === 'nav_settings') return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: {} };
     }
-    if (id === 'sys_theme_dark' || id === 'view_dark') return { category: 'GORUNUM', action: 'DARK_MODE', parameters: {} };
+  if (id === 'sys_theme_dark' || id === 'view_dark') return { category: 'GORUNUM', action: 'DARK_MODE', parameters: {} };
     if (id === 'sys_theme_light' || id === 'view_light') return { category: 'GORUNUM', action: 'LIGHT_MODE', parameters: {} };
     if (id === 'search_global') {
       const t = transcript.toLowerCase().trim();
       const maybe = t.replace(/^(ara|arama yap|bul|sorgula)\s+/, '').trim();
       const query = maybe && maybe !== t ? maybe : '';
       return { category: 'ARAMA_SORGULAMA', action: 'SEARCH', parameters: query ? { query } : {} };
+    }
+    // Dynamic combinations from generator
+    if (ext.action?.startsWith?.('NAV_PAGE_')) {
+      const page = ext.action.replace('NAV_PAGE_', '');
+      const map: any = { dashboard: 'NAV_DASHBOARD', cases: 'NAV_CASES', clients: 'NAV_CLIENTS', calendar: 'NAV_APPOINTMENTS', settings: 'NAV_SETTINGS' };
+      const act = map[page] || 'NAV_DASHBOARD';
+      return { category: 'NAVIGASYON', action: act, parameters: {} };
+    }
+    if (ext.action?.startsWith?.('FILTER_')) {
+      const page = ext.action.replace('FILTER_', '');
+      return { category: 'LIST', action: 'FILTER', parameters: { page } };
+    }
+    if (ext.action?.startsWith?.('SORT_')) {
+      const page = ext.action.replace('SORT_', '');
+      return { category: 'LIST', action: 'SORT', parameters: { page } };
+    }
+    if (ext.action?.startsWith?.('NAV_TIME_')) {
+      const page = ext.action.replace('NAV_TIME_', '');
+      return { category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', parameters: { page, time: true } };
     }
   }
 
@@ -138,7 +249,12 @@ class VoiceManager {
       const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       if (SR) {
         const rec = new SR();
-        rec.lang = 'tr-TR';
+        try {
+          const savedLang = localStorage.getItem('voice_recognition_lang') || 'tr-TR';
+          rec.lang = savedLang;
+        } catch {
+          rec.lang = 'tr-TR';
+        }
         rec.continuous = true;
         rec.interimResults = true;
         rec.onresult = (event: any) => {
@@ -151,6 +267,10 @@ class VoiceManager {
           if (!transcript) return;
           const intent = analyzeIntent(transcript);
           window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
+          // Always emit raw transcript for potential dictation mode consumers
+          try {
+            window.dispatchEvent(new CustomEvent('voice-dictation', { detail: { transcript } }));
+          } catch {}
         };
         rec.onerror = (ev: any) => {
           try {
