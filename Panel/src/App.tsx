@@ -32,6 +32,7 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const { loading, error } = useSupabase();
+  const lastCmdRef = React.useRef<{ transcript: string; action?: string; ts: number } | null>(null);
 
   // Backend health check state
   // Single-port dev: prefer same-origin proxy paths; fallback to .env for direct URL
@@ -136,8 +137,10 @@ function App() {
   // Voice commands handler (minimal, safe wiring)
   React.useEffect(() => {
     const onVoice = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { intent?: { category?: string; action?: string; parameters?: any } };
-      const intent = detail?.intent;
+  const detail = (e as CustomEvent).detail as { transcript?: string; intent?: { category?: string; action?: string; parameters?: any } };
+  const intent = detail?.intent;
+  // Remember last command to suppress dictation of command phrases
+  lastCmdRef.current = { transcript: detail?.transcript || '', action: intent?.action, ts: Date.now() };
       if (!intent) return;
       switch (intent.action) {
         case 'DARK_MODE':
@@ -186,6 +189,10 @@ function App() {
           setActiveTab('contract-generator');
           speak('Sözleşme oluşturucu');
           break;
+        case 'NAV_PETITION_WRITER':
+          setActiveTab('petition-writer');
+          speak('Dilekçe yazım');
+          break;
         case 'NAV_WHATSAPP':
           setActiveTab('whatsapp');
           speak('WhatsApp desteği');
@@ -231,6 +238,10 @@ function App() {
           try { window.dispatchEvent(new CustomEvent('voice-dictation-toggle', { detail: { enabled: false } })); } catch {}
           speak('Dikte durduruldu');
           break;
+        case 'DICTATE_SAVE':
+          try { window.dispatchEvent(new CustomEvent('voice-dictation-save', { detail: {} })); } catch {}
+          speak('Dikte kaydedildi');
+          break;
         default:
           break;
       }
@@ -238,6 +249,96 @@ function App() {
     window.addEventListener('voice-command', onVoice as any);
     return () => window.removeEventListener('voice-command', onVoice as any);
   }, [darkMode]);
+
+  // Global dictation: append transcript to the currently focused input/textarea/contenteditable
+  React.useEffect(() => {
+    const isDictationOn = () => {
+      try { return localStorage.getItem('voice_dictation_enabled') === 'true'; } catch { return false; }
+    };
+    const normalizePunctuation = (text: string) => {
+      let t = ' ' + (text || '').toLowerCase().trim() + ' ';
+      const rep = [
+        [/\s(nokta)\s/g, '.' ],
+        [/\s(virgül)\s/g, ',' ],
+        [/\s(soru işareti|soru işareti)\s/g, '?' ],
+        [/\s(ünlem)\s/g, '!' ],
+        [/\s(iki nokta)\s/g, ':' ],
+        [/\s(üç nokta|nokta nokta nokta)\s/g, '...' ],
+        [/\s(yeni satır|satır sonu|alt satır)\s/g, '\n' ],
+      ];
+      for (const [r, v] of rep) t = t.replace(r as RegExp, v as string + ' ');
+      return t.trim();
+    };
+    const appendAtCursor = (el: any, text: string) => {
+      const insertion = normalizePunctuation(text);
+      if (!insertion) return;
+      if (el && typeof el.setRangeText === 'function') {
+        const hasSpace = el.selectionStart > 0 && el.value?.[el.selectionStart - 1] !== ' ';
+        el.setRangeText((hasSpace ? ' ' : '') + insertion, el.selectionStart, el.selectionEnd, 'end');
+        const evt = new Event('input', { bubbles: true });
+        el.dispatchEvent(evt);
+        return;
+      }
+      // contentEditable fallback
+      if (el && el.isContentEditable) {
+        try {
+          document.execCommand('insertText', false, insertion);
+        } catch {}
+        return;
+      }
+      // Fallback: append to value
+      if (el && 'value' in el) {
+        el.value = (el.value ? el.value + ' ' : '') + insertion;
+        const evt = new Event('input', { bubbles: true });
+        el.dispatchEvent(evt);
+      }
+    };
+    const onDictation = (e: Event) => {
+      if (!isDictationOn()) return;
+      const t = (e as CustomEvent).detail?.transcript as string | undefined;
+      // Suppress inserting the last command-like utterance
+      const recent = lastCmdRef.current;
+      const suppressActions = ['SEARCH','DARK_MODE','LIGHT_MODE','FILTER','SORT','DICTATE_START','DICTATE_STOP','DICTATE_SAVE'];
+      if (recent && t && t.trim() && recent.transcript?.trim() === t.trim()) {
+        if (recent.action && (recent.action.startsWith('NAV_') || suppressActions.includes(recent.action))) {
+          return;
+        }
+      }
+      let el = document.activeElement as any;
+      if (!t || !el) return;
+      const tag = (el.tagName || '').toLowerCase();
+      const type = (el.type || '').toLowerCase();
+      const isTextInput = tag === 'textarea' || (tag === 'input' && ['text','search','email','tel','url','password','number'].includes(type));
+      if (!(isTextInput || el.isContentEditable)) {
+        // Fallback target: find a default dictation target on page
+        const fallback = document.querySelector('[data-dictation-default="true"]') as any;
+        if (fallback) el = fallback; else return;
+      }
+      appendAtCursor(el, t);
+    };
+    const onDictationSave = () => {
+      const el = document.activeElement as any;
+      const form: HTMLFormElement | null = (el?.form as HTMLFormElement) || (el?.closest?.('form') ?? null);
+      if (form) {
+        try {
+          if (typeof (form as any).requestSubmit === 'function') (form as any).requestSubmit();
+          else form.submit();
+        } catch {}
+      } else {
+        // Fallback: click a dedicated save button if marked
+        const saveBtn = document.querySelector('[data-dictation-save="true"]') as HTMLButtonElement | null;
+        if (saveBtn) {
+          try { saveBtn.click(); } catch {}
+        }
+      }
+    };
+    window.addEventListener('voice-dictation', onDictation as any);
+    window.addEventListener('voice-dictation-save', onDictationSave as any);
+    return () => {
+      window.removeEventListener('voice-dictation', onDictation as any);
+      window.removeEventListener('voice-dictation-save', onDictationSave as any);
+    };
+  }, []);
 
   if (loading) {
     return (

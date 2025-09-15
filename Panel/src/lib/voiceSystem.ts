@@ -108,6 +108,10 @@ export function analyzeIntent(transcript: string): VoiceIntent {
   if (tnorm.includes('dönüştürücü') || tnorm.includes('dönüştür')) {
     return { category: 'NAVIGASYON', action: 'NAV_FILE_CONVERTER', parameters: {} };
   }
+  // Dilekçe yazımı (petition writer) kısayolu
+  if (tnorm.includes('dilekçe')) {
+    return { category: 'NAVIGASYON', action: 'NAV_PETITION_WRITER', parameters: {} };
+  }
   if (tnorm.includes('profil') || tnorm.includes('hesabım')) {
     return { category: 'NAVIGASYON', action: 'NAV_PROFILE', parameters: {} };
   }

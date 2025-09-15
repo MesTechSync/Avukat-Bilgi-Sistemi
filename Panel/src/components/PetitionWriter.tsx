@@ -92,6 +92,19 @@ export default function PetitionWriter() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [generatedPetition, setGeneratedPetition] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Persist generated petition on DICTATE_SAVE as a convenience
+  React.useEffect(() => {
+    const onVoiceSave = () => {
+      if (!generatedPetition) return;
+      try {
+        const key = `petition_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
+        localStorage.setItem(key, generatedPetition);
+      } catch {}
+    };
+    window.addEventListener('voice-dictation-save', onVoiceSave as any);
+    return () => window.removeEventListener('voice-dictation-save', onVoiceSave as any);
+  }, [generatedPetition, selectedTemplate]);
 
   const extractPlaceholders = (template: string): string[] => {
     const matches = template.match(/\{([^}]+)\}/g);
@@ -260,7 +273,13 @@ export default function PetitionWriter() {
                   <Download className="w-4 h-4" />
                   İndir
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-dictation-save="true" onClick={() => {
+                  try {
+                    const key = `petition_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
+                    localStorage.setItem(key, generatedPetition);
+                    alert('Dilekçe yerel olarak kaydedildi');
+                  } catch {}
+                }}>
                   <Save className="w-4 h-4" />
                   Kaydet
                 </button>

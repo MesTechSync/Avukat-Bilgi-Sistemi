@@ -231,6 +231,19 @@ export default function ContractGenerator() {
     document.body.removeChild(element);
   };
 
+  // Persist generated contract on DICTATE_SAVE as a convenience
+  React.useEffect(() => {
+    const onVoiceSave = () => {
+      if (!generatedContract) return;
+      try {
+        const key = `contract_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
+        localStorage.setItem(key, generatedContract);
+      } catch {}
+    };
+    window.addEventListener('voice-dictation-save', onVoiceSave as any);
+    return () => window.removeEventListener('voice-dictation-save', onVoiceSave as any);
+  }, [generatedContract, selectedTemplate]);
+
   const getFieldIcon = (type: string) => {
     switch (type) {
       case 'text': return Users;
@@ -342,6 +355,7 @@ export default function ContractGenerator() {
                         value={formData[field.id] || ''}
                         onChange={(e) => handleInputChange(field.id, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                        title={field.label}
                       >
                         <option value="">Seçin...</option>
                         {field.options?.map((option) => (
@@ -421,7 +435,13 @@ export default function ContractGenerator() {
                   <Download className="w-4 h-4" />
                   İndir
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-dictation-save="true" onClick={() => {
+                  try {
+                    const key = `contract_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
+                    localStorage.setItem(key, generatedContract);
+                    alert('Sözleşme yerel olarak kaydedildi');
+                  } catch {}
+                }}>
                   <Save className="w-4 h-4" />
                   Kaydet
                 </button>

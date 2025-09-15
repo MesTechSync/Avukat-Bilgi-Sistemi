@@ -36,6 +36,23 @@ export default function ClientManagement() {
     return base;
   }, [filteredClients, sortBy]);
 
+  const SortBadge = () => {
+    if (sortBy === 'none') return null;
+    const txt = sortBy === 'name-asc' ? 'İsim: A→Z' : 'İsim: Z→A';
+    return (
+      <div className="mt-2">
+        <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
+          {txt}
+          <button
+            onClick={() => setSortBy('none')}
+            className="ml-1 text-current/70 hover:text-current"
+            title="Sıralamayı temizle"
+          >×</button>
+        </span>
+      </div>
+    );
+  };
+
   // Apply list-filter/list-sort events
   React.useEffect(() => {
     const onFilter = (e: Event) => {
@@ -114,6 +131,7 @@ export default function ClientManagement() {
           <p className="text-gray-600 dark:text-gray-400">
             Müvekkillerinizi yönetin ve iletişim bilgilerini takip edin
           </p>
+          <SortBadge />
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -134,13 +152,14 @@ export default function ClientManagement() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            data-dictation-default="true"
           />
         </div>
       </div>
 
       {/* Clients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {listedClients.map((client) => (
+        {listedClients.map((client) => (
           <div key={client.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -253,7 +272,7 @@ export default function ClientManagement() {
         </div>
       )}
 
-      {/* Add Client Modal */}
+  {/* Add Client Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
@@ -277,6 +296,7 @@ export default function ClientManagement() {
                   aria-label="Ad Soyad"
                   placeholder="Ad Soyad"
                   title="Ad Soyad"
+      data-dictation-default="true"
                 />
               </div>
 
@@ -354,6 +374,7 @@ export default function ClientManagement() {
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  data-dictation-save="true"
                 >
                   {loading ? 'Ekleniyor...' : 'Müvekkil Ekle'}
                 </button>

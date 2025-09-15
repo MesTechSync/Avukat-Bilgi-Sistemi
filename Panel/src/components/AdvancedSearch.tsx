@@ -197,6 +197,7 @@ export default function AdvancedSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
+              data-dictation-default="true"
               placeholder="Hukuki sorunuzu veya aradığınız konuyu yazın... (örn: işten çıkarma tazminatı)"
               className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-lg"
             />

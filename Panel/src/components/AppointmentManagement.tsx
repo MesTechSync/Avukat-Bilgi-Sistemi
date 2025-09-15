@@ -137,12 +137,15 @@ export default function AppointmentManagement() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              data-dictation-default="true"
+              title="Randevu ara"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            title="Durum filtresi"
           >
             <option value="">Tüm Durumlar</option>
             {statusOptions.map(status => (
@@ -224,15 +227,16 @@ export default function AppointmentManagement() {
                 </div>
 
                 <div className="flex items-center gap-1 ml-4">
-                  <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Görüntüle">
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-gray-400 hover:text-green-600 transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Düzenle">
                     <Edit className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => deleteAppointment(appointment.id)}
                     className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Sil"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -279,6 +283,8 @@ export default function AppointmentManagement() {
                     value={newAppointment.title}
                     onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    data-dictation-default="true"
+                    title="Randevu Başlığı"
                   />
                 </div>
 
@@ -292,6 +298,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.date}
                     onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Tarih"
                   />
                 </div>
 
@@ -305,6 +312,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.time}
                     onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Saat"
                   />
                 </div>
 
@@ -317,6 +325,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.type}
                     onChange={(e) => setNewAppointment({...newAppointment, type: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Türü"
                   >
                     <option value="">Tür Seçin</option>
                     {appointmentTypes.map(type => (
@@ -333,6 +342,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.status}
                     onChange={(e) => setNewAppointment({...newAppointment, status: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Durum"
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
@@ -348,6 +358,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.client_id}
                     onChange={(e) => setNewAppointment({...newAppointment, client_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Müvekkil"
                   >
                     <option value="">Müvekkil Seçin</option>
                     {clients.map(client => (
@@ -366,6 +377,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.case_id}
                     onChange={(e) => setNewAppointment({...newAppointment, case_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="İlgili Dava"
                   >
                     <option value="">Dava Seçin</option>
                     {cases.map(case_ => (
@@ -402,6 +414,7 @@ export default function AppointmentManagement() {
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  data-dictation-save="true"
                 >
                   {loading ? 'Ekleniyor...' : 'Randevu Ekle'}
                 </button>

@@ -46,6 +46,30 @@ export default function CaseManagement() {
     return matchesSearch && matchesStatus && matchesPriority && matchesType;
   });
 
+  const ActiveFilters = () => {
+    const badges: Array<{ label: string; color: string; onClear?: () => void }> = [];
+    if (statusFilter) badges.push({ label: `Durum: ${statusFilter}`, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200', onClear: () => setStatusFilter('') });
+    if (priorityFilter) badges.push({ label: `Öncelik: ${priorityFilter}`, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200', onClear: () => setPriorityFilter('') });
+    if (typeFilter) badges.push({ label: `Tür: ${typeFilter}`, color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200', onClear: () => setTypeFilter('') });
+    if (!badges.length) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {badges.map((b, i) => (
+          <span key={i} className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${b.color}`}>
+            {b.label}
+            {b.onClear && (
+              <button onClick={b.onClear} className="ml-1 text-current/70 hover:text-current" title="Temizle">×</button>
+            )}
+          </span>
+        ))}
+        <button
+          onClick={() => { setStatusFilter(''); setPriorityFilter(''); setTypeFilter(''); }}
+          className="ml-2 text-xs text-gray-600 dark:text-gray-300 hover:underline"
+        >Filtreleri temizle</button>
+      </div>
+    );
+  };
+
   // Apply list-filter/list-sort (basic: set status = Devam Ediyor for demo)
   React.useEffect(() => {
     const onFilter = (e: Event) => {
@@ -180,6 +204,8 @@ export default function CaseManagement() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              data-dictation-default="true"
+              title="Dava ara"
             />
           </div>
           <select
@@ -195,6 +221,8 @@ export default function CaseManagement() {
             ))}
           </select>
         </div>
+  {/* Active filter badges */}
+  <ActiveFilters />
       </div>
 
       {/* Cases Grid */}
@@ -330,7 +358,7 @@ export default function CaseManagement() {
               </h3>
             </div>
             
-            <form onSubmit={handleAddCase} className="p-6 space-y-4">
+      <form onSubmit={handleAddCase} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -344,6 +372,7 @@ export default function CaseManagement() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     aria-label="Dava Başlığı"
                     placeholder="Dava başlığı"
+        data-dictation-default="true"
                   />
                 </div>
 
@@ -476,6 +505,7 @@ export default function CaseManagement() {
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  data-dictation-save="true"
                 >
                   {loading ? 'Ekleniyor...' : 'Dava Ekle'}
                 </button>
