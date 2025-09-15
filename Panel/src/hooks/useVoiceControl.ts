@@ -27,6 +27,7 @@ export function useVoiceControl(): VoiceControlHookResult {
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const groupsRef = useRef<ReturnType<DynamicCommandGenerator['generateAll']> | null>(null);
+  const debounceRef = useRef<number | null>(null);
 
   useEffect(() => {
     setSupported(voiceManager.isSupported());
@@ -42,8 +43,11 @@ export function useVoiceControl(): VoiceControlHookResult {
             groupsRef.current = gen.generateAll();
           }
           const groups = groupsRef.current!;
-          const best = findBestMatches(detail.transcript, groups, VOICE_FUZZY_THRESHOLD).slice(0, 3);
-          setSuggestions(best.map(b => ({ command: b.command, score: Number(b.score.toFixed(2)) })));
+          if (debounceRef.current) window.clearTimeout(debounceRef.current);
+          debounceRef.current = window.setTimeout(() => {
+            const best = findBestMatches(detail.transcript, groups, VOICE_FUZZY_THRESHOLD).slice(0, 3);
+            setSuggestions(best.map(b => ({ command: b.command, score: Number(b.score.toFixed(2)) })));
+          }, 120);
         } catch {
           setSuggestions([]);
         }
@@ -51,8 +55,22 @@ export function useVoiceControl(): VoiceControlHookResult {
         setSuggestions([]);
       }
     };
+    const onError = (e: Event) => {
+      const d = (e as CustomEvent).detail as { code?: string; message?: string };
+      const msg = d?.code === 'not-allowed'
+        ? 'Mikrofon izni reddedildi. Tarayıcı ayarlarından mikrofon izni verin.'
+        : d?.code === 'no-speech'
+          ? 'Ses algılanmadı. Lütfen tekrar deneyin.'
+          : d?.message || 'Ses tanıma hatası.';
+      setError(msg);
+      setListening(false);
+    };
     window.addEventListener('voice-command', handler as any);
-    return () => window.removeEventListener('voice-command', handler as any);
+    window.addEventListener('voice-error', onError as any);
+    return () => {
+      window.removeEventListener('voice-command', handler as any);
+      window.removeEventListener('voice-error', onError as any);
+    };
   }, []);
 
   const start = useCallback(() => {

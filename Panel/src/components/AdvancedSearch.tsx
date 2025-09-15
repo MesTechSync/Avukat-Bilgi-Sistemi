@@ -106,6 +106,24 @@ export default function AdvancedSearch() {
     }, 1500);
   };
 
+  // Accept voice-driven search query and trigger search
+  React.useEffect(() => {
+    const onVoiceSearch = (e: Event) => {
+      const { detail } = e as CustomEvent;
+      const intent = detail?.intent as { action?: string; parameters?: any };
+      if (intent?.action === 'SEARCH') {
+        const q = intent.parameters?.query as string | undefined;
+        if (q && q.trim()) {
+          setQuery(q);
+          // Defer to ensure input updates before triggering search
+          setTimeout(() => handleSearch(), 0);
+        }
+      }
+    };
+    window.addEventListener('voice-command', onVoiceSearch as any);
+    return () => window.removeEventListener('voice-command', onVoiceSearch as any);
+  }, [query]);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();

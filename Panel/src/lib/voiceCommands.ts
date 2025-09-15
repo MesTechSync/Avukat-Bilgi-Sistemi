@@ -80,9 +80,18 @@ export interface VoiceCommand {
 
 export function matchRegistry(transcript: string): { def: CommandDef; params?: Record<string, any> } | null {
   const t = transcript.toLowerCase().trim();
+  const containsPattern = (text: string, pat: string) => {
+    const p = pat.toLowerCase();
+    // Use word boundaries for short single-word patterns like 'ara', 'bul'
+    if (!p.includes(' ') && p.length <= 4) {
+      const re = new RegExp(`(^|\\b)${p}(\\b|$)`);
+      return re.test(text);
+    }
+    return text.includes(p);
+  };
   // Direct pattern contains
   for (const cmd of COMMANDS) {
-    if (cmd.patterns.some(p => t.includes(p))) {
+    if (cmd.patterns.some(p => containsPattern(t, p))) {
       if (cmd.action === 'SEARCH') {
         // extract query if starts with a search keyword
         const maybe = t.replace(/^(ara|arama yap|bul|sorgula)\s+/, '').trim();

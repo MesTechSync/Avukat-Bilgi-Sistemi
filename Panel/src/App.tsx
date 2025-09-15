@@ -168,6 +168,11 @@ function App() {
           break;
         case 'SEARCH':
           setActiveTab('search');
+          // Ensure AdvancedSearch mounts, then re-dispatch for it to pick up the query
+          const intentCopy = intent;
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('voice-command', { detail: { intent: intentCopy } }));
+          }, 0);
           break;
         default:
           break;
