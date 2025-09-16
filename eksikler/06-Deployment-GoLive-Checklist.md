@@ -21,5 +21,5 @@ Hedef: Nginx üzerinden statik yayın; /health endpoint.
 
 ## Rollback
 
-- [ ] Önceki build arşivli; Nginx symlink ile geri dönüş 1 komut
+- [ ] Önceki build arşivli; Nginx symlink ile geri dönüş 1 komut (bkz. 13-Rollback-Plan.md)
 - [ ] Versiyon etiketleri ve CHANGELOG güncel
