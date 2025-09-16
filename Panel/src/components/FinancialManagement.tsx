@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { filterAndSortTransactions } from '../lib/financials';
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye } from 'lucide-react';
 
 const FinancialManagement = () => {
@@ -26,19 +27,7 @@ const FinancialManagement = () => {
 
   // Derived list with filters and sort
   const filteredSorted = useMemo(() => {
-    let arr = [...recentTransactions];
-    if (typeFilter !== 'all') arr = arr.filter(t => t.type === typeFilter);
-    if (statusFilter !== 'all') arr = arr.filter(t => t.status === statusFilter);
-    arr.sort((a, b) => {
-      if (sortKey === 'date') {
-        const da = new Date(a.date).getTime();
-        const db = new Date(b.date).getTime();
-        return sortDir === 'asc' ? da - db : db - da;
-      } else {
-        return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
-      }
-    });
-    return arr;
+    return filterAndSortTransactions(recentTransactions as any, { type: typeFilter, status: statusFilter }, { key: sortKey, dir: sortDir });
   }, [recentTransactions, typeFilter, statusFilter, sortKey, sortDir]);
 
   // Listen to list-filter and list-sort voice events
