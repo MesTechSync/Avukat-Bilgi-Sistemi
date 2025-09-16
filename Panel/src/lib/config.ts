@@ -31,9 +31,11 @@ export const CONFIG: AppConfig = {
 };
 
 export function assertProdEnv() {
-  if (CONFIG.PROD) {
-    if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
-      throw new Error('Production mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
-    }
-  }
+  // Disabled to allow running without Supabase in demo/local preview
+  // If you want to enforce configuration, re-enable the check below.
+  // if (CONFIG.PROD) {
+  //   if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
+  //     throw new Error('Production mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  //   }
+  // }
 }

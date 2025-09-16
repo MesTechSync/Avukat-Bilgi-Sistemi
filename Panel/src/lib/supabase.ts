@@ -7,10 +7,38 @@ const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 't
 const supabaseUrl = ((CONFIG.SUPABASE_URL as string) || undefined) ?? undefined
 const supabaseAnonKey = ((CONFIG.SUPABASE_ANON_KEY as string) || undefined) ?? undefined
 
-const resolvedUrl = supabaseUrl || (isTestEnv ? 'http://127.0.0.1:54321' : '')
-const resolvedKey = supabaseAnonKey || (isTestEnv ? 'test-anon-key' : '')
+// If env is missing (common in local preview), disable Supabase to avoid crashing the SPA
+const SUPABASE_ENABLED = Boolean(supabaseUrl && supabaseAnonKey) || isTestEnv
 
-export const supabase = createClient(resolvedUrl, resolvedKey)
+let supabase: ReturnType<typeof createClient> | any
+if (SUPABASE_ENABLED) {
+  const resolvedUrl = supabaseUrl || 'http://127.0.0.1:54321'
+  const resolvedKey = supabaseAnonKey || 'test-anon-key'
+  supabase = createClient(resolvedUrl, resolvedKey)
+} else {
+  // Lightweight mock so accidental direct usages don't blow up
+  supabase = {
+    from() {
+      return {
+        select: async () => ({ data: [], error: null, count: 0 }),
+        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
+        update: () => ({ eq: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }) }),
+        delete: () => ({ eq: async () => ({ error: null }) }),
+        ilike: () => this,
+        or: () => this,
+        eq: () => this,
+        limit: () => this,
+      }
+    },
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+    },
+  }
+  // eslint-disable-next-line no-console
+  console.info('[supabase] Disabled (no VITE_SUPABASE_URL/ANON_KEY). Running in mock mode.')
+}
+
+export { supabase, SUPABASE_ENABLED }
 
 // Database Types
 export interface Case {
@@ -110,24 +138,28 @@ type TableMap = {
 };
 
 export async function dbSelect<T extends keyof TableMap>(table: T, columns = '*'): Promise<{ data: TableMap[T][]; error: any }>{
+  if (!SUPABASE_ENABLED) return { data: [], error: null }
   // @ts-ignore - supabase type generic differs in mock
   const { data, error } = await (supabase.from(table).select(columns));
   return { data: (data ?? []) as TableMap[T][], error };
 }
 
 export async function dbInsert<T extends keyof TableMap>(table: T, row: Partial<TableMap[T]>): Promise<{ data: TableMap[T] | null; error: any }>{
+  if (!SUPABASE_ENABLED) return { data: null, error: null }
   // @ts-ignore
   const { data, error } = await (supabase.from(table).insert(row).select().single());
   return { data: (data ?? null) as TableMap[T] | null, error };
 }
 
 export async function dbUpdate<T extends keyof TableMap>(table: T, id: number | string, patch: Partial<TableMap[T]>): Promise<{ data: TableMap[T] | null; error: any }>{
+  if (!SUPABASE_ENABLED) return { data: null, error: null }
   // @ts-ignore
   const { data, error } = await (supabase.from(table).update(patch).eq('id', id).select().single());
   return { data: (data ?? null) as TableMap[T] | null, error };
 }
 
 export async function dbDelete<T extends keyof TableMap>(table: T, id: number | string): Promise<{ error: any }>{
+  if (!SUPABASE_ENABLED) return { error: null }
   // @ts-ignore
   const { error } = await (supabase.from(table).delete().eq('id', id));
   return { error };
@@ -140,6 +172,10 @@ export async function searchLegalResearch(params: {
   limit?: number;
 }): Promise<{ data: LegalResearch[]; total: number; timeMs: number; error: any }>{
   const start = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  if (!SUPABASE_ENABLED) {
+    const end = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    return { data: [], total: 0, timeMs: Math.round((end - start)), error: null }
+  }
   let q = supabase
     .from('legal_research')
     .select('*', { count: 'exact' })

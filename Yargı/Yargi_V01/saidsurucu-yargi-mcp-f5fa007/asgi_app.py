@@ -19,6 +19,7 @@ from fastapi.exception_handlers import http_exception_handler
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
 from starlette.requests import Request as StarletteRequest
 
 # Import the MCP app creator function
@@ -121,6 +122,12 @@ class UTF8JSONResponse(JSONResponse):
             separators=(",", ":"),
         ).encode("utf-8")
 
+# Resolve frontend dist (Vite build) path
+HERE = os.path.abspath(os.path.dirname(__file__))
+FRONTEND_DIST = os.path.abspath(os.path.join(HERE, "..", "..", "..", "Panel", "dist"))
+FRONTEND_INDEX = os.path.join(FRONTEND_DIST, "index.html")
+FRONTEND_AVAILABLE = os.path.exists(FRONTEND_INDEX)
+
 # Create FastAPI wrapper application
 app = FastAPI(
     title="Yargı MCP Server",
@@ -181,45 +188,73 @@ app.router.lifespan_context = mcp_app.lifespan
 
 # SSE transport deprecated - removed
 
-# FastAPI root endpoint
-@app.get("/")
-async def root():
-    """Root endpoint with service information"""
-    return JSONResponse({
-        "service": "Yargı MCP Server",
-        "description": "MCP server for Turkish legal databases with OAuth authentication",
-        "endpoints": {
-            "mcp": "/mcp",
-            "health": "/health",
-            "status": "/status",
-            "stripe_webhook": "/api/stripe/webhook",
-            "oauth_login": "/auth/login",
-            "oauth_callback": "/auth/callback",
-            "oauth_google": "/auth/google/login",
-            "user_info": "/auth/user"
-        },
-        "transports": {
-            "http": "/mcp"
-        },
-        "supported_databases": [
-            "Yargıtay (Court of Cassation)",
-            "Danıştay (Council of State)", 
-            "Emsal (Precedent)",
-            "Uyuşmazlık Mahkemesi (Court of Jurisdictional Disputes)",
-            "Anayasa Mahkemesi (Constitutional Court)",
-            "Kamu İhale Kurulu (Public Procurement Authority)",
-            "Rekabet Kurumu (Competition Authority)",
-            "Sayıştay (Court of Accounts)",
-            "Bedesten API (Multiple courts)"
-        ],
-        "authentication": {
-            "enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true",
-            "type": "OAuth 2.0 via Clerk",
-            "issuer": os.getenv("CLERK_ISSUER", "https://clerk.accounts.dev"),
-            "providers": ["google"],
-            "flow": "authorization_code"
-        }
-    })
+# Root handling
+if not FRONTEND_AVAILABLE:
+    # Fallback JSON root when SPA build is not present
+    @app.get("/")
+    async def root():
+        """Root endpoint with service information (SPA not built)"""
+        return JSONResponse({
+            "service": "Yargı MCP Server",
+            "description": "MCP server for Turkish legal databases with OAuth authentication",
+            "endpoints": {
+                "mcp": "/mcp",
+                "health": "/health",
+                "status": "/status",
+                "stripe_webhook": "/api/stripe/webhook",
+                "oauth_login": "/auth/login",
+                "oauth_callback": "/auth/callback",
+                "oauth_google": "/auth/google/login",
+                "user_info": "/auth/user"
+            },
+            "transports": {
+                "http": "/mcp"
+            },
+            "supported_databases": [
+                "Yargıtay (Court of Cassation)",
+                "Danıştay (Council of State)", 
+                "Emsal (Precedent)",
+                "Uyuşmazlık Mahkemesi (Court of Jurisdictional Disputes)",
+                "Anayasa Mahkemesi (Constitutional Court)",
+                "Kamu İhale Kurulu (Public Procurement Authority)",
+                "Rekabet Kurumu (Competition Authority)",
+                "Sayıştay (Court of Accounts)",
+                "Bedesten API (Multiple courts)"
+            ],
+            "authentication": {
+                "enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true",
+                "type": "OAuth 2.0 via Clerk",
+                "issuer": os.getenv("CLERK_ISSUER", "https://clerk.accounts.dev"),
+                "providers": ["google"],
+                "flow": "authorization_code"
+            }
+        })
+else:
+    # Serve built SPA: mount static assets and return index.html at root
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets"), html=False), name="spa-assets")
+
+    @app.get("/favicon.ico")
+    async def favicon_passthrough():
+        from starlette.responses import FileResponse
+        path = os.path.join(FRONTEND_DIST, "favicon.ico")
+        if os.path.exists(path):
+            return FileResponse(path)
+        raise HTTPException(status_code=404)
+
+    @app.get("/", response_class=HTMLResponse)
+    async def serve_spa_index():
+        with open(FRONTEND_INDEX, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+
+    @app.get("/{full_path:path}", response_class=HTMLResponse)
+    async def spa_fallback(full_path: str, request: Request):
+        # Do not hijack API/MCP and well-known routes
+        protected_prefixes = ("mcp", ".well-known", "auth", "api", "health", "status", "assets")
+        if full_path.startswith(protected_prefixes):
+            raise HTTPException(status_code=404)
+        # Always return index.html for client-side routing
+        with open(FRONTEND_INDEX, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
 
 # OAuth 2.0 Authorization Server Metadata proxy (for MCP clients that can't reach Clerk directly)
 # MCP Auth Toolkit expects this to be under /mcp/.well-known/oauth-authorization-server
