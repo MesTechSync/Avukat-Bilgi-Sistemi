@@ -20,8 +20,57 @@ function hasTokenOverlap(transcript: string, command: string): boolean {
   return tokens.some(tok => t.includes(tok));
 }
 
+// Basic Turkish mishear normalization and filler filtering
+function preprocessTranscript(raw: string): string {
+  if (!raw) return '';
+  let t = raw.toLowerCase().trim();
+  // Common fillers to remove
+  const fillers = [' ya ', ' yani ', ' hani ', ' şey ', ' ee ', ' eee ', ' ıı ', ' ııı ', ' aaa ', ' haa ', ' hmm '];
+  t = ' ' + t + ' ';
+  for (const f of fillers) t = t.replaceAll(f, ' ');
+  t = t.replace(/\s+/g, ' ').trim();
+  // Common mishears
+  const replaces: Array<[RegExp, string]> = [
+    [/\barax\b|\baray\b/g, 'ara'],
+    [/\bkonusma\b/g, 'konuşma'],
+    [/\bguvenlik\b/g, 'güvenlik'],
+    [/\bgorunum\b/g, 'görünüm'],
+    [/\bayarlar?\b/g, 'ayarlar'],
+    [/\bprofilim\b/g, 'profil'],
+    [/\bguvenlig?i?\b/g, 'güvenlik'],
+    [/\bgorun[uü]m\b/g, 'görünüm'],
+    [/\btem[ae]\b/g, 'tema'],
+    [/\bm[uü]vekkil y[öo]netimi\b/g, 'müvekkil yönetimi'],
+    [/\bdava y[öo]netimi\b/g, 'dava yönetimi'],
+    [/\brandevu y[öo]netimi\b/g, 'randevu yönetimi'],
+    [/\bi[cç]tihat(arama| araştırma)?\b/g, 'içtihat arama'],
+  ];
+  for (const [r, v] of replaces) t = t.replace(r, v);
+  return t.trim();
+}
+
 export function analyzeIntent(transcript: string): VoiceIntent {
-  const tnorm = transcript.toLowerCase().trim();
+  const transcriptNorm = preprocessTranscript(transcript);
+  const tnorm = transcriptNorm.toLowerCase().trim();
+  // Settings sub-navigation: "ayarlar sistem", "ayarlar güvenlik" etc.
+  if (tnorm.includes('ayar')) {
+    const tabMap: Record<string, string> = {
+      'profil': 'profile',
+      'güvenlik': 'security', 'guvenlik': 'security',
+      'bildirim': 'notifications', 'bildirimler': 'notifications',
+      'görünüm': 'appearance', 'gorunum': 'appearance', 'tema': 'appearance',
+      'sistem': 'system',
+      'ses': 'voice', 'konuşma': 'voice', 'konusma': 'voice'
+    };
+    let tab: string | undefined;
+    // Look for tab keywords even if "ayarlar" not adjacent
+    for (const k of Object.keys(tabMap)) {
+      const re = new RegExp(`(^|\b)${k}(\b|$)`, 'i');
+      if (re.test(tnorm)) { tab = tabMap[k]; break; }
+    }
+    if (tab) return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: { tab } };
+    return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: {} };
+  }
   // Heuristic: If transcript clearly asks for filtering or sorting on a known page, prefer LIST actions over NAV
   const filterKeys = ['filtrele', 'filtre', 'filtreleme', 'filtre uygula', 'süz', 'süzgeç'];
   const sortKeys = ['sırala', 'sıralama', 'sıralama yap', 'artan sırala', 'azalan sırala'];
@@ -247,6 +296,10 @@ function extractParameters(transcript: string, pattern: string): Record<string, 
 
 class VoiceManager {
   private recognition: any | null = null;
+  private stoppedByUser = false;
+  private backoffMs = 500;
+  private backoffCap = 5000;
+  private speakingGate = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -263,27 +316,76 @@ class VoiceManager {
         rec.interimResults = true;
         rec.onresult = (event: any) => {
           let finalText = '';
+          let confidence: number | undefined = undefined;
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const res = event.results[i];
-            if (res.isFinal) finalText += res[0].transcript;
+            if (res.isFinal) {
+              finalText += res[0].transcript;
+              if (typeof res[0]?.confidence === 'number') confidence = res[0].confidence;
+            }
           }
           const transcript = finalText.trim();
           if (!transcript) return;
+          // Gate while TTS is speaking (optional)
+          try {
+            const ttsGate = (localStorage.getItem('voice_tts_gate') ?? 'on') !== 'off';
+            if (ttsGate && this.speakingGate) {
+              // Defer silently
+              return;
+            }
+          } catch {}
+          // Min confidence gating (configurable via localStorage: voice_min_confidence)
+          try {
+            const raw = localStorage.getItem('voice_min_confidence') ?? '0';
+            const minConf = Math.max(0, Math.min(1, parseFloat(raw)));
+            if (!Number.isNaN(minConf) && typeof confidence === 'number' && confidence < minConf) {
+              try {
+                window.dispatchEvent(new CustomEvent('voice-error', { detail: { code: 'low-confidence', message: 'Güven değeri eşiğin altında', confidence, min: minConf, transcript } }));
+              } catch {}
+              // Do not analyze intent when below threshold
+              this.backoffMs = 500;
+              return;
+            }
+          } catch {}
           const intent = analyzeIntent(transcript);
-          window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent } }));
+          window.dispatchEvent(new CustomEvent('voice-command', { detail: { transcript, intent, confidence } }));
           // Always emit raw transcript for potential dictation mode consumers
           try {
             window.dispatchEvent(new CustomEvent('voice-dictation', { detail: { transcript } }));
           } catch {}
+          // Reset backoff on successful result
+          this.backoffMs = 500;
         };
         rec.onerror = (ev: any) => {
           try {
             window.dispatchEvent(new CustomEvent('voice-error', { detail: { code: ev?.error ?? 'unknown', message: ev?.message ?? 'Ses tanıma hatası' } }));
           } catch {}
+          // Auto-restart unless permission denied or explicitly stopped
+          const auto = this.isAutoRestartEnabled();
+          const code = ev?.error;
+          const fatal = code === 'not-allowed' || code === 'service-not-allowed';
+          if (!this.stoppedByUser && auto && !fatal) {
+            const delay = Math.min(this.backoffMs, this.backoffCap);
+            window.setTimeout(() => { try { rec.start(); } catch {} }, delay);
+            this.backoffMs = Math.min(this.backoffMs * 2, this.backoffCap);
+          }
         };
-        rec.onend = () => {};
+        rec.onend = () => {
+          const auto = this.isAutoRestartEnabled();
+          if (!this.stoppedByUser && auto) {
+            const delay = Math.min(this.backoffMs, this.backoffCap);
+            window.setTimeout(() => { try { rec.start(); } catch {} }, delay);
+            this.backoffMs = Math.min(this.backoffMs * 2, this.backoffCap);
+          }
+          try { window.dispatchEvent(new CustomEvent('voice-state', { detail: { listening: false } })); } catch {}
+        };
         this.recognition = rec;
       }
+      // Track TTS speaking state
+      try {
+        window.addEventListener('tts-start', () => { this.speakingGate = true; });
+        window.addEventListener('tts-end', () => { this.speakingGate = false; });
+      } catch {}
     }
   }
 
@@ -293,14 +395,24 @@ class VoiceManager {
 
   start() {
     try {
+      this.stoppedByUser = false;
+      this.backoffMs = 500;
       this.recognition?.start?.();
+      try { window.dispatchEvent(new CustomEvent('voice-state', { detail: { listening: true } })); } catch {}
     } catch {}
   }
 
   stop() {
     try {
+      this.stoppedByUser = true;
       this.recognition?.stop?.();
+      try { window.dispatchEvent(new CustomEvent('voice-state', { detail: { listening: false } })); } catch {}
     } catch {}
+  }
+
+  private isAutoRestartEnabled(): boolean {
+    if (typeof window === 'undefined') return true;
+    try { return (localStorage.getItem('voice_autorestart') ?? 'on') !== 'off'; } catch { return true; }
   }
 }
 

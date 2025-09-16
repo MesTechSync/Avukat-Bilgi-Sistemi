@@ -1,7 +1,11 @@
 import React from 'react';
 import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Bot, Search, FileText, Phone } from 'lucide-react';
 
-export default function Dashboard() {
+type Props = {
+  onNavigate?: (tabId: string) => void;
+};
+
+export default function Dashboard({ onNavigate }: Props) {
   const stats = [
     {
       title: 'Toplam Davalar',
@@ -205,6 +209,7 @@ export default function Dashboard() {
               <button
                 key={index}
                 className="p-4 border border-white/30 dark:border-gray-700/50 rounded-xl hover:shadow-xl transition-all duration-300 text-left group hover:border-blue-300/50 dark:hover:border-blue-600/50 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-gray-800/50"
+                onClick={() => onNavigate?.(action.action)}
               >
                 <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg backdrop-blur-sm`}>
                   <IconComponent className="w-6 h-6 text-white" />
@@ -231,7 +236,17 @@ export default function Dashboard() {
             {recentActivities.map((activity) => {
               const IconComponent = activity.icon;
               return (
-                <div key={activity.id} className="flex items-start gap-3 p-3 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm">
+                <button
+                  key={activity.id}
+                  type="button"
+                  className="w-full text-left flex items-start gap-3 p-3 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                  onClick={() => {
+                    // Navigate by type
+                    const map: Record<string, string> = { case: 'cases', client: 'clients', ai: 'ai-assistant', search: 'search' };
+                    const tab = map[activity.type] || 'dashboard';
+                    onNavigate?.(tab);
+                  }}
+                >
                   <div className={`p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm shadow-sm`}>
                     <IconComponent className={`w-4 h-4 ${activity.color}`} />
                   </div>
@@ -243,7 +258,7 @@ export default function Dashboard() {
                       {activity.time}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -301,7 +316,10 @@ export default function Dashboard() {
               Yapay zeka destekli hukuki asistanınız 7/24 hizmetinizde. İçtihat arama, dilekçe hazırlama ve hukuki danışmanlık için hemen başlayın.
             </p>
           </div>
-          <button className="px-6 py-3 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700/90 transition-all duration-200 font-medium shadow-lg backdrop-blur-sm hover:shadow-xl">
+          <button
+            className="px-6 py-3 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700/90 transition-all duration-200 font-medium shadow-lg backdrop-blur-sm hover:shadow-xl"
+            onClick={() => onNavigate?.('ai-assistant')}
+          >
             AI Asistan'ı Dene
           </button>
         </div>

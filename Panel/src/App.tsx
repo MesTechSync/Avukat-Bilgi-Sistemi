@@ -17,6 +17,8 @@ import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
 import VoiceControl from './components/VoiceControl';
+import VoiceDebugOverlay from './components/VoiceDebugOverlay';
+import { voiceManager } from './lib/voiceSystem';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
 import { sanitizeText } from './lib/sanitize';
 import { speak } from './lib/voiceTTS';
@@ -84,7 +86,7 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onNavigate={(tabId: string) => setActiveTab(tabId)} />;
       case 'ai-assistant':
         return <AILegalAssistant />;
       case 'search':
@@ -137,6 +139,27 @@ function App() {
 
   // Voice commands handler (minimal, safe wiring)
   React.useEffect(() => {
+    // Push-to-talk (Space): when enabled via localStorage 'voice_push_to_talk' == 'on'
+    const onKeyDown = (e: KeyboardEvent) => {
+      try {
+        const ptt = (localStorage.getItem('voice_push_to_talk') ?? 'off') === 'on';
+        if (!ptt) return;
+        if (e.code === 'Space' && !e.repeat) {
+          voiceManager.start();
+        }
+      } catch {}
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      try {
+        const ptt = (localStorage.getItem('voice_push_to_talk') ?? 'off') === 'on';
+        if (!ptt) return;
+        if (e.code === 'Space') {
+          voiceManager.stop();
+        }
+      } catch {}
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
     const onVoice = (e: Event) => {
   const detail = (e as CustomEvent).detail as { transcript?: string; intent?: { category?: string; action?: string; parameters?: any } };
   const intent = detail?.intent;
@@ -144,6 +167,14 @@ function App() {
   lastCmdRef.current = { transcript: detail?.transcript || '', action: intent?.action, ts: Date.now() };
       if (!intent) return;
       switch (intent.action) {
+        case 'VOICE_START':
+          voiceManager.start();
+          speak('Ses tanıma başlatıldı');
+          break;
+        case 'VOICE_STOP':
+          voiceManager.stop();
+          speak('Ses tanıma durduruldu');
+          break;
         case 'DARK_MODE':
           if (!darkMode) {
             setDarkMode(true);
@@ -176,7 +207,20 @@ function App() {
           break;
         case 'NAV_SETTINGS':
           setActiveTab('settings');
+          try {
+            if (intent.parameters?.tab) {
+              try { localStorage.setItem('pending_settings_tab', intent.parameters.tab); } catch {}
+              // Dispatch after a short delay to ensure Settings mounts and binds the listener
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('settings-select-tab', { detail: { tab: intent.parameters.tab } }));
+              }, 100);
+            }
+          } catch {}
           speak('Ayarlar');
+          break;
+        case 'NAV_SEARCH':
+          setActiveTab('search');
+          speak('Arama');
           break;
         case 'NAV_FINANCIALS':
           setActiveTab('financials');
@@ -581,6 +625,7 @@ function App() {
           {renderContent()}
           {/* Floating voice control */}
           <VoiceControl />
+          <VoiceDebugOverlay />
         </main>
       </div>
     </div>

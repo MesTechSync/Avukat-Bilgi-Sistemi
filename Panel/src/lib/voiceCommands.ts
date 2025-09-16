@@ -7,12 +7,22 @@ export type CommandAction =
   | 'NAV_CLIENTS'
   | 'NAV_APPOINTMENTS'
   | 'NAV_SETTINGS'
+  | 'NAV_AI_ASSISTANT'
+  | 'NAV_SEARCH'
+  | 'NAV_CONTRACT_GENERATOR'
+  | 'NAV_PETITION_WRITER'
+  | 'NAV_WHATSAPP'
+  | 'NAV_FILE_CONVERTER'
+  | 'NAV_FINANCIALS'
+  | 'NAV_PROFILE'
   | 'SEARCH'
   | 'DARK_MODE'
   | 'LIGHT_MODE'
   | 'DICTATE_START'
   | 'DICTATE_STOP'
   | 'DICTATE_SAVE'
+  | 'VOICE_START'
+  | 'VOICE_STOP'
   | 'UNKNOWN';
 
 export interface CommandDef {
@@ -37,16 +47,26 @@ const syn = (list: string[]): string[] => list.map(s => s.toLowerCase());
 // Base synonyms
 const s = {
   home: syn(['ana sayfa', 'dashboard', 'başlangıç', 'kontrol paneli', 'özet ekran']),
-  cases: syn(['davalar', 'dava dosyaları', 'dosyalar', 'dava ekranı']),
-  clients: syn(['müvekkiller', 'müşteriler', 'danışanlar', 'müvekkil listesi']),
-  appointments: syn(['randevular', 'takvim', 'ajanda', 'duruşmalar']),
+  cases: syn(['davalar', 'dava yönetimi', 'dava yönetim', 'dava dosyaları', 'dosyalar', 'dava ekranı']),
+  clients: syn(['müvekkiller', 'müvekkil yönetimi', 'müvekkil yönetim', 'müvekkil listesi', 'müşteriler', 'müşteri yönetimi', 'danışanlar']),
+  appointments: syn(['randevu', 'randevular', 'randevu yönetimi', 'randevular yönetimi', 'randevu ekranı', 'takvim', 'ajanda', 'duruşmalar']),
   settings: syn(['ayarlar', 'sistem ayarları', 'tercihler', 'profil ayarları']),
+  ai: syn(['ai hukuki asistan', 'yapay zeka asistan', 'asistan']),
+  searchPage: syn(['içtihat', 'içtihat arama', 'içtihat araştırma', 'arama sayfası', 'içtihatlar']),
+  petition: syn(['dilekçe yazım', 'dilekçe oluştur', 'dilekçe yaz']),
+  contract: syn(['sözleşme oluştur', 'sözleşme sihirbazı', 'sözleşme üretici']),
+  whatsapp: syn(['whatsapp', 'whatsapp destek']),
+  fileconv: syn(['dosya dönüştürücü', 'dosya çevirici', 'format dönüştürme']),
+  financials: syn(['mali işler', 'finans', 'muhasebe', 'ödemeler', 'faturalar']),
+  profile: syn(['hesabım', 'profilim', 'profil']),
   search: syn(['ara', 'arama yap', 'bul', 'sorgula']),
   dark: syn(['karanlık mod', 'gece modu', 'koyu tema']),
   light: syn(['aydınlık mod', 'gündüz modu', 'açık tema']),
   dictateStart: syn(['dikte başlat', 'yazmaya başla', 'not almaya başla']),
   dictateStop: syn(['dikte durdur', 'yazmayı durdur', 'kaydı bitir']),
   dictateSave: syn(['dikteyi kaydet', 'notu kaydet', 'metni kaydet']),
+  voiceStart: syn(['ses tanımayı başlat', 'ses tanımayı aç', 'sesi aç', 'dinlemeyi başlat']),
+  voiceStop: syn(['ses tanımayı durdur', 'ses tanımayı kapat', 'sesi kapat', 'dinlemeyi durdur']),
 };
 
 export const COMMANDS: CommandDef[] = [
@@ -56,6 +76,14 @@ export const COMMANDS: CommandDef[] = [
   { id: 'nav_clients', category: 'NAVIGASYON', action: 'NAV_CLIENTS', patterns: s.clients, description: 'Müvekkiller sayfasına git' },
   { id: 'nav_appointments', category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', patterns: s.appointments, description: 'Randevular sayfasına git' },
   { id: 'nav_settings', category: 'NAVIGASYON', action: 'NAV_SETTINGS', patterns: s.settings, description: 'Ayarlar sayfasına git' },
+  { id: 'nav_ai', category: 'NAVIGASYON', action: 'NAV_AI_ASSISTANT', patterns: s.ai, description: 'AI Asistanına git' },
+  { id: 'nav_search_page', category: 'NAVIGASYON', action: 'NAV_SEARCH', patterns: s.searchPage, description: 'Arama sayfasına git' },
+  { id: 'nav_petition', category: 'NAVIGASYON', action: 'NAV_PETITION_WRITER', patterns: s.petition, description: 'Dilekçe yazım sayfasına git' },
+  { id: 'nav_contract', category: 'NAVIGASYON', action: 'NAV_CONTRACT_GENERATOR', patterns: s.contract, description: 'Sözleşme oluşturucuya git' },
+  { id: 'nav_whatsapp', category: 'NAVIGASYON', action: 'NAV_WHATSAPP', patterns: s.whatsapp, description: 'WhatsApp entegrasyonuna git' },
+  { id: 'nav_fileconv', category: 'NAVIGASYON', action: 'NAV_FILE_CONVERTER', patterns: s.fileconv, description: 'Dosya dönüştürücüye git' },
+  { id: 'nav_financials', category: 'NAVIGASYON', action: 'NAV_FINANCIALS', patterns: s.financials, description: 'Mali İşler sayfasına git' },
+  { id: 'nav_profile', category: 'NAVIGASYON', action: 'NAV_PROFILE', patterns: s.profile, description: 'Hesabım sayfasına git' },
 
   // Appearance
   { id: 'view_dark', category: 'GORUNUM', action: 'DARK_MODE', patterns: s.dark, description: 'Karanlık modu aç' },
@@ -68,6 +96,10 @@ export const COMMANDS: CommandDef[] = [
   { id: 'dictate_start', category: 'DIKTE', action: 'DICTATE_START', patterns: s.dictateStart, description: 'Dikteyi başlat' },
   { id: 'dictate_stop', category: 'DIKTE', action: 'DICTATE_STOP', patterns: s.dictateStop, description: 'Dikteyi durdur' },
   { id: 'dictate_save', category: 'DIKTE', action: 'DICTATE_SAVE', patterns: s.dictateSave, description: 'Dikteyi kaydet' },
+
+  // Voice engine control
+  { id: 'voice_start', category: 'NAVIGASYON', action: 'VOICE_START', patterns: s.voiceStart, description: 'Ses tanımayı başlat' },
+  { id: 'voice_stop', category: 'NAVIGASYON', action: 'VOICE_STOP', patterns: s.voiceStop, description: 'Ses tanımayı durdur' },
 ];
 
 export interface VoiceCommand {

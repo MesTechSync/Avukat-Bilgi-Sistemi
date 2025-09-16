@@ -46,6 +46,26 @@ export default function Settings() {
     { id: 'voice', label: 'Ses', icon: Globe }
   ];
 
+  React.useEffect(() => {
+    const onSelect = (e: Event) => {
+      const tab = (e as CustomEvent).detail?.tab as string | undefined;
+      if (!tab) return;
+      const found = tabs.find(t => t.id === tab);
+      if (found) setActiveTab(found.id);
+    };
+    window.addEventListener('settings-select-tab', onSelect as any);
+    // Apply pending tab deep-link if present
+    try {
+      const pending = localStorage.getItem('pending_settings_tab');
+      if (pending) {
+        const found = tabs.find(t => t.id === pending);
+        if (found) setActiveTab(found.id);
+        localStorage.removeItem('pending_settings_tab');
+      }
+    } catch {}
+    return () => window.removeEventListener('settings-select-tab', onSelect as any);
+  }, []);
+
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -58,7 +78,7 @@ export default function Settings() {
     alert('Ayarlar kaydedildi!');
   };
 
-  const renderVoiceTab = () => {
+  const VoiceSettingsTab: React.FC = () => {
     const get = (k: string, fallback: string) => {
       try { return localStorage.getItem(k) ?? fallback; } catch { return fallback; }
     };
@@ -73,6 +93,11 @@ export default function Settings() {
     const [strict, setStrict] = useState(get('VITE_VOICE_FUZZY_STRICT_SCORE', '0.85'));
     const [ctx, setCtx] = useState(get('VITE_VOICE_FUZZY_CONTEXT_SCORE', '0.65'));
   const [recLang, setRecLang] = useState(get('voice_recognition_lang', 'tr-TR'));
+    const [debugOverlay, setDebugOverlay] = useState(get('voice_debug_overlay', 'off') === 'on');
+    const [autoRestart, setAutoRestart] = useState(get('voice_autorestart', 'on') !== 'off');
+    const [minConf, setMinConf] = useState(get('voice_min_confidence', '0'));
+  const [pushToTalk, setPushToTalk] = useState(get('voice_push_to_talk', 'off') === 'on');
+  const [ttsGate, setTtsGate] = useState(get('voice_tts_gate', 'on') !== 'off');
 
     const saveAll = () => {
       set('voice_privacy_consent_v1', consent ? 'true' : 'false');
@@ -83,6 +108,11 @@ export default function Settings() {
       set('VITE_VOICE_FUZZY_STRICT_SCORE', strict);
       set('VITE_VOICE_FUZZY_CONTEXT_SCORE', ctx);
   set('voice_recognition_lang', recLang);
+      set('voice_debug_overlay', debugOverlay ? 'on' : 'off');
+      set('voice_autorestart', autoRestart ? 'on' : 'off');
+      set('voice_min_confidence', minConf);
+      set('voice_push_to_talk', pushToTalk ? 'on' : 'off');
+      set('voice_tts_gate', ttsGate ? 'on' : 'off');
       alert('Ses ayarları kaydedildi. Değişiklikler bir sonraki ses oturumunda geçerli olacaktır.');
     };
 
@@ -96,7 +126,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Ses verilerinin işlenmesi için açık rıza</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="sr-only peer" />
+              <input aria-label="KVKK onayı" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
           </div>
@@ -107,7 +137,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Ses geçmişini sunucuya kaydet</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} className="sr-only peer" />
+              <input aria-label="Uzak kayıt" type="checkbox" checked={remote} onChange={e => setRemote(e.target.checked)} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
           </div>
@@ -118,9 +148,39 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">E-posta, telefon, TCKN gibi verileri maskele</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked={pii} onChange={e => setPii(e.target.checked)} className="sr-only peer" />
+              <input aria-label="Kişisel veri maskeleme" type="checkbox" checked={pii} onChange={e => setPii(e.target.checked)} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700"></div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tanıma Kontrolleri</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white">Hata Sonrası Otomatik Başlat</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Hata olduğunda dinlemeyi otomatik başlat</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input aria-label="Otomatik başlat" type="checkbox" checked={autoRestart} onChange={e => setAutoRestart(e.target.checked)} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
+            </div>
+            <div>
+              <label htmlFor="voice-min-conf" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Asgari Güven (0-1)</label>
+              <input id="voice-min-conf" aria-label="Asgari güven" type="number" min="0" max="1" step="0.01" value={minConf} onChange={e => setMinConf(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Bu değerin altında ise komut üretme (debug için)</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white">Bas Konuş (Space)</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Boşluk tuşu basılıyken dinle</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input aria-label="Bas konuş" type="checkbox" checked={pushToTalk} onChange={e => setPushToTalk(e.target.checked)} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700"></div>
@@ -128,8 +188,8 @@ export default function Settings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ses Tanıma Dili</label>
-              <select value={recLang} onChange={e => setRecLang(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white">
+              <label htmlFor="voice-rec-lang" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ses Tanıma Dili</label>
+              <select id="voice-rec-lang" value={recLang} onChange={e => setRecLang(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white">
                 <option value="tr-TR">Türkçe (tr-TR)</option>
                 <option value="en-US">English (en-US)</option>
               </select>
@@ -143,28 +203,51 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Hatalı telaffuzlarda tolerans</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked={fuzzy} onChange={e => setFuzzy(e.target.checked)} className="sr-only peer" />
+              <input aria-label="Bulanık eşleşme" type="checkbox" checked={fuzzy} onChange={e => setFuzzy(e.target.checked)} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Eşik</label>
-              <input type="number" min="0" max="1" step="0.01" value={th} onChange={e => setTh(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+              <label htmlFor="voice-fuzzy-th" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Eşik</label>
+              <input id="voice-fuzzy-th" aria-label="Fuzzy eşik" type="number" min="0" max="1" step="0.01" value={th} onChange={e => setTh(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Katı Eşik</label>
-              <input type="number" min="0" max="1" step="0.01" value={strict} onChange={e => setStrict(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+              <label htmlFor="voice-fuzzy-strict" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Katı Eşik</label>
+              <input id="voice-fuzzy-strict" aria-label="Katı eşik" type="number" min="0" max="1" step="0.01" value={strict} onChange={e => setStrict(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kontekst Eşiği</label>
-              <input type="number" min="0" max="1" step="0.01" value={ctx} onChange={e => setCtx(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
+              <label htmlFor="voice-fuzzy-ctx" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kontekst Eşiği</label>
+              <input id="voice-fuzzy-ctx" aria-label="Kontekst eşiği" type="number" min="0" max="1" step="0.01" value={ctx} onChange={e => setCtx(e.target.value)} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white" />
             </div>
           </div>
 
           <div className="pt-2">
             <button onClick={saveAll} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"><Save className="w-4 h-4" /> Kaydet</button>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700"></div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Debug Overlay</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ekranın sol alt köşesinde canlı log</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input aria-label="Debug overlay" type="checkbox" checked={debugOverlay} onChange={e => setDebugOverlay(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">TTS Sırasında Dinlemeyi Duraklat</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Sistem konuşurken yeni komutları beklet</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input aria-label="TTS esnasında beklet" type="checkbox" checked={ttsGate} onChange={e => setTtsGate(e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:top-[2px] after:left-[2px] after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>
           </div>
         </div>
       </div>
@@ -191,10 +274,10 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Ad Soyad
           </label>
-          <input
+          <input id="profile-name" aria-label="Ad soyad"
             type="text"
             value={settings.name}
             onChange={(e) => handleSettingChange('name', e.target.value)}
@@ -203,10 +286,10 @@ export default function Settings() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             E-posta
           </label>
-          <input
+          <input id="profile-email" aria-label="E-posta"
             type="email"
             value={settings.email}
             onChange={(e) => handleSettingChange('email', e.target.value)}
@@ -215,10 +298,10 @@ export default function Settings() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Telefon
           </label>
-          <input
+          <input id="profile-phone" aria-label="Telefon"
             type="tel"
             value={settings.phone}
             onChange={(e) => handleSettingChange('phone', e.target.value)}
@@ -227,10 +310,10 @@ export default function Settings() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Unvan
           </label>
-          <input
+          <input id="profile-title" aria-label="Unvan"
             type="text"
             value={settings.title}
             onChange={(e) => handleSettingChange('title', e.target.value)}
@@ -239,10 +322,10 @@ export default function Settings() {
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Şirket
           </label>
-          <input
+          <input id="profile-company" aria-label="Şirket"
             type="text"
             value={settings.company}
             onChange={(e) => handleSettingChange('company', e.target.value)}
@@ -251,10 +334,10 @@ export default function Settings() {
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="profile-bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Biyografi
           </label>
-          <textarea
+          <textarea id="profile-bio" aria-label="Biyografi"
             rows={3}
             value={settings.bio}
             onChange={(e) => handleSettingChange('bio', e.target.value)}
@@ -280,7 +363,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Önemli güncellemeler için e-posta alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="E-posta bildirimleri"
                 type="checkbox"
                 checked={settings.emailNotifications}
                 onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
@@ -296,7 +379,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Acil durumlar için SMS alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="SMS bildirimleri"
                 type="checkbox"
                 checked={settings.smsNotifications}
                 onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
@@ -312,7 +395,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Tarayıcı bildirimleri alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="Push bildirimleri"
                 type="checkbox"
                 checked={settings.pushNotifications}
                 onChange={(e) => handleSettingChange('pushNotifications', e.target.checked)}
@@ -328,7 +411,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Dava durumu değişikliklerinde bildirim alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="Dava güncellemeleri"
                 type="checkbox"
                 checked={settings.caseUpdates}
                 onChange={(e) => handleSettingChange('caseUpdates', e.target.checked)}
@@ -344,7 +427,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Yaklaşan randevular için hatırlatma alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="Randevu hatırlatmaları"
                 type="checkbox"
                 checked={settings.appointmentReminders}
                 onChange={(e) => handleSettingChange('appointmentReminders', e.target.checked)}
@@ -371,7 +454,7 @@ export default function Settings() {
               Mevcut Şifre
             </label>
             <div className="relative">
-              <input
+              <input aria-label="Mevcut şifre"
                 type={showPassword ? 'text' : 'password'}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white pr-10"
                 placeholder="Mevcut şifrenizi girin"
@@ -395,7 +478,7 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Yeni Şifre
               </label>
-              <input
+              <input aria-label="Yeni şifre"
                 type="password"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Yeni şifre"
@@ -405,7 +488,7 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Şifre Tekrar
               </label>
-              <input
+              <input aria-label="Şifre tekrar"
                 type="password"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Şifre tekrar"
@@ -419,7 +502,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Hesabınız için ek güvenlik katmanı</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="İki faktörlü doğrulama"
                 type="checkbox"
                 checked={settings.twoFactorAuth}
                 onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
@@ -435,7 +518,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Yeni cihazdan giriş yapıldığında bildirim alın</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="Giriş uyarıları"
                 type="checkbox"
                 checked={settings.loginAlerts}
                 onChange={(e) => handleSettingChange('loginAlerts', e.target.checked)}
@@ -449,17 +532,20 @@ export default function Settings() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Oturum Zaman Aşımı (dakika)
             </label>
-            <select
-              value={settings.sessionTimeout}
-              onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="15">15 dakika</option>
-              <option value="30">30 dakika</option>
-              <option value="60">1 saat</option>
-              <option value="120">2 saat</option>
-              <option value="480">8 saat</option>
-            </select>
+              <label htmlFor="security-session-timeout" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Oturum Zaman Aşımı (dakika)
+              </label>
+              <select id="security-session-timeout"
+                value={settings.sessionTimeout}
+                onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="15">15 dakika</option>
+                <option value="30">30 dakika</option>
+                <option value="60">1 saat</option>
+                <option value="120">2 saat</option>
+                <option value="480">8 saat</option>
+              </select>
           </div>
         </div>
       </div>
@@ -478,31 +564,37 @@ export default function Settings() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tema
             </label>
-            <select
-              value={settings.theme}
-              onChange={(e) => handleSettingChange('theme', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="light">Açık Tema</option>
-              <option value="dark">Koyu Tema</option>
-              <option value="system">Sistem Ayarı</option>
-            </select>
+              <label htmlFor="appearance-theme" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tema
+              </label>
+              <select id="appearance-theme"
+                value={settings.theme}
+                onChange={(e) => handleSettingChange('theme', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="light">Açık Tema</option>
+                <option value="dark">Koyu Tema</option>
+                <option value="system">Sistem Ayarı</option>
+              </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Dil
             </label>
-            <select
-              value={settings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="tr">Türkçe</option>
-              <option value="en">English</option>
-              <option value="de">Deutsch</option>
-              <option value="fr">Français</option>
-            </select>
+              <label htmlFor="appearance-language" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Dil
+              </label>
+              <select id="appearance-language"
+                value={settings.language}
+                onChange={(e) => handleSettingChange('language', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+              </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -510,29 +602,35 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Tarih Formatı
               </label>
-              <select
-                value={settings.dateFormat}
-                onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="dd/mm/yyyy">DD/MM/YYYY</option>
-                <option value="mm/dd/yyyy">MM/DD/YYYY</option>
-                <option value="yyyy-mm-dd">YYYY-MM-DD</option>
-              </select>
+                <label htmlFor="appearance-date-format" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tarih Formatı
+                </label>
+                <select id="appearance-date-format"
+                  value={settings.dateFormat}
+                  onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="dd/mm/yyyy">DD/MM/YYYY</option>
+                  <option value="mm/dd/yyyy">MM/DD/YYYY</option>
+                  <option value="yyyy-mm-dd">YYYY-MM-DD</option>
+                </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Saat Formatı
               </label>
-              <select
-                value={settings.timeFormat}
-                onChange={(e) => handleSettingChange('timeFormat', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="24h">24 Saat</option>
-                <option value="12h">12 Saat (AM/PM)</option>
-              </select>
+                <label htmlFor="appearance-time-format" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Saat Formatı
+                </label>
+                <select id="appearance-time-format"
+                  value={settings.timeFormat}
+                  onChange={(e) => handleSettingChange('timeFormat', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="24h">24 Saat</option>
+                  <option value="12h">12 Saat (AM/PM)</option>
+                </select>
             </div>
           </div>
         </div>
@@ -554,7 +652,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Verilerinizi otomatik olarak yedekleyin</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="Otomatik yedekleme"
                 type="checkbox"
                 checked={settings.autoBackup}
                 onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
@@ -568,17 +666,20 @@ export default function Settings() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Veri Saklama Süresi (ay)
             </label>
-            <select
-              value={settings.dataRetention}
-              onChange={(e) => handleSettingChange('dataRetention', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="6">6 ay</option>
-              <option value="12">12 ay</option>
-              <option value="24">24 ay</option>
-              <option value="60">5 yıl</option>
-              <option value="-1">Süresiz</option>
-            </select>
+              <label htmlFor="system-data-retention" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Veri Saklama Süresi (ay)
+              </label>
+              <select id="system-data-retention"
+                value={settings.dataRetention}
+                onChange={(e) => handleSettingChange('dataRetention', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="6">6 ay</option>
+                <option value="12">12 ay</option>
+                <option value="24">24 ay</option>
+                <option value="60">5 yıl</option>
+                <option value="-1">Süresiz</option>
+              </select>
           </div>
 
           <div className="flex items-center justify-between">
@@ -587,7 +688,7 @@ export default function Settings() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Üçüncü taraf uygulamalar için API erişimi</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
+              <input aria-label="API erişimi"
                 type="checkbox"
                 checked={settings.apiAccess}
                 onChange={(e) => handleSettingChange('apiAccess', e.target.checked)}
@@ -626,7 +727,7 @@ export default function Settings() {
       case 'system':
         return renderSystemTab();
       case 'voice':
-        return renderVoiceTab();
+        return <VoiceSettingsTab />;
       default:
         return renderProfileTab();
     }

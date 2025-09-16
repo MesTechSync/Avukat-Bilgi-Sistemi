@@ -10,6 +10,9 @@ export function speak(text: string) {
     const tr = voices.find(v => v.lang?.toLowerCase().startsWith('tr'));
     if (tr) utter.voice = tr;
     utter.lang = tr?.lang || 'tr-TR';
+    try { window.dispatchEvent(new CustomEvent('tts-start', { detail: { text } })); } catch {}
+    utter.onend = () => { try { window.dispatchEvent(new CustomEvent('tts-end', { detail: {} })); } catch {} };
+    utter.onerror = () => { try { window.dispatchEvent(new CustomEvent('tts-end', { detail: {} })); } catch {} };
     synth.speak(utter);
   } catch {}
 }

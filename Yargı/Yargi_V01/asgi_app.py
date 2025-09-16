@@ -16,6 +16,7 @@ import json
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import JSONResponse, HTMLResponse, Response
+from starlette.staticfiles import StaticFiles
 from fastapi.exception_handlers import http_exception_handler
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -23,6 +24,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # Import the proper create_app function that includes all middleware
 from mcp_server_main import create_app
+# Import the comprehensive REST API app (exposes /api/* endpoints)
+try:
+    from example_fastapi_app import app as comprehensive_rest_api
+    has_rest_api = True
+except Exception as _e:
+    comprehensive_rest_api = None
+    has_rest_api = False
+    logging.getLogger(__name__).warning(f"Comprehensive REST API could not be imported: {_e}")
 
 # Import Stripe webhook router
 from stripe_webhook import router as stripe_router
@@ -173,7 +182,8 @@ async def health_check():
         "service": "Yargı MCP Server",
         "version": "0.1.0",
         "tools_count": len(mcp_server._tool_manager._tools),
-        "auth_enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true"
+    "auth_enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true",
+    "rest_api_mounted": has_rest_api
     }
 
 # Add explicit redirect for /mcp to /mcp/ with method preservation
@@ -264,47 +274,89 @@ async def clerk_cors_proxy(request: Request, path: str):
             headers={"Access-Control-Allow-Origin": "*"}
         )
 
-# FastAPI root endpoint
-@app.get("/")
-async def root():
-    """Root endpoint with service information"""
-    return {
-        "service": "Yargı MCP Server",
-        "description": "MCP server for Turkish legal databases with OAuth authentication",
-        "endpoints": {
-            "mcp": "/mcp",
-            "health": "/health",
-            "status": "/status",
-            "stripe_webhook": "/api/stripe/webhook",
-            "oauth_login": "/auth/login",
-            "oauth_callback": "/auth/callback",
-            "oauth_google": "/auth/google/login",
-            "user_info": "/auth/user"
-        },
-        "transports": {
-            "http": "/mcp"
-        },
-        "supported_databases": [
-            "Yargıtay (Court of Cassation)",
-            "Danıştay (Council of State)", 
-            "Emsal (Precedent)",
-            "Uyuşmazlık Mahkemesi (Court of Jurisdictional Disputes)",
-            "Anayasa Mahkemesi (Constitutional Court)",
-            "Kamu İhale Kurulu (Public Procurement Authority)",
-            "Rekabet Kurumu (Competition Authority)",
-            "Sayıştay (Court of Accounts)",
-            "KVKK (Personal Data Protection Authority)",
-            "BDDK (Banking Regulation and Supervision Agency)",
-            "Bedesten API (Multiple courts)"
-        ],
-        "authentication": {
-            "enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true",
-            "type": "OAuth 2.0 via Clerk",
-            "issuer": CLERK_ISSUER,
-            "providers": ["google"],
-            "flow": "authorization_code"
+# Mount the comprehensive REST API (if available) under /rest
+if has_rest_api and comprehensive_rest_api is not None:
+    # This will expose endpoints like /rest/api/yargitay/search
+    app.mount("/rest", comprehensive_rest_api)
+    logger.info("Comprehensive REST API mounted at /rest")
+else:
+    logger.warning("Comprehensive REST API not mounted (module import failed)")
+
+# Frontend (SPA) static files and root serving
+HERE = os.path.abspath(os.path.dirname(__file__))
+# Panel/dist is located at repo root / Panel / dist
+FRONTEND_DIST = os.path.abspath(os.path.join(HERE, "..", "..", "Panel", "dist"))
+FRONTEND_INDEX = os.path.join(FRONTEND_DIST, "index.html")
+FRONTEND_AVAILABLE = os.path.exists(FRONTEND_INDEX)
+
+if FRONTEND_AVAILABLE:
+    # Serve hashed assets under /assets
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets"), html=False), name="spa-assets")
+
+    @app.get("/favicon.ico")
+    async def favicon_passthrough():
+        from starlette.responses import FileResponse
+        path = os.path.join(FRONTEND_DIST, "favicon.ico")
+        if os.path.exists(path):
+            return FileResponse(path)
+        raise HTTPException(status_code=404)
+
+    @app.get("/", response_class=HTMLResponse)
+    async def serve_spa_index():
+        with open(FRONTEND_INDEX, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+
+    @app.get("/{full_path:path}", response_class=HTMLResponse)
+    async def spa_fallback(full_path: str, request: Request):
+        # Do not hijack API/MCP and well-known routes
+        protected_prefixes = ("mcp", ".well-known", "auth", "api", "health", "status", "assets", "rest")
+        if full_path.startswith(protected_prefixes):
+            raise HTTPException(status_code=404)
+        # Always return index.html for client-side routing
+        with open(FRONTEND_INDEX, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+else:
+    # FastAPI JSON root when SPA is not built
+    @app.get("/")
+    async def root():
+        """Root endpoint with service information (SPA not built)"""
+        return {
+            "service": "Yargı MCP Server",
+            "description": "MCP server for Turkish legal databases with OAuth authentication",
+            "endpoints": {
+                "mcp": "/mcp",
+                "health": "/health",
+                "status": "/status",
+                "stripe_webhook": "/api/stripe/webhook",
+                "oauth_login": "/auth/login",
+                "oauth_callback": "/auth/callback",
+                "oauth_google": "/auth/google/login",
+                "user_info": "/auth/user"
+            },
+            "transports": {
+                "http": "/mcp"
+            },
+            "supported_databases": [
+                "Yargıtay (Court of Cassation)",
+                "Danıştay (Council of State)", 
+                "Emsal (Precedent)",
+                "Uyuşmazlık Mahkemesi (Court of Jurisdictional Disputes)",
+                "Anayasa Mahkemesi (Constitutional Court)",
+                "Kamu İhale Kurulu (Public Procurement Authority)",
+                "Rekabet Kurumu (Competition Authority)",
+                "Sayıştay (Court of Accounts)",
+                "KVKK (Personal Data Protection Authority)",
+                "BDDK (Banking Regulation and Supervision Agency)",
+                "Bedesten API (Multiple courts)"
+            ],
+            "authentication": {
+                "enabled": os.getenv("ENABLE_AUTH", "false").lower() == "true",
+                "type": "OAuth 2.0 via Clerk",
+                "issuer": CLERK_ISSUER,
+                "providers": ["google"],
+                "flow": "authorization_code"
+            }
         }
-    }
 
 # OAuth 2.0 Authorization Server Metadata - MCP standard location
 @app.get("/.well-known/oauth-authorization-server")

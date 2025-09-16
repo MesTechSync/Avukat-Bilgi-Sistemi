@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { searchLegalResearch } from '../lib/supabase';
+import { searchYargitay, searchEmsal, searchDanistay, getYargitayDocumentMarkdown, getDanistayDocumentMarkdown, getEmsalDocumentMarkdown } from '../lib/yargiApi';
 import { Search, Filter, Calendar, Building, Scale, BookOpen, Download, Eye, Star } from 'lucide-react';
 
 interface SearchFilters {
@@ -39,6 +39,7 @@ export default function AdvancedSearch() {
   const [dictationOn, setDictationOn] = useState<boolean>(() => {
     try { return localStorage.getItem('voice_dictation_enabled') === 'true'; } catch { return false; }
   });
+  const [docModal, setDocModal] = useState<{ open: boolean; title?: string; markdown?: string }>({ open: false });
 
   // Demo sonuçları kaldırıldı; sonuçlar gerçek API ile doldurulmalı
 
@@ -60,28 +61,90 @@ export default function AdvancedSearch() {
     if (!query.trim()) return;
 
     setIsSearching(true);
+    const started = performance.now();
     try {
-      const { data, total, timeMs, error } = await searchLegalResearch({
-        query,
-        legalArea: filters.legalArea || undefined,
-        limit: 50,
-      });
-      if (error) throw error;
-      // Map LegalResearch -> SearchResult UI shape (best-effort fields)
-      const mapped = (data || []).map((r) => ({
-        id: String(r.id),
-        caseNumber: r.id ? `LR-${r.id}` : 'N/A',
-        courtName: r.source || 'Kaynak',
-        courtType: (filters.courtType || 'yargitay'),
-        decisionDate: r.created_at,
-        subject: r.title,
-        content: r.content || '',
-        relevanceScore: 100,
-        legalAreas: r.category ? [r.category] : [],
-        keywords: query.split(/\s+/).filter(Boolean),
-      }));
-      setResults(mapped);
-      setSearchStats({ total, time: Math.max(1, Math.round(timeMs / 1000)) });
+      const court = (filters.courtType || 'yargitay');
+      const keywords = query.split(/\s+/).filter(Boolean);
+
+      if (court === 'yargitay') {
+        const resp = await searchYargitay({
+          query,
+          chamber: '',
+          startDate: filters.dateRange.from || undefined,
+          endDate: filters.dateRange.to || undefined,
+          pageSize: 20,
+        });
+        const mapped = (resp.decisions || []).map((d) => ({
+          id: String(d.id),
+          caseNumber: `${d.esasNo || ''} ${d.kararNo || ''}`.trim() || '—',
+          courtName: d.daire || 'Yargıtay',
+          courtType: 'yargitay',
+          decisionDate: d.kararTarihi || '',
+          subject: `${d.daire || 'Yargıtay'} ${d.kararNo || ''}`.trim(),
+          content: '',
+          relevanceScore: 100,
+          legalAreas: filters.legalArea ? [filters.legalArea] : [],
+          keywords,
+        }));
+        setResults(mapped);
+        setSearchStats({ total: resp.total_records || mapped.length, time: Math.max(1, Math.round((performance.now() - started) / 1000)) });
+      } else if (court === 'danistay') {
+        const resp = await searchDanistay({
+          queryAll: keywords,
+          chamber: undefined,
+          startDate: filters.dateRange.from || undefined,
+          endDate: filters.dateRange.to || undefined,
+          pageSize: 20,
+        });
+        const mapped = (resp.decisions || []).map((d: any) => ({
+          id: String((d as any).id ?? `${d.daire}-${d.kararTarihi ?? ''}-${d.karar ?? ''}`),
+          caseNumber: `${d.esas ?? ''} ${d.karar ?? ''}`.trim() || '—',
+          courtName: d.daire || 'Danıştay',
+          courtType: 'danistay',
+          decisionDate: d.kararTarihi || '',
+          subject: `${d.daire || 'Danıştay'} ${d.karar ?? ''}`.trim(),
+          content: '',
+          relevanceScore: 100,
+          legalAreas: filters.legalArea ? [filters.legalArea] : [],
+          keywords,
+        }));
+        setResults(mapped);
+        setSearchStats({ total: resp.total_records || mapped.length, time: Math.max(1, Math.round((performance.now() - started) / 1000)) });
+      } else if (court === 'bam') {
+        // Use Emsal as broad cross-court precedent source for BAM
+        const resp = await searchEmsal({ keyword: query, pageSize: 20 });
+        const mapped = (resp.decisions || []).map((d: any) => ({
+          id: String((d as any).id ?? `${d.court ?? 'BAM'}-${d.kararTarihi ?? ''}-${d.kararNo ?? ''}`),
+          caseNumber: `${d.kararNo ?? ''}`.trim() || '—',
+          courtName: d.court || 'Bölge Adliye Mahkemesi',
+          courtType: 'bam',
+          decisionDate: d.kararTarihi || '',
+          subject: `${d.court || 'BAM'} ${d.kararNo ?? ''}`.trim(),
+          content: '',
+          relevanceScore: 100,
+          legalAreas: filters.legalArea ? [filters.legalArea] : [],
+          keywords,
+        }));
+        setResults(mapped);
+        setSearchStats({ total: resp.total_records || mapped.length, time: Math.max(1, Math.round((performance.now() - started) / 1000)) });
+      } else {
+        // For AYM/Sayıştay not yet wired — fallback to Emsal so UI still returns results
+        const resp = await searchEmsal({ keyword: query, pageSize: 20 });
+        const mapped = (resp.decisions || []).map((d: any) => ({
+          id: String((d as any).id ?? `${d.court ?? 'Mahkeme'}-${d.kararTarihi ?? ''}-${d.kararNo ?? ''}`),
+          caseNumber: `${d.kararNo ?? ''}`.trim() || '—',
+          courtName: d.court || (filters.courtType || 'Mahkeme'),
+          courtType: (filters.courtType || 'bam'),
+          decisionDate: d.kararTarihi || '',
+          subject: `${d.court || 'Mahkeme'} ${d.kararNo ?? ''}`.trim(),
+          content: '',
+          relevanceScore: 100,
+          legalAreas: filters.legalArea ? [filters.legalArea] : [],
+          keywords,
+        }));
+        setResults(mapped);
+        setSearchStats({ total: resp.total_records || mapped.length, time: Math.max(1, Math.round((performance.now() - started) / 1000)) });
+      }
     } catch (e) {
       console.error('Arama hatası:', e);
       setResults([]);
@@ -342,7 +405,30 @@ export default function AdvancedSearch() {
                           %{result.relevanceScore}
                         </span>
                       </div>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Görüntüle" title="Görüntüle">
+                      <button
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        aria-label="Görüntüle"
+                        title="Görüntüle"
+                        onClick={async () => {
+                          try {
+                            let md = '';
+                            if (result.courtType === 'yargitay') {
+                              const r = await getYargitayDocumentMarkdown(result.id);
+                              md = r?.markdown || '';
+                            } else if (result.courtType === 'danistay') {
+                              const r = await getDanistayDocumentMarkdown(result.id);
+                              md = r?.markdown || '';
+                            } else {
+                              const r = await getEmsalDocumentMarkdown(result.id);
+                              md = r?.markdown || '';
+                            }
+                            setDocModal({ open: true, title: result.subject, markdown: md });
+                          } catch (err) {
+                            console.error('Karar metni alınamadı:', err);
+                            setDocModal({ open: true, title: result.subject, markdown: 'Karar metni alınamadı.' });
+                          }
+                        }}
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
@@ -411,6 +497,21 @@ export default function AdvancedSearch() {
                 <li>• "boşanma nafaka"</li>
                 <li>• "trafik kazası tazminat"</li>
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Modal */}
+      {docModal.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 max-w-4xl w-full m-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate pr-4">{docModal.title || 'Karar Metni'}</h3>
+              <button className="px-3 py-1 border rounded-md text-sm" onClick={() => setDocModal({ open: false })}>Kapat</button>
+            </div>
+            <div className="p-4 overflow-auto prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
+              {docModal.markdown || '—'}
             </div>
           </div>
         </div>

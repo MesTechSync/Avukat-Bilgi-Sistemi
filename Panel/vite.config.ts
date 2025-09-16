@@ -29,6 +29,15 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     proxy: {
+      // Proxy Yargı backend during development
+      '/rest': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/mcp': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
       // Proxy endpoints to UDF API on 8010 (independent from Yargı)
       '/health': {
         target: 'http://127.0.0.1:8011',
