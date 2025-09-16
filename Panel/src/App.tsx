@@ -18,6 +18,7 @@ import Settings from './components/Settings';
 import Profile from './components/Profile';
 import VoiceControl from './components/VoiceControl';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
+import { sanitizeText } from './lib/sanitize';
 import { speak } from './lib/voiceTTS';
 
 function App() {
@@ -270,7 +271,7 @@ function App() {
       return t.trim();
     };
     const appendAtCursor = (el: any, text: string) => {
-      const insertion = normalizePunctuation(text);
+      const insertion = sanitizeText(normalizePunctuation(text));
       if (!insertion) return;
       if (el && typeof el.setRangeText === 'function') {
         const hasSpace = el.selectionStart > 0 && el.value?.[el.selectionStart - 1] !== ' ';
@@ -295,7 +296,8 @@ function App() {
     };
     const onDictation = (e: Event) => {
       if (!isDictationOn()) return;
-      const t = (e as CustomEvent).detail?.transcript as string | undefined;
+  const raw = (e as CustomEvent).detail?.transcript as string | undefined;
+  const t = raw ? sanitizeText(raw) : raw;
       // Suppress inserting the last command-like utterance
       const recent = lastCmdRef.current;
       const suppressActions = ['SEARCH','DARK_MODE','LIGHT_MODE','FILTER','SORT','DICTATE_START','DICTATE_STOP','DICTATE_SAVE'];
