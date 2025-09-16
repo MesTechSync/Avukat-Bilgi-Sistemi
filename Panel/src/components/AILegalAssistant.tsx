@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { sanitizeText } from '../lib/sanitize';
 import { Bot, Send, Loader, MessageSquare, Search, FileText, Scale, Phone } from 'lucide-react';
 
 interface Message {
@@ -309,7 +310,7 @@ Lütfen daha spesifik bir soru sorun veya yukarıdaki seçeneklerden birini terc
               }`}
             >
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {message.content}
+                {sanitizeText(message.content)}
               </div>
               <div className="text-xs opacity-70 mt-2">
                 {message.timestamp.toLocaleTimeString('tr-TR', { 
@@ -353,8 +354,11 @@ Lütfen daha spesifik bir soru sorun veya yukarıdaki seçeneklerden birini terc
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isLoading}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            aria-label="Gönder"
+            title="Gönder"
           >
             <Send className="w-4 h-4" />
+            <span className="sr-only">Gönder</span>
           </button>
         </div>
         

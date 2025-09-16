@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizeText } from '../lib/sanitize';
 import { FileText, Wand2, Download, Copy, Save, RefreshCw } from 'lucide-react';
 
 interface PetitionTemplate {
@@ -121,7 +122,8 @@ export default function PetitionWriter() {
       let petition = selectedTemplate.template;
       
       Object.entries(formData).forEach(([key, value]) => {
-        petition = petition.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `[${key}]`);
+        const safeVal = sanitizeText(value || '');
+        petition = petition.replace(new RegExp(`\\{${key}\\}`, 'g'), safeVal || `[${key}]`);
       });
 
       // Add current date if not provided
@@ -136,13 +138,13 @@ export default function PetitionWriter() {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedPetition);
+    navigator.clipboard.writeText(sanitizeText(generatedPetition));
     alert('Dilekçe panoya kopyalandı!');
   };
 
   const downloadPetition = () => {
     const element = document.createElement('a');
-    const file = new Blob([generatedPetition], { type: 'text/plain' });
+    const file = new Blob([sanitizeText(generatedPetition)], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `${selectedTemplate?.name || 'dilekce'}.txt`;
     document.body.appendChild(element);
@@ -273,7 +275,7 @@ export default function PetitionWriter() {
                   <Download className="w-4 h-4" />
                   İndir
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-dictation-save="true" onClick={() => {
+                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" data-dictation-save="true" title="Kaydet" aria-label="Kaydet" onClick={() => {
                   try {
                     const key = `petition_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
                     localStorage.setItem(key, generatedPetition);

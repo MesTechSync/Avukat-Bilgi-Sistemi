@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizeText } from '../lib/sanitize';
 import { FileText, Download, Copy, Save, Wand2, Building, Users, Calendar, DollarSign } from 'lucide-react';
 
 interface ContractTemplate {
@@ -189,7 +190,7 @@ export default function ContractGenerator() {
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: sanitizeText(value)
     }));
   };
 
@@ -204,7 +205,8 @@ export default function ContractGenerator() {
       // Replace placeholders with form data
       Object.entries(formData).forEach(([key, value]) => {
         const placeholder = `{${key.toUpperCase()}}`;
-        contract = contract.replace(new RegExp(placeholder, 'g'), value || `[${key}]`);
+        const safeVal = sanitizeText(value || '');
+        contract = contract.replace(new RegExp(placeholder, 'g'), safeVal || `[${key}]`);
       });
 
       // Add current date if not provided
@@ -217,13 +219,13 @@ export default function ContractGenerator() {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedContract);
+    navigator.clipboard.writeText(sanitizeText(generatedContract));
     alert('Sözleşme panoya kopyalandı!');
   };
 
   const downloadContract = () => {
     const element = document.createElement('a');
-    const file = new Blob([generatedContract], { type: 'text/plain' });
+    const file = new Blob([sanitizeText(generatedContract)], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `${selectedTemplate?.name || 'sozlesme'}.txt`;
     document.body.appendChild(element);
@@ -237,7 +239,7 @@ export default function ContractGenerator() {
       if (!generatedContract) return;
       try {
         const key = `contract_${selectedTemplate?.id || 'custom'}_${Date.now()}`;
-        localStorage.setItem(key, generatedContract);
+        localStorage.setItem(key, sanitizeText(generatedContract));
       } catch {}
     };
     window.addEventListener('voice-dictation-save', onVoiceSave as any);
