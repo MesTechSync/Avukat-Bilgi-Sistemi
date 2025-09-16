@@ -5,8 +5,8 @@ Uses Redis for authorization code storage to support multi-machine deployment
 
 import os
 import logging
-from typing import Optional
-from urllib.parse import urlencode, quote
+from typing import Optional, Any, MutableMapping, cast, Dict
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -17,9 +17,9 @@ from redis_session_store import get_redis_store
 # Try to import Clerk SDK
 try:
     from clerk_backend_api import Clerk
-    CLERK_AVAILABLE = True
+    clerk_available = True
 except ImportError:
-    CLERK_AVAILABLE = False
+    clerk_available = False
     Clerk = None
 
 logger = logging.getLogger(__name__)
@@ -33,13 +33,15 @@ CLERK_DOMAIN = os.getenv("CLERK_DOMAIN", "accounts.yargimcp.com")
 # Initialize Redis store
 redis_store = None
 
+# In-memory fallback storage for authorization codes (single-process only)
+CODE_STORAGE: Dict[str, Dict[str, Any]] = {}
+
 def get_redis_session_store():
     """Get Redis store instance with lazy initialization."""
     global redis_store
     if redis_store is None:
         try:
             import concurrent.futures
-            import functools
             
             # Use thread pool with timeout to prevent hanging
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -157,7 +159,7 @@ async def oauth_callback(
         session_id = None
         real_jwt_token = None
         
-        if clerk_token and CLERK_AVAILABLE:
+        if clerk_token and clerk_available:
             try:
                 # Extract user info from JWT token (no Clerk session verification needed)
                 import jwt
@@ -191,14 +193,9 @@ async def oauth_callback(
                 logger.info("User authenticated via cookie")
                 
                 # Try to get session from cookie and generate JWT
-                if CLERK_AVAILABLE:
-                    try:
-                        clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
-                        # Note: sessions.verify_session is deprecated, but we'll try
-                        # In practice, you'd need to extract session_id from cookie
-                        logger.info("Cookie authentication - JWT generation not implemented yet")
-                    except Exception as e:
-                        logger.warning(f"Failed to generate JWT from cookie: {e}")
+                if clerk_available and Clerk is not None:
+                    # JWT generation from cookie is not implemented; require frontend to provide JWT
+                    logger.info("Cookie present but JWT generation is not implemented; expecting JWT via query params")
         
         # Only generate authorization code if we have a real JWT token
         if user_authenticated and real_jwt_token:
@@ -206,8 +203,7 @@ async def oauth_callback(
             auth_code = f"clerk_auth_{os.urandom(16).hex()}"
             
             # Prepare code data
-            import time
-            code_data = {
+            code_data: dict[str, Any] = {
                 "user_id": user_id,
                 "session_id": session_id,
                 "real_jwt_token": real_jwt_token,
@@ -227,15 +223,11 @@ async def oauth_callback(
                 else:
                     logger.error(f"Failed to store authorization code in Redis, falling back to in-memory")
                     # Fall back to in-memory storage
-                    if not hasattr(oauth_callback, '_code_storage'):
-                        oauth_callback._code_storage = {}
-                    oauth_callback._code_storage[auth_code] = code_data
+                    CODE_STORAGE[auth_code] = code_data
             else:
                 # Fall back to in-memory storage
                 logger.warning("Redis not available, using in-memory storage")
-                if not hasattr(oauth_callback, '_code_storage'):
-                    oauth_callback._code_storage = {}
-                oauth_callback._code_storage[auth_code] = code_data
+                CODE_STORAGE[auth_code] = code_data
                 logger.info(f"Stored authorization code in memory (fallback)")
             
             # Redirect back to client with authorization code
@@ -253,9 +245,7 @@ async def oauth_callback(
             logger.info("No JWT token provided - redirecting back to sign-in to complete authentication")
             
             # Keep the same redirect URL so the flow continues
-            sign_in_params = {
-                "redirect_url": f"{request.url._url}"  # Current callback URL with all params
-            }
+            sign_in_params = {"redirect_url": str(request.url)}
             
             sign_in_url = f"https://yargimcp.com/sign-in?{urlencode(sign_in_params)}"
             logger.info(f"Redirecting back to sign-in: {sign_in_url}")
@@ -270,7 +260,7 @@ async def oauth_callback(
         )
 
 @router.post("/auth/register")
-async def register_client(request: Request):
+async def register_client_auth(request: Request):
     """Dynamic Client Registration (RFC 7591)"""
     
     data = await request.json()
@@ -298,13 +288,14 @@ async def oauth_callback_post(request: Request):
     grant_type = form_data.get("grant_type")
     code = form_data.get("code")
     redirect_uri = form_data.get("redirect_uri")
-    client_id = form_data.get("client_id")
-    code_verifier = form_data.get("code_verifier")
+    _client_id = form_data.get("client_id")
+    _code_verifier = form_data.get("code_verifier")
     
     logger.info(f"OAuth callback POST - grant_type: {grant_type}")
-    logger.info(f"Code: {code[:20] if code else 'None'}...")
-    logger.info(f"Client ID: {client_id}")
-    logger.info(f"PKCE verifier: {bool(code_verifier)}")
+    code_preview = code if isinstance(code, str) else None
+    logger.info(f"Code: {code_preview[:20] if code_preview else 'None'}...")
+    logger.info(f"Client ID: {_client_id}")
+    logger.info(f"PKCE verifier: {bool(_code_verifier)}")
     
     if grant_type != "authorization_code":
         return JSONResponse(
@@ -320,7 +311,7 @@ async def oauth_callback_post(request: Request):
     
     try:
         # Validate authorization code
-        if not code.startswith("clerk_auth_"):
+        if not isinstance(code, str) or not code.startswith("clerk_auth_"):
             return JSONResponse(
                 status_code=400,
                 content={"error": "invalid_grant", "error_description": "Invalid authorization code"}
@@ -339,11 +330,11 @@ async def oauth_callback_post(request: Request):
                 logger.warning(f"Authorization code {code[:10]}... not found in Redis")
         
         # Fall back to in-memory storage if Redis unavailable or code not found
-        if not stored_code_data and hasattr(oauth_callback, '_code_storage'):
-            stored_code_data = oauth_callback._code_storage.get(code)
+        if not stored_code_data:
+            stored_code_data = CODE_STORAGE.get(code)
             if stored_code_data:
                 # Clean up in-memory storage
-                oauth_callback._code_storage.pop(code, None)
+                CODE_STORAGE.pop(code, None)
                 logger.info(f"Retrieved authorization code {code[:10]}... from in-memory storage")
         
         if not stored_code_data:
@@ -369,8 +360,7 @@ async def oauth_callback_post(request: Request):
         if real_jwt_token:
             logger.info("Returning real Clerk JWT token")
             # Note: Code already deleted from Redis, clean up in-memory fallback if used
-            if hasattr(oauth_callback, '_code_storage'):
-                oauth_callback._code_storage.pop(code, None)
+            CODE_STORAGE.pop(code, None)
             
             return JSONResponse({
                 "access_token": real_jwt_token,
@@ -379,15 +369,14 @@ async def oauth_callback_post(request: Request):
                 "scope": "read search"
             })
         else:
-            logger.warning("No real JWT token found, generating mock token")
-            # Fallback to mock token for testing
-            mock_token = f"mock_clerk_jwt_{code}"
-            return JSONResponse({
-                "access_token": mock_token,
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "scope": "read search"
-            })
+            logger.error("No real JWT token found; refusing to issue mock token")
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "invalid_grant",
+                    "error_description": "Real JWT required from identity provider"
+                }
+            )
         
     except Exception as e:
         logger.exception(f"OAuth callback POST failed: {e}")
@@ -425,11 +414,12 @@ async def token_endpoint(request: Request):
     grant_type = form_data.get("grant_type")
     code = form_data.get("code")
     redirect_uri = form_data.get("redirect_uri")
-    client_id = form_data.get("client_id")
-    code_verifier = form_data.get("code_verifier")
+    _client_id = form_data.get("client_id")
+    _code_verifier = form_data.get("code_verifier")
     
     logger.info(f"Token exchange - grant_type: {grant_type}")
-    logger.info(f"Code: {code[:20] if code else 'None'}...")
+    code_preview = code if isinstance(code, str) else None
+    logger.info(f"Code: {code_preview[:20] if code_preview else 'None'}...")
     
     if grant_type != "authorization_code":
         return JSONResponse(
@@ -445,34 +435,41 @@ async def token_endpoint(request: Request):
     
     try:
         # Validate authorization code
-        if not code.startswith("clerk_auth_"):
+        if not isinstance(code, str) or not code.startswith("clerk_auth_"):
             return JSONResponse(
                 status_code=400,
                 content={"error": "invalid_grant", "error_description": "Invalid authorization code"}
             )
+        # After this point, treat code as string for type checking
+        code_str: str = code
         
         # Retrieve stored JWT token using authorization code from Redis or in-memory fallback
-        stored_code_data = None
+        stored_code_data: Optional[dict[str, Any]] = None
         
         # Try to get from Redis first, then fall back to in-memory
         store = get_redis_session_store()
         if store:
-            stored_code_data = store.get_oauth_code(code, delete_after_use=True)
+            result = store.get_oauth_code(code_str, delete_after_use=True)
+            if result is not None:
+                stored_code_data = result
             if stored_code_data:
-                logger.info(f"Retrieved authorization code {code[:10]}... from Redis (/token endpoint)")
+                logger.info(f"Retrieved authorization code {code_str[:10]}... from Redis (/token endpoint)")
             else:
-                logger.warning(f"Authorization code {code[:10]}... not found in Redis (/token endpoint)")
+                logger.warning(f"Authorization code {code_str[:10]}... not found in Redis (/token endpoint)")
         
         # Fall back to in-memory storage if Redis unavailable or code not found
-        if not stored_code_data and hasattr(oauth_callback, '_code_storage'):
-            stored_code_data = oauth_callback._code_storage.get(code)
-            if stored_code_data:
-                # Clean up in-memory storage
-                oauth_callback._code_storage.pop(code, None)
-                logger.info(f"Retrieved authorization code {code[:10]}... from in-memory storage (/token endpoint)")
+        if not stored_code_data:
+            code_storage_obj = getattr(oauth_callback, "_code_storage", None)
+            code_storage: Optional[MutableMapping[str, dict[str, Any]]] = cast(Optional[MutableMapping[str, dict[str, Any]]], code_storage_obj) if isinstance(code_storage_obj, dict) else None
+            if code_storage is not None:
+                stored_code_data = code_storage.get(code_str)
+                if stored_code_data is not None:
+                    # Clean up in-memory storage
+                    code_storage.pop(code_str, None)
+                    logger.info(f"Retrieved authorization code {code_str[:10]}... from in-memory storage (/token endpoint)")
         
         if not stored_code_data:
-            logger.error(f"No stored data found for authorization code: {code}")
+            logger.error(f"No stored data found for authorization code: {code_str}")
             return JSONResponse(
                 status_code=400,
                 content={"error": "invalid_grant", "error_description": "Authorization code not found or expired"}
@@ -480,22 +477,25 @@ async def token_endpoint(request: Request):
         
         # Note: Redis TTL handles expiration automatically, but check for manual expiration for in-memory fallback
         import time
+        assert stored_code_data is not None
         expires_at = stored_code_data.get("expires_at", 0)
         if expires_at and time.time() > expires_at:
-            logger.error(f"Authorization code expired: {code}")
+            logger.error(f"Authorization code expired: {code_str}")
             return JSONResponse(
                 status_code=400,
                 content={"error": "invalid_grant", "error_description": "Authorization code expired"}
             )
         
         # Get the real JWT token
-        real_jwt_token = stored_code_data.get("real_jwt_token")
+        real_jwt_token = cast(Optional[str], stored_code_data.get("real_jwt_token"))
         
         if real_jwt_token:
             logger.info("Returning real Clerk JWT token from /token endpoint")
             # Note: Code already deleted from Redis, clean up in-memory fallback if used
-            if hasattr(oauth_callback, '_code_storage'):
-                oauth_callback._code_storage.pop(code, None)
+            code_storage_obj = getattr(oauth_callback, "_code_storage", None)
+            code_storage = cast(Optional[MutableMapping[str, dict[str, Any]]], code_storage_obj) if isinstance(code_storage_obj, dict) else None
+            if code_storage is not None:
+                code_storage.pop(code_str, None)
             
             return JSONResponse({
                 "access_token": real_jwt_token,
@@ -504,15 +504,14 @@ async def token_endpoint(request: Request):
                 "scope": "read search"
             })
         else:
-            logger.warning("No real JWT token found in /token endpoint, generating mock token")
-            # Fallback to mock token for testing
-            mock_token = f"mock_clerk_jwt_{code}"
-            return JSONResponse({
-                "access_token": mock_token,
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "scope": "read search"
-            })
+            logger.error("No real JWT token found in /token endpoint; refusing to issue mock token")
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "invalid_grant",
+                    "error_description": "Real JWT required from identity provider"
+                }
+            )
         
     except Exception as e:
         logger.exception(f"Token exchange failed: {e}")

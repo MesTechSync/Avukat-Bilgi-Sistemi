@@ -1,43 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
+import { CONFIG } from './config'
 
-// Demo mode için mock Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://demo.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-key'
+// In unit tests, provide safe localhost defaults so module import doesn't throw.
+const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
 
-// Mock Supabase client for demo purposes
-const createMockSupabaseClient = () => {
-  return {
-    from: (table: string) => ({
-      select: (columns?: string) => ({
-        order: (column: string, options?: any) => Promise.resolve({ data: [], error: null }),
-        eq: (column: string, value: any) => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: null, error: null })
-          })
-        })
-      }),
-      insert: (data: any) => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: { id: Date.now(), ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, error: null })
-        })
-      }),
-      update: (data: any) => ({
-        eq: (column: string, value: any) => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: { id: value, ...data, updated_at: new Date().toISOString() }, error: null })
-          })
-        })
-      }),
-      delete: () => ({
-        eq: (column: string, value: any) => Promise.resolve({ error: null })
-      })
-    })
-  }
-}
+const supabaseUrl = ((CONFIG.SUPABASE_URL as string) || undefined) ?? undefined
+const supabaseAnonKey = ((CONFIG.SUPABASE_ANON_KEY as string) || undefined) ?? undefined
 
-export const supabase = import.meta.env.VITE_SUPABASE_URL ? 
-  createClient(supabaseUrl, supabaseAnonKey) : 
-  createMockSupabaseClient() as any
+const resolvedUrl = supabaseUrl || (isTestEnv ? 'http://127.0.0.1:54321' : '')
+const resolvedKey = supabaseAnonKey || (isTestEnv ? 'test-anon-key' : '')
+
+export const supabase = createClient(resolvedUrl, resolvedKey)
 
 // Database Types
 export interface Case {
@@ -158,4 +131,32 @@ export async function dbDelete<T extends keyof TableMap>(table: T, id: number | 
   // @ts-ignore
   const { error } = await (supabase.from(table).delete().eq('id', id));
   return { error };
+}
+
+// Domain-specific helpers
+export async function searchLegalResearch(params: {
+  query: string;
+  legalArea?: string;
+  limit?: number;
+}): Promise<{ data: LegalResearch[]; total: number; timeMs: number; error: any }>{
+  const start = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  let q = supabase
+    .from('legal_research')
+    .select('*', { count: 'exact' })
+    .limit(params.limit ?? 50);
+
+  const qtext = (params.query || '').trim();
+  if (qtext) {
+    // basic ilike search on title or content
+    const like = `%${qtext}%`;
+    // @ts-ignore - typed columns are strings
+    q = q.ilike('title', like).or(`content.ilike.${like}`);
+  }
+  if (params.legalArea) {
+    // @ts-ignore
+    q = q.eq('category', params.legalArea);
+  }
+  const { data, error, count } = await q;
+  const end = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  return { data: (data ?? []) as LegalResearch[], total: count ?? 0, timeMs: Math.round((end - start)), error };
 }

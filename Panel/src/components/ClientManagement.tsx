@@ -58,7 +58,6 @@ export default function ClientManagement() {
     const onFilter = (e: Event) => {
       const page = (e as CustomEvent).detail?.page as string | undefined;
       if (page && page !== 'clients') return;
-      // Demo: filter by leaving current searchTerm; could be extended to tags/status later
       setSearchTerm((prev) => prev);
     };
     const onSort = (e: Event) => {

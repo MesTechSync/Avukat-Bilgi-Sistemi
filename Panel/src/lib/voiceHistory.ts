@@ -1,4 +1,4 @@
-import { dbInsert } from './supabase';
+import { dbInsert, supabase } from './supabase';
 import { hasConsent, isRemoteLoggingEnabled, isPIIMaskingEnabled, anonymizeTranscript } from './voicePrivacy';
 
 type HistoryItem = {
@@ -23,7 +23,13 @@ export async function recordVoiceEvent(item: HistoryItem) {
   // KVKK: require prior consent and explicit remote logging opt-in
   if (!hasConsent() || !isRemoteLoggingEnabled()) return;
   const sanitized = isPIIMaskingEnabled() ? { ...item, transcript: anonymizeTranscript(item.transcript) } : item;
-  const payload = { ...sanitized, created_at: new Date().toISOString() };
+  // Try to attach current user id for owner-based RLS; ignore if unavailable
+  let owner: string | undefined;
+  try {
+    const { data } = await supabase.auth.getUser();
+    owner = data?.user?.id;
+  } catch {}
+  const payload = { ...sanitized, created_at: new Date().toISOString(), ...(owner ? { owner } : {}) } as any;
   try {
     const { error } = await dbInsert('voice_history' as any, payload as any);
     if (error) throw error;

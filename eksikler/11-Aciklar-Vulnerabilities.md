@@ -4,14 +4,14 @@ Amaç: Güvenlik açıkları, eksikler ve çözüm önerilerini toplamak.
 
 ## Güvenlik (Uygulama)
 
-- [ ] XSS yüzeyi: Dikte edilen metin ve template çıktıları sanitize edilmeli (DOMPurify önerilir)
+- [x] XSS yüzeyi: Dikte edilen metin ve template çıktıları sanitize edildi (DOMPurify)
 - [ ] CSRF riski: Form gönderimlerinde token ve same-site cookie stratejisi
 - [ ] LocalStorage gizlilik: KVKK’ya uygun maskeleme ve süresi dolan anahtarlar
 - [ ] Üçüncü parti script yok/var kontrolü; supply‑chain riski
 
 ## Güvenlik (API / Supabase)
 
-- [ ] RLS politikaları: sadece owner erişimi; row‑level kısıtlar test edilmeli
+- [ ] RLS politikaları: sadece owner erişimi; row‑level kısıtlar test edilmeli (voice_history owner‑based RLS migration eklendi, test bekliyor)
 - [ ] Auth token sızıntısı: URL, log ve client storage’ta sızıntı testi
 - [ ] Rate limiting ve abuse koruması: edge function/proxy katmanı
 - [ ] Storage bucket politikaları: private varsayılan; imzalı URL süre sınırı
@@ -32,4 +32,4 @@ Amaç: Güvenlik açıkları, eksikler ve çözüm önerilerini toplamak.
 
 - [ ] DOM sanitization kütüphanesi ekle ve tüm riskli render noktalarında uygula
 - [ ] RLS ve bucket politikalarını kod/test ile doğrula
-- [ ] Nginx güvenlik başlıkları konfigüre et ve test et
+- [ ] Nginx güvenlik başlıkları konfigüre et ve test et (bkz. `Panel/deploy/nginx.conf`)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { searchLegalResearch } from '../lib/supabase';
 import { Search, Filter, Calendar, Building, Scale, BookOpen, Download, Eye, Star } from 'lucide-react';
 
 interface SearchFilters {
@@ -39,48 +40,7 @@ export default function AdvancedSearch() {
     try { return localStorage.getItem('voice_dictation_enabled') === 'true'; } catch { return false; }
   });
 
-  // Mock data for demonstration
-  const mockResults: SearchResult[] = [
-    {
-      id: '1',
-      caseNumber: '2023/1234',
-      courtName: 'Yargıtay 4. Hukuk Dairesi',
-      courtType: 'yargitay',
-      decisionDate: '2023-06-15',
-      subject: 'İş Sözleşmesinin Feshi ve Tazminat',
-      content: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda...',
-      relevanceScore: 95,
-      legalAreas: ['İş Hukuku', 'Tazminat'],
-      keywords: ['işten çıkarma', 'tazminat', 'haklı sebep'],
-      highlight: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda kıdem ve ihbar tazminatı...'
-    },
-    {
-      id: '2',
-      caseNumber: '2023/5678',
-      courtName: 'Danıştay 5. Dairesi',
-      courtType: 'danistay',
-      decisionDate: '2023-08-22',
-      subject: 'İdari İşlemin İptali',
-      content: 'İdari işlemin hukuka aykırılığı nedeniyle iptali...',
-      relevanceScore: 87,
-      legalAreas: ['İdare Hukuku'],
-      keywords: ['idari işlem', 'iptal', 'hukuka aykırılık'],
-      highlight: 'İdari işlemin hukuka aykırılığı nedeniyle iptali talep edilmiş...'
-    },
-    {
-      id: '3',
-      caseNumber: '2023/9012',
-      courtName: 'İstanbul BAM 15. Hukuk Dairesi',
-      courtType: 'bam',
-      decisionDate: '2023-09-03',
-      subject: 'Ticari Alacak Davası',
-      content: 'Ticari sözleşmeden doğan alacağın tahsili...',
-      relevanceScore: 82,
-      legalAreas: ['Ticaret Hukuku', 'Borçlar Hukuku'],
-      keywords: ['ticari alacak', 'sözleşme', 'tahsil'],
-      highlight: 'Ticari sözleşmeden doğan alacağın tahsili için açılan davada...'
-    }
-  ];
+  // Demo sonuçları kaldırıldı; sonuçlar gerçek API ile doldurulmalı
 
   const courtTypes = [
     { value: 'yargitay', label: 'Yargıtay' },
@@ -100,13 +60,35 @@ export default function AdvancedSearch() {
     if (!query.trim()) return;
 
     setIsSearching(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setResults(mockResults);
-      setSearchStats({ total: mockResults.length, time: 0.23 });
+    try {
+      const { data, total, timeMs, error } = await searchLegalResearch({
+        query,
+        legalArea: filters.legalArea || undefined,
+        limit: 50,
+      });
+      if (error) throw error;
+      // Map LegalResearch -> SearchResult UI shape (best-effort fields)
+      const mapped = (data || []).map((r) => ({
+        id: String(r.id),
+        caseNumber: r.id ? `LR-${r.id}` : 'N/A',
+        courtName: r.source || 'Kaynak',
+        courtType: (filters.courtType || 'yargitay'),
+        decisionDate: r.created_at,
+        subject: r.title,
+        content: r.content || '',
+        relevanceScore: 100,
+        legalAreas: r.category ? [r.category] : [],
+        keywords: query.split(/\s+/).filter(Boolean),
+      }));
+      setResults(mapped);
+      setSearchStats({ total, time: Math.max(1, Math.round(timeMs / 1000)) });
+    } catch (e) {
+      console.error('Arama hatası:', e);
+      setResults([]);
+      setSearchStats({ total: 0, time: 0 });
+    } finally {
       setIsSearching(false);
-    }, 1500);
+    }
   };
 
   // Accept voice-driven search query and trigger search

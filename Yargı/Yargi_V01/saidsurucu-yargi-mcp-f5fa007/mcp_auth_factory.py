@@ -4,16 +4,22 @@ Factory for creating FastMCP app with MCP Auth Toolkit integration
 
 import logging
 import os
-from typing import Optional
+from typing import Optional, Any, TYPE_CHECKING, Protocol, cast
 
 logger = logging.getLogger(__name__)
 
 try:
-    from fastmcp import FastMCP
-    FASTMCP_AVAILABLE = True
+    from fastmcp import FastMCP as _FastMCP
+    fastmcp_available = True
 except ImportError:
-    FASTMCP_AVAILABLE = False
-    FastMCP = None
+    _FastMCP = None
+    fastmcp_available = False
+
+if TYPE_CHECKING:
+    from fastmcp import FastMCP as FastMCPType
+else:
+    class FastMCPType(Protocol):
+        def tool(self, *args, **kwargs): ...
 
 from mcp_auth import (
     OAuthProvider, 
@@ -24,16 +30,16 @@ from mcp_auth import (
 from mcp_auth.clerk_config import create_mcp_server_config
 
 
-def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
+def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> "FastMCPType":
     """Create FastMCP app with authentication enabled"""
     
-    if not FASTMCP_AVAILABLE:
+    if not fastmcp_available:
         raise ImportError("FastMCP is required for authenticated MCP server")
     
     logger.info("Creating FastMCP app with MCP Auth Toolkit integration")
     
     # Create base FastMCP app
-    app = FastMCP(app_name)
+    app = _FastMCP(app_name)  # type: ignore[call-arg]
     
     # Check if authentication is enabled
     auth_enabled = os.getenv("ENABLE_AUTH", "true").lower() == "true"
@@ -45,7 +51,7 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
     try:
         # Get configuration
         logger.info("Getting MCP server configuration...")
-        config = create_mcp_server_config()
+        config = cast(dict[str, Any], create_mcp_server_config())
         logger.info("Configuration loaded successfully")
         
         # Create OAuth provider with Clerk config
@@ -60,16 +66,17 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
         policy_engine = create_default_policies()
         
         # Store auth components for later wrapping (after tools are defined)
-        app._oauth_provider = oauth_provider
-        app._policy_engine = policy_engine
-        app._auth_config = config
+        cast(Any, app)._oauth_provider = oauth_provider
+        cast(Any, app)._policy_engine = policy_engine
+        cast(Any, app)._auth_config = config
         
         # Add OAuth endpoints immediately
-        @app.tool(
+        tool = cast(Any, app).tool
+        @tool(
             description="Initiate OAuth 2.1 authorization flow with PKCE",
             annotations={"readOnlyHint": True, "idempotentHint": False}
         )
-        async def oauth_authorize(redirect_uri: str, scopes: str = None):
+        async def oauth_authorize(redirect_uri: str, scopes: Optional[str] = None):
             """OAuth authorization endpoint"""
             scope_list = scopes.split(" ") if scopes else ["mcp:tools:read", "mcp:tools:write"]
             auth_url, pkce = oauth_provider.generate_authorization_url(
@@ -83,7 +90,7 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
                 "instructions": "Use the authorization_url to complete OAuth flow, then exchange the returned code using oauth_token tool"
             }
 
-        @app.tool(
+        @tool(
             description="Exchange OAuth authorization code for access token",
             annotations={"readOnlyHint": False, "idempotentHint": False}
         )
@@ -99,7 +106,7 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
                 logger.error(f"Token exchange failed: {e}")
                 raise
 
-        @app.tool(
+        @tool(
             description="Validate and introspect OAuth access token",
             annotations={"readOnlyHint": True, "idempotentHint": True}
         )
@@ -109,7 +116,7 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
             logger.debug(f"Token introspection: active={result.get('active', False)}")
             return result
 
-        @app.tool(
+        @tool(
             description="Revoke OAuth access token",
             annotations={"readOnlyHint": False, "idempotentHint": False}
         )
@@ -119,6 +126,9 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
             logger.info(f"Token revocation: success={success}")
             return {"revoked": success}
         
+        # Mark as used for static analyzers
+        _ = oauth_authorize, oauth_token, oauth_introspect, oauth_revoke
+
         logger.info("Successfully created authenticated FastMCP app")
         
     except Exception as e:
@@ -130,32 +140,32 @@ def create_auth_enabled_app(app_name: str = "Yargı MCP Server") -> FastMCP:
     return app
 
 
-def create_app() -> FastMCP:
+def create_app() -> "FastMCPType":
     """Create FastMCP app (backwards compatible with mcp_factory.py)"""
     return create_auth_enabled_app()
 
 
-def get_auth_wrapper(app: FastMCP) -> Optional[FastMCPAuthWrapper]:
+def get_auth_wrapper(app: "FastMCPType") -> Optional[FastMCPAuthWrapper]:
     """Get auth wrapper from app if available"""
     return getattr(app, '_auth_wrapper', None)
 
 
-def get_oauth_provider(app: FastMCP) -> Optional[OAuthProvider]:
+def get_oauth_provider(app: "FastMCPType") -> Optional[OAuthProvider]:
     """Get OAuth provider from app if available"""
     return getattr(app, '_oauth_provider', None)
 
 
-def get_policy_engine(app: FastMCP) -> Optional[PolicyEngine]:
+def get_policy_engine(app: "FastMCPType") -> Optional[PolicyEngine]:
     """Get policy engine from app if available"""
     return getattr(app, '_policy_engine', None)
 
 
-def is_auth_enabled(app: FastMCP) -> bool:
+def is_auth_enabled(app: "FastMCPType") -> bool:
     """Check if authentication is enabled for the app"""
     return hasattr(app, '_oauth_provider') or hasattr(app, '_auth_wrapper')
 
 
-def enable_tool_authentication(app: FastMCP):
+def enable_tool_authentication(app: "FastMCPType"):
     """Enable authentication on all existing tools (call after tools are defined)"""
     if not is_auth_enabled(app):
         logger.debug("Authentication not enabled, skipping tool authentication")
@@ -177,7 +187,7 @@ def enable_tool_authentication(app: FastMCP):
         )
         
         # Store wrapper for reference
-        app._auth_wrapper = auth_wrapper
+        cast(Any, app)._auth_wrapper = auth_wrapper
         
         logger.info("Tool authentication enabled successfully")
         
@@ -185,7 +195,7 @@ def enable_tool_authentication(app: FastMCP):
         logger.error(f"Failed to enable tool authentication: {e}")
 
 
-def cleanup_auth_sessions(app: FastMCP):
+def cleanup_auth_sessions(app: "FastMCPType"):
     """Clean up expired auth sessions and tokens"""
     oauth_provider = get_oauth_provider(app)
     if oauth_provider:

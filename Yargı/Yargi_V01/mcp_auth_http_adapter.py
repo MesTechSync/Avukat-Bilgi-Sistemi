@@ -9,18 +9,18 @@ import secrets
 import time
 from typing import Optional
 from urllib.parse import urlencode, quote
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 
-# Try to import Clerk SDK
+# Try to import Clerk SDK (optional)
 try:
-    from clerk_backend_api import Clerk
-    CLERK_AVAILABLE = True
-except ImportError as e:
-    CLERK_AVAILABLE = False
-    Clerk = None
+    from clerk_backend_api import Clerk as ClerkApi  # type: ignore
+    clerk_available = True
+except ImportError:
+    ClerkApi = None  # type: ignore
+    clerk_available = False
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ async def authorize_endpoint(
     
     logger.info(f"OAuth authorize request - client_id: {client_id}, redirect_uri: {redirect_uri}")
     
-    if not CLERK_AVAILABLE:
+    if not clerk_available:
         logger.error("Clerk SDK not available")
         raise HTTPException(status_code=500, detail="Clerk SDK not available")
     
@@ -104,7 +104,7 @@ async def authorize_endpoint(
             "client_id": client_id,
             "scopes": scope.split(" ") if scope else ["mcp:tools:read", "mcp:tools:write"],
             "created_at": time.time(),
-            "expires_at": (datetime.utcnow() + timedelta(minutes=10)).timestamp(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp(),
         }
         oauth_provider.storage.set_session(session_id, session_data)
         
@@ -192,35 +192,21 @@ async def oauth_callback(
         auth_method = "none"
         
         if clerk_token:
-            logger.info("Attempting JWT token validation")
+            logger.info("Attempting JWT token validation from claims only")
             try:
-                # Validate JWT token with Clerk
-                from clerk_backend_api import Clerk
-                clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
-                
-                # Extract session_id from JWT token and verify with Clerk
                 import jwt
                 decoded_token = jwt.decode(clerk_token, options={"verify_signature": False})
-                session_id = decoded_token.get("sid") or decoded_token.get("session_id")
-                
-                if session_id:
-                    # Verify with Clerk using session_id
-                    session = clerk.sessions.verify(session_id=session_id, token=clerk_token)
-                    user_id = session.user_id if session else None
-                else:
-                    user_id = None
-                
+                user_id = decoded_token.get("sub") or decoded_token.get("user_id")
                 if user_id:
-                    logger.info(f"JWT token validation successful - user_id: {user_id}")
+                    logger.info(f"JWT token contains user_id: {user_id}")
                     user_authenticated = True
                     auth_method = "jwt_token"
-                    # Store user info in session for token exchange
                     oauth_session["user_id"] = user_id
                     oauth_session["auth_method"] = "jwt_token"
                 else:
-                    logger.error("JWT token validation failed - no user_id in claims")
+                    logger.error("JWT token validation failed - no user identifier in claims")
             except Exception as e:
-                logger.error(f"JWT token validation failed: {str(e)}")
+                logger.error(f"JWT token parsing failed: {str(e)}")
                 # Fall through to cookie validation
         
         # If no JWT token or validation failed, check cookies
@@ -255,7 +241,7 @@ async def oauth_callback(
             "auth_method": auth_method,
             "custom_domain_flow": True,
             "created_at": time.time(),
-            "expires_at": (datetime.utcnow() + timedelta(minutes=5)).timestamp(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp(),
         }
         if "user_id" in oauth_session:
             code_data["user_id"] = oauth_session["user_id"]
@@ -315,7 +301,8 @@ async def token_endpoint(request: Request):
     client_id = form_data.get("client_id")
     code_verifier = form_data.get("code_verifier")
     
-    logger.info(f"Token exchange - grant_type: {grant_type}, code: {code[:20] if code else 'None'}...")
+    code_preview = code if isinstance(code, str) else None
+    logger.info(f"Token exchange - grant_type: {grant_type}, code: {code_preview[:20] if code_preview else 'None'}...")
     
     if grant_type != "authorization_code":
         return JSONResponse(
@@ -334,46 +321,22 @@ async def token_endpoint(request: Request):
                 content={"error": "invalid_request", "error_description": "Missing code or redirect_uri"}
             )
         
-        # Validate OAuth code with Clerk
-        if CLERK_AVAILABLE:
-            try:
-                clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
-                
-                # In a real implementation, you'd validate the code with Clerk
-                # For now, we'll assume the code is valid if it looks like a Clerk code
-                if len(code) > 10:  # Basic validation
-                    # Create a mock session with the code
-                    # In practice, this would be validated with Clerk's OAuth flow
-                    
-                    # Return Clerk JWT token format
-                    # This should be the actual Clerk JWT token from the OAuth flow
-                    return JSONResponse({
-                        "access_token": f"mock_clerk_jwt_{code}",
-                        "token_type": "Bearer",
-                        "expires_in": 3600,
-                        "scope": "yargi.read yargi.search"
-                    })
-                else:
-                    logger.error(f"Invalid code format: {code}")
-                    return JSONResponse(
-                        status_code=400,
-                        content={"error": "invalid_grant", "error_description": "Invalid authorization code"}
-                    )
-                    
-            except Exception as e:
-                logger.error(f"Clerk validation failed: {e}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "invalid_grant", "error_description": "Authorization code validation failed"}
-                )
+        # Validate authorization code format only; actual exchange must be implemented with IdP
+        if isinstance(code, str) and len(code) > 10:
+            logger.error("Authorization code exchange with IdP not implemented; refusing to issue mock token")
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "invalid_grant",
+                    "error_description": "Real JWT required from identity provider"
+                }
+            )
         else:
-            logger.warning("Clerk SDK not available, using mock response")
-            return JSONResponse({
-                "access_token": "mock_jwt_token_for_development",
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "scope": "yargi.read yargi.search"
-            })
+            logger.error(f"Invalid code format: {code}")
+            return JSONResponse(
+                status_code=400,
+                content={"error": "invalid_grant", "error_description": "Invalid authorization code"}
+            )
         
     except Exception as e:
         logger.exception(f"Token exchange failed: {e}")

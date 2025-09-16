@@ -70,7 +70,7 @@ export default function CaseManagement() {
     );
   };
 
-  // Apply list-filter/list-sort (basic: set status = Devam Ediyor for demo)
+  // Apply list-filter/list-sort events (voice-driven filters)
   React.useEffect(() => {
     const onFilter = (e: Event) => {
       const detail = (e as CustomEvent).detail as any;
@@ -82,7 +82,6 @@ export default function CaseManagement() {
       if (nextPrio) setPriorityFilter(nextPrio);
       const nextType = detail?.filter?.case_type as string | undefined;
       if (nextType) setTypeFilter(nextType);
-      if (!nextStatus && !nextPrio && !nextType) setStatusFilter(prev => prev || 'Devam Ediyor');
     };
     const onSort = (e: Event) => {
       // Sorting UI yok; gelecekte eklenecek

@@ -86,13 +86,13 @@ async def health_check(request: Request):
         "service": "Yargı MCP Server"
     })
 
-# Login example (returns token for demo)
+# Login info endpoint (no demo token fallback)
 async def login(request: Request):
-    token = os.getenv("API_TOKEN", "demo-token")
+    token = os.getenv("API_TOKEN")
     return JSONResponse({
         "message": "Use this token in Authorization header",
-        "example": f"Authorization: Bearer {token}",
-        "note": "Set API_TOKEN environment variable to change token"
+        "example": f"Authorization: Bearer {token or '<configure API_TOKEN>'}",
+        "note": "Set API_TOKEN environment variable to a secure value"
     })
 
 # Create MCP ASGI app
