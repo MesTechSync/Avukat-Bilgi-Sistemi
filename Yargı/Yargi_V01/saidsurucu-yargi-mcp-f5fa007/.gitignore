@@ -213,3 +213,6 @@ measure_mcp_directly.py
 playwright_mcp_overhead.json
 simple_test.py
 analyze_anayasa_html.py
+
+# Local smoke scripts (do not commit)
+__smoke_*.py

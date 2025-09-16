@@ -244,11 +244,8 @@ def create_app(auth=None):
     if auth:
         # Set auth on existing app instead of creating new one
         app.auth = auth
-        app.name = "Yargı MCP Server"
         logger.info("MCP server created with Bearer authentication enabled")
     else:
-        # Update placeholder app name only
-        app.name = "Yargı MCP Server"
         logger.info("MCP server created with standard capabilities (FastMCP handles tools.listChanged automatically)")
     
     # Add token counting middleware
@@ -348,8 +345,8 @@ from bddk_mcp_module.models import (
 # Create a placeholder app that will be properly initialized after tools are defined
 from fastmcp import FastMCP
 
-# Placeholder app for decorators - will be replaced in create_app() after all tools are defined
-app = FastMCP("Yargı MCP Server Placeholder")
+# Placeholder app for decorators with final display name
+app = FastMCP("Yargı MCP Server")
 
 # --- Tool Documentation Resources ---
 @app.resource("docs://tools/yargitay")
