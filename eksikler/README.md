@@ -15,6 +15,7 @@ Bu klasör; eksiklerin tespiti, aksiyon planı ve canlıya geçiş için gerekli
 - 08-QA-Test-Plan.md
 - 09-CHANGELOG.md
 - 10-Risk-Register.md
+- 11-Aciklar-Vulnerabilities.md
 
 Kullanım:
 
