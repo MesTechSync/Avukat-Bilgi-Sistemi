@@ -8,6 +8,7 @@ export default function AppointmentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
+  // Only Supabase state, no localStorage or mock arrays
   const [newAppointment, setNewAppointment] = useState({
     title: '',
     date: '',
@@ -27,6 +28,7 @@ export default function AppointmentManagement() {
     'Planlandı', 'Onaylandı', 'Beklemede', 'Tamamlandı', 'İptal'
   ];
 
+  // Filter appointments from Supabase only
   const filteredAppointments = appointments.filter(appointment => {
     const matchesSearch = appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          appointment.type.toLowerCase().includes(searchTerm.toLowerCase());
@@ -34,6 +36,7 @@ export default function AppointmentManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  // Add appointment only via Supabase
   const handleAddAppointment = async (e) => {
     e.preventDefault();
     try {
@@ -134,6 +137,7 @@ export default function AppointmentManagement() {
             <input
               type="text"
               placeholder="Randevu ara..."
+              title="Randevu arama kutusu"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -143,6 +147,7 @@ export default function AppointmentManagement() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            title="Randevu Durumu Filtresi"
           >
             <option value="">Tüm Durumlar</option>
             {statusOptions.map(status => (
@@ -224,15 +229,16 @@ export default function AppointmentManagement() {
                 </div>
 
                 <div className="flex items-center gap-1 ml-4">
-                  <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Randevuyu Görüntüle">
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-gray-400 hover:text-green-600 transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Randevuyu Düzenle">
                     <Edit className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => deleteAppointment(appointment.id)}
                     className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Randevuyu Sil"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -279,6 +285,8 @@ export default function AppointmentManagement() {
                     value={newAppointment.title}
                     onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Başlığı"
+                    placeholder="Başlık girin"
                   />
                 </div>
 
@@ -292,6 +300,8 @@ export default function AppointmentManagement() {
                     value={newAppointment.date}
                     onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Tarihi"
+                    placeholder="Tarih seçin"
                   />
                 </div>
 
@@ -305,6 +315,8 @@ export default function AppointmentManagement() {
                     value={newAppointment.time}
                     onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Saati"
+                    placeholder="Saat seçin"
                   />
                 </div>
 
@@ -317,6 +329,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.type}
                     onChange={(e) => setNewAppointment({...newAppointment, type: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Türü"
                   >
                     <option value="">Tür Seçin</option>
                     {appointmentTypes.map(type => (
@@ -333,6 +346,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.status}
                     onChange={(e) => setNewAppointment({...newAppointment, status: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Randevu Durumu"
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
@@ -348,6 +362,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.client_id}
                     onChange={(e) => setNewAppointment({...newAppointment, client_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Müvekkil Seçimi"
                   >
                     <option value="">Müvekkil Seçin</option>
                     {clients.map(client => (
@@ -366,6 +381,7 @@ export default function AppointmentManagement() {
                     value={newAppointment.case_id}
                     onChange={(e) => setNewAppointment({...newAppointment, case_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Dava Seçimi"
                   >
                     <option value="">Dava Seçin</option>
                     {cases.map(case_ => (

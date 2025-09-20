@@ -1,35 +1,19 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, Bell, Plus, Scale, FileCheck, AlertTriangle, Star } from 'lucide-react';
-
-interface Appointment {
-  id: string;
-  clientName: string;
-  date: string;
-  time: string;
-  type: string;
-  status: string;
-}
+import { useSupabase } from '../hooks/useSupabase';
 
 interface DashboardProps {
   onNavigate?: (tab: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const { appointments, clients, cases, financials } = useSupabase();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    // Randevuları localStorage'dan yükle
-    const savedAppointments = localStorage.getItem('appointments');
-    if (savedAppointments) {
-      setAppointments(JSON.parse(savedAppointments));
-    }
-
-    // Saati güncelle
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -42,6 +26,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     .filter(apt => new Date(apt.date) > new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
+
+  // İstatistikler Supabase verisinden
+  const totalClients = clients.length;
+  const totalCases = cases.length;
+  const totalAppointments = appointments.length;
+  const monthlyIncome = financials
+    .filter(f => f.type === 'income' && new Date(f.date).getMonth() === new Date().getMonth())
+    .reduce((sum, f) => sum + Number(f.amount), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-4">
@@ -105,47 +97,44 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* İstatistik Kartları */}
+        {/* İstatistik Kartları - Supabase verisiyle */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Toplam Müvekkil</p>
-                <p className="text-4xl font-bold mt-2">46</p>
-                <p className="text-blue-200 text-xs mt-1">↗️ +3 bu ay</p>
+                <p className="text-4xl font-bold mt-2">{totalClients}</p>
+                <p className="text-blue-200 text-xs mt-1">↗️ Supabase canlı veri</p>
               </div>
               <Users className="w-12 h-12 text-blue-200" />
             </div>
           </div>
-
           <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm font-medium">Aktif Davalar</p>
-                <p className="text-4xl font-bold mt-2">27</p>
-                <p className="text-green-200 text-xs mt-1">↗️ +2 bu hafta</p>
+                <p className="text-4xl font-bold mt-2">{totalCases}</p>
+                <p className="text-green-200 text-xs mt-1">↗️ Supabase canlı veri</p>
               </div>
               <Gavel className="w-12 h-12 text-green-200" />
             </div>
           </div>
-
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">Bugünkü Randevular</p>
                 <p className="text-4xl font-bold mt-2">{todayAppointments.length}</p>
-                <p className="text-purple-200 text-xs mt-1">📅 {appointments.length} toplam</p>
+                <p className="text-purple-200 text-xs mt-1">📅 {totalAppointments} toplam</p>
               </div>
               <Calendar className="w-12 h-12 text-purple-200" />
             </div>
           </div>
-
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-orange-100 text-sm font-medium">Aylık Gelir</p>
-                <p className="text-4xl font-bold mt-2">₺44.109</p>
-                <p className="text-orange-200 text-xs mt-1">📈 +15% artış</p>
+                <p className="text-4xl font-bold mt-2">₺{monthlyIncome.toLocaleString()}</p>
+                <p className="text-orange-200 text-xs mt-1">📈 Supabase canlı veri</p>
               </div>
               <DollarSign className="w-12 h-12 text-orange-200" />
             </div>

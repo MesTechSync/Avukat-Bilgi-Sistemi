@@ -5,33 +5,42 @@ interface FinancialManagementProps {
   onNavigate?: (tab: string) => void;
 }
 
+import { useSupabase } from '../hooks/useSupabase';
 const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const { financials, addFinancial } = useSupabase();
 
-  const financialData = {
-    totalRevenue: 125000,
-    totalExpenses: 45000,
-    netProfit: 80000,
-    pendingPayments: 25000,
-    monthlyGrowth: 12.5
+  // Supabase'den canlı veriler
+  const totalRevenue = financials.filter(f => f.type === 'income').reduce((sum, f) => sum + Number(f.amount), 0);
+  const totalExpenses = financials.filter(f => f.type === 'expense').reduce((sum, f) => sum + Number(f.amount), 0);
+  const netProfit = totalRevenue - totalExpenses;
+  const pendingPayments = financials.filter(f => f.status === 'pending').reduce((sum, f) => sum + Number(f.amount), 0);
+  const monthlyGrowth = 0; // Gelişmiş analiz için eklenebilir
+
+  // Son işlemler
+  const recentTransactions = financials.slice(-10).reverse();
+
+  // Aylık gelir/gider
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const monthlyData = months.map((month, idx) => {
+    const income = financials.filter(f => f.type === 'income' && new Date(f.date).getMonth() === idx).reduce((sum, f) => sum + Number(f.amount), 0);
+    const expense = financials.filter(f => f.type === 'expense' && new Date(f.date).getMonth() === idx).reduce((sum, f) => sum + Number(f.amount), 0);
+    return { month, income, expense };
+  });
+
+  // Yeni işlem ekleme
+  const [newTransaction, setNewTransaction] = useState({ type: 'income', description: '', amount: '', date: '', status: 'pending' });
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    try {
+      await addFinancial(newTransaction);
+      setShowAddTransaction(false);
+      setNewTransaction({ type: 'income', description: '', amount: '', date: '', status: 'pending' });
+    } catch (err) {
+      // Hata yönetimi
+    }
   };
-
-  const recentTransactions = [
-    { id: 1, type: 'income', description: 'Dava Ücreti - Ahmet Yılmaz', amount: 15000, date: '2024-01-15', status: 'completed' },
-    { id: 2, type: 'expense', description: 'Ofis Kirası', amount: 8000, date: '2024-01-14', status: 'completed' },
-    { id: 3, type: 'income', description: 'Danışmanlık Ücreti', amount: 5000, date: '2024-01-13', status: 'pending' },
-    { id: 4, type: 'expense', description: 'Kırtasiye Giderleri', amount: 1200, date: '2024-01-12', status: 'completed' }
-  ];
-
-  const monthlyData = [
-    { month: 'Ocak', income: 45000, expense: 15000 },
-    { month: 'Şubat', income: 52000, expense: 18000 },
-    { month: 'Mart', income: 48000, expense: 16000 },
-    { month: 'Nisan', income: 55000, expense: 20000 },
-    { month: 'Mayıs', income: 60000, expense: 22000 },
-    { month: 'Haziran', income: 58000, expense: 19000 }
-  ];
 
   return (
     <div className="space-y-6">
@@ -42,7 +51,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Toplam Gelir</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ₺{financialData.totalRevenue.toLocaleString()}
+                ₺{totalRevenue.toLocaleString()}
               </p>
             </div>
             <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -62,7 +71,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Toplam Gider</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ₺{financialData.totalExpenses.toLocaleString()}
+                ₺{totalExpenses.toLocaleString()}
               </p>
             </div>
             <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
@@ -82,7 +91,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Net Kar</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ₺{financialData.netProfit.toLocaleString()}
+                ₺{netProfit.toLocaleString()}
               </p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -102,7 +111,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Bekleyen Ödemeler</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ₺{financialData.pendingPayments.toLocaleString()}
+                ₺{pendingPayments.toLocaleString()}
               </p>
             </div>
             <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
@@ -402,12 +411,16 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Yeni İşlem Ekle
             </h3>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleAddTransaction}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   İşlem Türü
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={newTransaction.type}
+                  onChange={e => setNewTransaction({ ...newTransaction, type: e.target.value })}
+                >
                   <option value="income">Gelir</option>
                   <option value="expense">Gider</option>
                 </select>
@@ -420,6 +433,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="İşlem açıklaması"
+                  value={newTransaction.description}
+                  onChange={e => setNewTransaction({ ...newTransaction, description: e.target.value })}
                 />
               </div>
               <div>
@@ -430,6 +445,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   type="number"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="0.00"
+                  value={newTransaction.amount}
+                  onChange={e => setNewTransaction({ ...newTransaction, amount: e.target.value })}
                 />
               </div>
               <div>
@@ -439,6 +456,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                 <input
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={newTransaction.date}
+                  onChange={e => setNewTransaction({ ...newTransaction, date: e.target.value })}
                 />
               </div>
               <div className="flex gap-3 pt-4">
