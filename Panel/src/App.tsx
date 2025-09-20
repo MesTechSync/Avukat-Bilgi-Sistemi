@@ -40,6 +40,7 @@ function App() {
   const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
   const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number; endpoint?: string } | null>(null);
+  const [triedEndpoints, setTriedEndpoints] = useState<string[]>([]);
 
   const ENV_BACKEND = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
   const normalizedEnv = (ENV_BACKEND || '').replace(/\/$/, '');
@@ -59,9 +60,17 @@ function App() {
     setBackendStatus('checking');
     setBackendInfo(null);
     const candidates: string[] = [];
-    if (normalizedEnv) candidates.push(`${normalizedEnv}/health`);
+    if (normalizedEnv) {
+      candidates.push(`${normalizedEnv}/health`);
+      candidates.push(`${normalizedEnv}/health/production`);
+    }
     candidates.push('/api/health');
+    candidates.push('/api/health/production');
     candidates.push('/health');
+    candidates.push('/health/production');
+
+    // Store the full list for diagnostics in UI
+    setTriedEndpoints(candidates);
 
     for (const endpoint of candidates) {
       try {
@@ -590,13 +599,13 @@ function App() {
             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100 border border-red-200/50 dark:border-red-800/50">
               Backend'e bağlanılamadı. Lütfen backend adresini ve reverse proxy ayarlarını kontrol edin.
               <div className="text-xs mt-1 opacity-80">
-                Denenen uç noktalar: {(import.meta as any).env?.VITE_BACKEND_URL ? ((import.meta as any).env?.VITE_BACKEND_URL.replace(/\/$/,'') + '/health, ') : ''}/api/health, /health
+                Denenen uç noktalar: {triedEndpoints && triedEndpoints.length > 0 ? triedEndpoints.join(', ') : '—'}
               </div>
             </div>
           )}
           {backendStatus === 'ok' && backendInfo && (
             <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-100 border border-green-200/50 dark:border-green-800/50 text-sm">
-              <span className="font-medium">Backend Sağlıklı</span> · {backendInfo.service || 'Service'} v{backendInfo.version || ''} · Araçlar: {backendInfo.tools_count ?? '—'}
+              <span className="font-medium">Backend Sağlıklı</span> · {backendInfo.service || 'Service'} v{backendInfo.version || ''} · Araçlar: {backendInfo.tools_count ?? '—'} · Endpoint: {backendInfo.endpoint || '—'}
             </div>
           )}
           {renderContent()}

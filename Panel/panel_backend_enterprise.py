@@ -1,3 +1,4 @@
+# Sağlam /health endpointi (her ortamda çalışır)
 #!/usr/bin/env python3
 """
 Enterprise Panel Backend - İçtihat & Mevzuat Legal Research System
@@ -369,12 +370,61 @@ app.add_middleware(
         "http://localhost:5175",  # Panel frontend dev server
         "http://localhost:5173",  # Alternative Vite port
         "http://127.0.0.1:5175",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "https://avukat-bilgi-sistemi.hidlightmedya.tr",  # Production site
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Health endpoints for frontend checks and ops
+@app.get("/health")
+async def health():
+    uptime = time.time() - startup_time
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "2.0.0",
+        "uptime_seconds": round(uptime, 2),
+        "api_endpoints": {
+            "search/yargitay": True,
+            "search/danistay": True,
+            "search/emsal": True,
+        },
+    }
+
+# Ekstra: /api/health endpointi de aynı sonucu döner
+@app.get("/api/health")
+async def api_health():
+    uptime = time.time() - startup_time
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "2.0.0",
+        "uptime_seconds": round(uptime, 2),
+        "api_endpoints": {
+            "search/yargitay": True,
+            "search/danistay": True,
+            "search/emsal": True,
+        },
+    }
+
+@app.get("/health/production")
+async def health_production():
+    # Same payload for now; kept as a distinct endpoint for prod probes
+    uptime = time.time() - startup_time
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "2.0.0",
+        "uptime_seconds": round(uptime, 2),
+        "api_endpoints": {
+            "search/yargitay": True,
+            "search/danistay": True,
+            "search/emsal": True,
+        },
+    }
 
 # Request tracking middleware
 @app.middleware("http")

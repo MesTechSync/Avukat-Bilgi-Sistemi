@@ -650,6 +650,48 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# CORS configuration for Panel frontend (production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://avukat-bilgi-sistemi.hidlightmedya.tr",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Health endpoints
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "2.0.0",
+        "uptime_seconds": None,
+        "api_endpoints": {
+            "search/yargitay": True,
+            "search/danistay": True,
+            "search/emsal": True,
+        },
+    }
+
+@app.get("/health/production")
+async def health_production():
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "2.0.0",
+        "uptime_seconds": None,
+        "api_endpoints": {
+            "search/yargitay": True,
+            "search/danistay": True,
+            "search/emsal": True,
+        },
+    }
+
 # Serve built frontend (if available)
 try:
     _dist_dir = os.path.join(os.path.dirname(__file__), 'dist')

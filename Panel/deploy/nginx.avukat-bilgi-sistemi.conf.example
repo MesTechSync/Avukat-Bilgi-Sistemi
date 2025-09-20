@@ -1,0 +1,92 @@
+# Nginx reverse proxy for Avukat Bilgi Sistemi (Frontend + Backend)
+# Domain: avukat-bilgi-sistemi.hidlightmedya.tr
+
+server {
+    listen 80;
+    server_name avukat-bilgi-sistemi.hidlightmedya.tr;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name avukat-bilgi-sistemi.hidlightmedya.tr;
+
+    # SSL certs (replace with your real paths / use certbot-managed files)
+    ssl_certificate     /etc/letsencrypt/live/avukat-bilgi-sistemi.hidlightmedya.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/avukat-bilgi-sistemi.hidlightmedya.tr/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/avukat-bilgi-sistemi.hidlightmedya.tr/chain.pem;
+
+    # Security & performance (basic)
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Referrer-Policy strict-origin-when-cross-origin;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Frontend - serve built assets
+    root /var/www/avukat-bilgi-sistemi/dist;
+    index index.html;
+
+    # Try static, then SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend proxy targets (Panel FastAPI on localhost:9000)
+    set $panel_backend http://127.0.0.1:9000;
+
+    # Health endpoints (for App health check and ops)
+    location = /health {
+        proxy_pass $panel_backend/health;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location = /health/production {
+        proxy_pass $panel_backend/health/production;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # API namespaces
+    location /api/ {
+        proxy_pass $panel_backend/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+    location /legal/ {
+        proxy_pass $panel_backend/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location /ai/ {
+        proxy_pass $panel_backend/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location /wa/ {
+        proxy_pass $panel_backend/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Optional: upstream websockets support
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
