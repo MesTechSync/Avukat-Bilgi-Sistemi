@@ -27,6 +27,17 @@
 				"$tsc"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Run Yargi MCP (dev)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'C:\\MesChain-Sync-Enterprise\\Avukat-Bilgi-Sistemi\\Yargı\\Yargi_V01\\saidsurucu-yargi-mcp-f5fa007'; python -m uvicorn asgi_app:app --host 127.0.0.1 --port 8000"
+			],
+			"group": "build"
 		}
 	]
 }

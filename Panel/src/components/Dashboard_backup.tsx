@@ -1,39 +1,66 @@
-import React from 'react';
-import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Bot, Search, FileText, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, AlertTriangle, Bot, Search, FileText, Phone, Bell, Plus, Scale, Star } from 'lucide-react';
+import { useSupabase } from '../hooks/useSupabase';
 
-export default function Dashboard() {
+interface DashboardProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
+  const { appointments, clients, cases, loading } = useSupabase();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // Saati güncelle
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const today = new Date().toDateString();
+  const todayAppointments = appointments.filter(apt => 
+    new Date(apt.date).toDateString() === today
+  );
+
+  const upcomingAppointments = appointments
+    .filter(apt => new Date(apt.date) > new Date())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3);
+
   const stats = [
     {
-      title: 'Toplam Davalar',
-      value: '24',
-      change: '+12%',
-      changeType: 'positive',
-      icon: Gavel,
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Aktif Müvekkiller',
-      value: '18',
-      change: '+8%',
+      title: 'Toplam Müvekkil',
+      value: clients.length.toString(),
+      change: '+3 bu ay',
       changeType: 'positive',
       icon: Users,
-      color: 'bg-green-500'
+      color: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'Bu Ay Gelir',
-      value: '₺45,200',
-      change: '+15%',
+      title: 'Aktif Davalar',
+      value: cases.length.toString(),
+      change: '+2 bu hafta',
+      changeType: 'positive',
+      icon: Gavel,
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      title: 'Bugünkü Randevular',
+      value: todayAppointments.length.toString(),
+      change: `📅 ${appointments.length} toplam`,
+      changeType: 'neutral',
+      icon: Calendar,
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      title: 'Aylık Gelir',
+      value: '₺44.109',
+      change: '📈 +15% artış',
       changeType: 'positive',
       icon: DollarSign,
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Bekleyen Randevular',
-      value: '7',
-      change: '-3%',
-      changeType: 'negative',
-      icon: Calendar,
-      color: 'bg-orange-500'
+      color: 'from-orange-500 to-orange-600'
     }
   ];
 
@@ -72,32 +99,70 @@ export default function Dashboard() {
     }
   ];
 
-  const quickActions = [
-    {
-      title: 'AI Dilekçe Oluştur',
-      description: 'Yapay zeka ile hızlı dilekçe hazırlayın',
-      icon: Bot,
-      color: 'bg-purple-500',
-      action: 'petition-writer'
-    },
-    {
-      title: 'İçtihat Ara',
-      description: 'Milyonlarca karar arasında arama yapın',
-      icon: Search,
-      color: 'bg-green-500',
-      action: 'search'
-    },
-    {
-      title: 'Sözleşme Hazırla',
-      description: 'Profesyonel sözleşmeler oluşturun',
-      icon: FileText,
-      color: 'bg-blue-500',
-      action: 'contract-generator'
-    },
-    {
-      title: 'WhatsApp Destek',
-      description: '7/24 hukuki destek alın',
-      icon: Phone,
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Enhanced Header */}
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 p-8 mb-8 relative overflow-hidden">
+          {/* Arka plan deseni */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
+          
+          <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-xl">
+                <Scale className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Hukuk Bürosu Paneli
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
+                  Hukuki süreçlerinizi yönetin ve takip edin • {currentTime.toLocaleDateString('tr-TR')} {currentTime.toLocaleTimeString('tr-TR')}
+                </p>
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sistem Operasyonel</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Premium Hesap</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => onNavigate?.('settings')}
+                  title="Ayarlar ve Bildirimler"
+                  className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
+                >
+                  <Bell className="w-5 h-5 group-hover:animate-pulse" />
+                </button>
+                <button 
+                  onClick={() => onNavigate?.('appointments')}
+                  title="Hızlı Randevu Ekle"
+                  className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
+                >
+                  <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-mono font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {currentTime.toLocaleTimeString('tr-TR')}
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Canlı Saat</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       color: 'bg-green-600',
       action: 'whatsapp'
     }

@@ -1,24 +1,75 @@
-import React, { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye } from 'lucide-react';
+import { useSupabase } from '../hooks/useSupabase';
 
-const FinancialManagement = () => {
+interface FinancialManagementProps {
+  onNavigate?: (tab: string) => void;
+}
+
+const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const { financials } = useSupabase();
 
-  const financialData = {
-    totalRevenue: 125000,
-    totalExpenses: 45000,
-    netProfit: 80000,
-    pendingPayments: 25000,
-    monthlyGrowth: 12.5
-  };
+  // Derive figures from financials if available; otherwise fall back to demo values
+  const financialData = useMemo(() => {
+    if (financials && financials.length > 0) {
+      const nums = financials.map(f => ({
+        type: f.type,
+        amount: Number.parseFloat((f.amount || '0').toString()) || 0,
+        date: f.date
+      }));
+      const totalRevenue = nums.filter(n => n.type === 'income').reduce((acc, n) => acc + n.amount, 0);
+      const totalExpenses = nums.filter(n => n.type === 'expense').reduce((acc, n) => acc + n.amount, 0);
+      const netProfit = totalRevenue - totalExpenses;
+      // Simple monthly growth estimation comparing this month vs previous month sums
+      const byMonth = nums.reduce<Record<string, { income: number; expense: number }>>((acc, n) => {
+        const ym = (n.date || '').slice(0, 7); // YYYY-MM
+        if (!acc[ym]) acc[ym] = { income: 0, expense: 0 };
+        if (n.type === 'income') acc[ym].income += n.amount; else acc[ym].expense += n.amount;
+        return acc;
+      }, {});
+      const months = Object.keys(byMonth).sort();
+      const last = months[months.length - 1];
+      const prev = months[months.length - 2];
+      const lastSum = last ? (byMonth[last].income - byMonth[last].expense) : 0;
+      const prevSum = prev ? (byMonth[prev].income - byMonth[prev].expense) : 0;
+      const monthlyGrowth = prevSum === 0 ? 0 : Number(((lastSum - prevSum) / Math.max(prevSum, 1) * 100).toFixed(1));
+      return {
+        totalRevenue,
+        totalExpenses,
+        netProfit,
+        pendingPayments: 0,
+        monthlyGrowth
+      };
+    }
+    return {
+      totalRevenue: 125000,
+      totalExpenses: 45000,
+      netProfit: 80000,
+      pendingPayments: 25000,
+      monthlyGrowth: 12.5
+    };
+  }, [financials]);
 
-  const recentTransactions = [
-    { id: 1, type: 'income', description: 'Dava Ücreti - Ahmet Yılmaz', amount: 15000, date: '2024-01-15', status: 'completed' },
-    { id: 2, type: 'expense', description: 'Ofis Kirası', amount: 8000, date: '2024-01-14', status: 'completed' },
-    { id: 3, type: 'income', description: 'Danışmanlık Ücreti', amount: 5000, date: '2024-01-13', status: 'pending' },
-    { id: 4, type: 'expense', description: 'Kırtasiye Giderleri', amount: 1200, date: '2024-01-12', status: 'completed' }
-  ];
+  const recentTransactions = useMemo(() => {
+    if (financials && financials.length > 0) {
+      return financials.slice(-10).reverse().map(f => ({
+        id: f.id,
+        type: f.type,
+        description: f.description || f.category || 'İşlem',
+        amount: Number.parseFloat((f.amount || '0').toString()) || 0,
+        date: f.date,
+        status: 'completed' as const
+      }));
+    }
+    return [
+      { id: 1, type: 'income', description: 'Dava Ücreti - Ahmet Yılmaz', amount: 15000, date: '2024-01-15', status: 'completed' as const },
+      { id: 2, type: 'expense', description: 'Ofis Kirası', amount: 8000, date: '2024-01-14', status: 'completed' as const },
+      { id: 3, type: 'income', description: 'Danışmanlık ücreti', amount: 5000, date: '2024-01-13', status: 'pending' as const },
+      { id: 4, type: 'expense', description: 'Kırtasiye Giderleri', amount: 1200, date: '2024-01-12', status: 'completed' as const }
+    ];
+  }, [financials]);
 
   const monthlyData = [
     { month: 'Ocak', income: 45000, expense: 15000 },
@@ -28,6 +79,39 @@ const FinancialManagement = () => {
     { month: 'Mayıs', income: 60000, expense: 22000 },
     { month: 'Haziran', income: 58000, expense: 19000 }
   ];
+
+  // Voice actions listener
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const intent = (e as CustomEvent).detail?.intent as { action?: string; parameters?: any };
+      if (!intent) return;
+      switch (intent.action) {
+        case 'FINANCIALS_TAB': {
+          const tab = intent.parameters?.tab as string | undefined;
+          if (tab) setActiveTab(tab);
+          break;
+        }
+        case 'FINANCIALS_TIME_RANGE': {
+          // Placeholder: switch to reports to reflect time range selection
+          setActiveTab('reports');
+          break;
+        }
+        case 'FINANCIALS_FILTER': {
+          // For demo, just switch to transactions tab and maybe highlight; real implementation would filter list
+          setActiveTab('transactions');
+          break;
+        }
+        case 'FINANCIALS_EXPORT': {
+          // Placeholder: could trigger download logic
+          // For now, simply alert
+          try { console.log('Finansal veriler dışa aktarılıyor...'); } catch {}
+          break;
+        }
+      }
+    };
+    window.addEventListener('financials-action', handler);
+    return () => window.removeEventListener('financials-action', handler);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -82,7 +166,7 @@ const FinancialManagement = () => {
               </p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <Calculator className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
@@ -159,17 +243,23 @@ const FinancialManagement = () => {
                         </span>
                         <div className="flex-1 mx-4">
                           <div className="flex items-center space-x-2">
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2" aria-label={`Gelir barı ${data.month}`}>
                               <div
                                 className="bg-green-500 h-2 rounded-full"
-                                style={{ width: `${(data.income / 70000) * 100}%` }}
-                              ></div>
+                                title={`Gelir: ₺${data.income.toLocaleString()}`}
+                                style={{ ['--w' as any]: `${(data.income / 70000) * 100}%` } as React.CSSProperties}
+                              >
+                                <div className="h-2 rounded-full" style={{ width: 'var(--w)' }} />
+                              </div>
                             </div>
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2" aria-label={`Gider barı ${data.month}`}>
                               <div
                                 className="bg-red-500 h-2 rounded-full"
-                                style={{ width: `${(data.expense / 70000) * 100}%` }}
-                              ></div>
+                                title={`Gider: ₺${data.expense.toLocaleString()}`}
+                                style={{ ['--w' as any]: `${(data.expense / 70000) * 100}%` } as React.CSSProperties}
+                              >
+                                <div className="h-2 rounded-full" style={{ width: 'var(--w)' }} />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -202,13 +292,13 @@ const FinancialManagement = () => {
                       Yeni İşlem Ekle
                     </p>
                   </button>
-                  <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                  <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors" title="Rapor indir" aria-label="Rapor indir">
                     <Download className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Rapor İndir
                     </p>
                   </button>
-                  <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                  <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors" title="Ödeme planla" aria-label="Ödeme planla">
                     <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Ödeme Planla
@@ -303,7 +393,7 @@ const FinancialManagement = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                          <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3" aria-label="İşlemi görüntüle" title="İşlemi görüntüle">
                             <Eye className="w-4 h-4" />
                           </button>
                         </td>
@@ -403,7 +493,7 @@ const FinancialManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   İşlem Türü
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" aria-label="İşlem türü seçimi" title="İşlem türü">
                   <option value="income">Gelir</option>
                   <option value="expense">Gider</option>
                 </select>
@@ -416,6 +506,7 @@ const FinancialManagement = () => {
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="İşlem açıklaması"
+                  title="İşlem açıklaması"
                 />
               </div>
               <div>
@@ -426,6 +517,7 @@ const FinancialManagement = () => {
                   type="number"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="0.00"
+                  title="Tutar"
                 />
               </div>
               <div>
@@ -435,6 +527,8 @@ const FinancialManagement = () => {
                 <input
                   type="date"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  aria-label="Tarih seçimi"
+                  title="Tarih"
                 />
               </div>
               <div className="flex gap-3 pt-4">

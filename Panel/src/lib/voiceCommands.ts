@@ -611,6 +611,24 @@ export const VOICE_COMMANDS: ExtendedVoiceCommand[] = [
     examples: ['Dikteyi kaydet', 'Notu kaydet', 'Metni kaydet']
   },
 
+  // ========== ÖZEL HEDEF DİKTE KOMUTLARI (ör. WhatsApp giriş kutusu) ==========
+  {
+    id: 'dictate_whatsapp',
+    category: 'DİKTE',
+    patterns: [
+      'whatsapp barına yaz',
+      'whatsapp mesaj yaz',
+      'whatsapp kutusuna yaz',
+      'mesaj kutusuna yaz',
+      "whatsapp'a yaz",
+      'whatsapp yazmaya başla'
+    ],
+    action: 'DICTATE_START',
+    parameters: ['whatsapp_input'],
+    description: 'WhatsApp mesaj kutusunda dikteyi başlat',
+    examples: ['WhatsApp barına yaz', 'Mesaj kutusuna yaz', "WhatsApp'a yaz"]
+  },
+
   // ========== SES SİSTEMİ KONTROL KOMUTLARI ==========
   {
     id: 'voice_start',

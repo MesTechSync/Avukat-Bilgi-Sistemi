@@ -8,6 +8,13 @@ export default function CaseManagement() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'amount'>('date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const [newCase, setNewCase] = useState({
     title: '',
@@ -20,6 +27,61 @@ export default function CaseManagement() {
     description: ''
   });
 
+  // Voice actions listener
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const intent = (e as CustomEvent).detail?.intent as { action?: string; parameters?: any };
+      if (!intent) return;
+      switch (intent.action) {
+        case 'CASES_NEW':
+          setShowAddModal(true);
+          break;
+        case 'CASES_SEARCH':
+          if (typeof intent.parameters?.query === 'string') setSearchTerm(intent.parameters.query);
+          break;
+        case 'CASES_FILTER_STATUS':
+          if (typeof intent.parameters?.status === 'string') setStatusFilter(intent.parameters.status);
+          break;
+        case 'CASES_FILTER_TYPE':
+          if (typeof intent.parameters?.case_type === 'string') setTypeFilter(intent.parameters.case_type);
+          break;
+        case 'CASES_FILTER_PRIORITY':
+          if (typeof intent.parameters?.priority === 'string') setPriorityFilter(intent.parameters.priority);
+          break;
+        case 'CASES_SORT': {
+          const by = intent.parameters?.by as 'date' | 'title' | 'amount' | undefined;
+          const dir = intent.parameters?.dir as 'asc' | 'desc' | undefined;
+          if (by) setSortBy(by);
+          if (dir) setSortDir(dir);
+          break;
+        }
+        case 'CASES_CLEAR_FILTERS':
+          setStatusFilter('');
+          setTypeFilter('');
+          setPriorityFilter('');
+          setSortBy('date');
+          setSortDir('desc');
+          setSearchTerm('');
+          setPage(1);
+          setSelectedIndex(null);
+          break;
+        case 'CASES_PAGE_NEXT':
+          setPage(p => p + 1);
+          break;
+        case 'CASES_PAGE_PREV':
+          setPage(p => Math.max(1, p - 1));
+          break;
+        case 'CASES_OPEN_INDEX': {
+          const idx = Number(intent.parameters?.index || 0);
+          if (idx > 0) setSelectedIndex(idx);
+          break;
+        }
+      }
+    };
+    window.addEventListener('cases-action', handler);
+    return () => window.removeEventListener('cases-action', handler);
+  }, []);
+
   const caseTypes = [
     'Ticari Hukuk', 'İş Hukuku', 'Aile Hukuku', 'Ceza Hukuku',
     'İdare Hukuku', 'Medeni Hukuk', 'Borçlar Hukuku', 'Miras Hukuku'
@@ -31,12 +93,30 @@ export default function CaseManagement() {
 
   const priorityOptions = ['Düşük', 'Orta', 'Yüksek', 'Acil'];
 
-  const filteredCases = cases.filter(case_ => {
-    const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         case_.case_type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || case_.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredCases = cases
+    .filter(case_ => {
+      const matchesSearch = case_.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           case_.case_type.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || case_.status === statusFilter;
+      const matchesType = !typeFilter || case_.case_type === typeFilter;
+      const matchesPriority = !priorityFilter || case_.priority === priorityFilter;
+      return matchesSearch && matchesStatus && matchesType && matchesPriority;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'date') {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortBy === 'title') {
+        cmp = a.title.localeCompare(b.title, 'tr');
+      } else {
+        cmp = (parseFloat(a.amount || '0') || 0) - (parseFloat(b.amount || '0') || 0);
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCases.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filteredCases.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleAddCase = async (e) => {
     e.preventDefault();
@@ -128,7 +208,7 @@ export default function CaseManagement() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Durum filtresi" aria-label="Durum filtresi"
           >
             <option value="">Tüm Durumlar</option>
             {statusOptions.map(status => (
@@ -140,12 +220,15 @@ export default function CaseManagement() {
 
       {/* Cases Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredCases.map((case_) => (
+        {pageItems.map((case_, idx) => (
           <div key={case_.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {case_.title}
+                  {selectedIndex === idx + 1 && (
+                    <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Seçili</span>
+                  )}
                 </h3>
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(case_.status)}`}>
@@ -157,15 +240,15 @@ export default function CaseManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Davayı görüntüle" aria-label="Davayı görüntüle">
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
+                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Davayı düzenle" aria-label="Davayı düzenle">
                   <Edit className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => deleteCase(case_.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors" title="Davayı sil" aria-label="Davayı sil"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -228,6 +311,15 @@ export default function CaseManagement() {
         </div>
       )}
 
+      {/* Pagination controls */}
+      {filteredCases.length > pageSize && (
+        <div className="flex items-center justify-center gap-3 pt-4">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1.5 rounded border dark:border-gray-600 disabled:opacity-50">Önceki</button>
+          <span className="text-sm text-gray-600 dark:text-gray-300">Sayfa {currentPage} / {totalPages}</span>
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded border dark:border-gray-600 disabled:opacity-50">Sonraki</button>
+        </div>
+      )}
+
       {/* Add Case Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -249,7 +341,7 @@ export default function CaseManagement() {
                     required
                     value={newCase.title}
                     onChange={(e) => setNewCase({...newCase, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Dava başlığı" title="Dava başlığı"
                   />
                 </div>
 
@@ -261,7 +353,7 @@ export default function CaseManagement() {
                     required
                     value={newCase.client_id}
                     onChange={(e) => setNewCase({...newCase, client_id: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
                   >
                     <option value="">Müvekkil Seçin</option>
                     {clients.map(client => (
@@ -280,7 +372,7 @@ export default function CaseManagement() {
                     required
                     value={newCase.case_type}
                     onChange={(e) => setNewCase({...newCase, case_type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava türü" aria-label="Dava türü"
                   >
                     <option value="">Dava Türü Seçin</option>
                     {caseTypes.map(type => (
@@ -296,7 +388,7 @@ export default function CaseManagement() {
                   <select
                     value={newCase.status}
                     onChange={(e) => setNewCase({...newCase, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava durumu" aria-label="Dava durumu"
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
@@ -312,7 +404,7 @@ export default function CaseManagement() {
                     type="date"
                     value={newCase.deadline}
                     onChange={(e) => setNewCase({...newCase, deadline: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Son tarih" aria-label="Son tarih"
                   />
                 </div>
 
@@ -323,7 +415,7 @@ export default function CaseManagement() {
                   <select
                     value={newCase.priority}
                     onChange={(e) => setNewCase({...newCase, priority: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Öncelik" aria-label="Öncelik"
                   >
                     {priorityOptions.map(priority => (
                       <option key={priority} value={priority}>{priority}</option>
@@ -339,7 +431,7 @@ export default function CaseManagement() {
                     type="text"
                     value={newCase.amount}
                     onChange={(e) => setNewCase({...newCase, amount: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0" title="Tutar"
                     placeholder="0"
                   />
                 </div>

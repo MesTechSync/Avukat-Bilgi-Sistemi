@@ -38,8 +38,12 @@ export default function AdvancedSearch() {
     keywords: []
   });
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchStats, setSearchStats] = useState({ total: 0, time: 0 });
+  const [sort, setSort] = useState<{ by: 'date' | 'relevance'; dir: 'asc' | 'desc' } | null>(null);
   const [showAllMevzuat, setShowAllMevzuat] = useState(false);
   // Tips panel state (expanded, more content at once)
   const [showTips, setShowTips] = useState(true);
@@ -199,11 +203,66 @@ export default function AdvancedSearch() {
     window.addEventListener('voice-search', handleVoiceSearch as EventListener);
     window.addEventListener('dictate-start', handleDictateStart);
     window.addEventListener('dictate-stop', handleDictateStop);
+    // Deep voice actions from App.tsx
+    const handleDeep = (e: Event) => {
+      const intent = (e as CustomEvent).detail?.intent as { action?: string; parameters?: any };
+      if (!intent) return;
+      switch (intent.action) {
+        case 'SEARCH_SET_MODE':
+          if (intent.parameters?.mode === 'ictihat' || intent.parameters?.mode === 'mevzuat') {
+            setMode(intent.parameters.mode);
+          }
+          break;
+        case 'SEARCH_SET_COURT':
+          if (typeof intent.parameters?.courtType === 'string') {
+            setFilters(prev => ({ ...prev, courtType: intent.parameters.courtType }));
+          }
+          break;
+        case 'SEARCH_SET_LEGAL_AREA':
+          if (typeof intent.parameters?.legalArea === 'string') {
+            setFilters(prev => ({ ...prev, legalArea: intent.parameters.legalArea }));
+          }
+          break;
+        case 'SEARCH_SET_DATE_RANGE':
+          if (typeof intent.parameters?.months === 'number') {
+            setQuickDateRange(intent.parameters.months);
+          }
+          break;
+        case 'SEARCH_TOGGLE_FILTERS':
+          setShowFilters(s => !s);
+          break;
+        case 'SEARCH_SORT':
+          if (intent.parameters?.by && intent.parameters?.dir) {
+            setSort({ by: intent.parameters.by, dir: intent.parameters.dir });
+            // Re-run search if we already have results
+            setTimeout(() => handleSearch(), 0);
+          }
+          break;
+        case 'SEARCH_RUN':
+          if (typeof intent.parameters?.query === 'string' && intent.parameters.query) setQuery(intent.parameters.query);
+          setPage(1);
+          setTimeout(() => handleSearch(), 0);
+          break;
+        case 'SEARCH_PAGE_NEXT':
+          setPage(p => p + 1);
+          break;
+        case 'SEARCH_PAGE_PREV':
+          setPage(p => Math.max(1, p - 1));
+          break;
+        case 'SEARCH_OPEN_INDEX': {
+          const idx = Number(intent.parameters?.index || 0);
+          if (idx > 0) setSelectedIndex(idx);
+          break;
+        }
+      }
+    };
+    window.addEventListener('advanced-search-action', handleDeep);
     
     return () => {
       window.removeEventListener('voice-search', handleVoiceSearch as EventListener);
       window.removeEventListener('dictate-start', handleDictateStart);
       window.removeEventListener('dictate-stop', handleDictateStop);
+      window.removeEventListener('advanced-search-action', handleDeep);
     };
   }, [isDictationSupported, isDictating, startDictation, stopDictation]);
 
@@ -240,7 +299,14 @@ export default function AdvancedSearch() {
         }));
 
         const t1 = performance.now();
-        setResults(mapped);
+        // Apply sort if requested
+        const sorted = [...mapped];
+        if (sort?.by === 'date') {
+          sorted.sort((a, b) => (new Date(a.decisionDate).getTime() - new Date(b.decisionDate).getTime()) * (sort.dir === 'asc' ? 1 : -1));
+        } else if (sort?.by === 'relevance') {
+          sorted.sort((a, b) => (a.relevanceScore - b.relevanceScore) * (sort.dir === 'asc' ? 1 : -1));
+        }
+        setResults(sorted);
         setSearchStats({ total: mapped.length, time: Number(((t1 - t0) / 1000).toFixed(2)) });
       } else {
         // Mevzuat search - now connected to real backend
@@ -273,7 +339,13 @@ export default function AdvancedSearch() {
         }));
 
         const t1 = performance.now();
-        setResults(mapped);
+        const sorted2 = [...mapped];
+        if (sort?.by === 'date') {
+          sorted2.sort((a, b) => (new Date(a.decisionDate).getTime() - new Date(b.decisionDate).getTime()) * (sort.dir === 'asc' ? 1 : -1));
+        } else if (sort?.by === 'relevance') {
+          sorted2.sort((a, b) => (a.relevanceScore - b.relevanceScore) * (sort.dir === 'asc' ? 1 : -1));
+        }
+        setResults(sorted2);
         setSearchStats({ total: mapped.length, time: Number(((t1 - t0) / 1000).toFixed(2)) });
       }
     } catch (err: any) {
@@ -916,8 +988,8 @@ export default function AdvancedSearch() {
                 </p>
               </div>
             ) : (
-              results.map((result) => (
-                <div key={result.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              results.slice((page - 1) * pageSize, page * pageSize).map((result, idx) => (
+                <div key={result.id} className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedIndex === idx + 1 ? 'ring-2 ring-blue-400 dark:ring-blue-500' : ''}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCourtTypeColor(result.courtType)}`}>
@@ -979,6 +1051,14 @@ export default function AdvancedSearch() {
               ))
             )}
           </div>
+          {/* Pagination */}
+          {!isSearching && results.length > pageSize && (
+            <div className="flex items-center justify-center gap-3 p-3 border-t border-gray-200 dark:border-gray-700">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded border dark:border-gray-600 disabled:opacity-50">Önceki</button>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Sayfa {page} / {Math.ceil(results.length / pageSize)}</span>
+              <button onClick={() => setPage(p => Math.min(Math.ceil(results.length / pageSize), p + 1))} disabled={page >= Math.ceil(results.length / pageSize)} className="px-3 py-1.5 rounded border dark:border-gray-600 disabled:opacity-50">Sonraki</button>
+            </div>
+          )}
         </div>
       )}
 

@@ -231,12 +231,38 @@ function WhatsAppIntegration() {
   };
   // Controlled input for message box
   const [messageText, setMessageText] = useState('');
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
   const handleSendClick = () => {
     const text = messageText.trim();
     if (!text) return;
     sendMessage(text);
     setMessageText('');
   };
+
+  // Focus message input on custom event from voice system
+  useEffect(() => {
+    const focusHandler = () => {
+      try { messageInputRef.current?.focus(); } catch {}
+    };
+    window.addEventListener('focus-whatsapp-input', focusHandler as any);
+    return () => window.removeEventListener('focus-whatsapp-input', focusHandler as any);
+  }, []);
+
+  // Append dictated text to WhatsApp message input when target matches
+  useEffect(() => {
+    const onDictation = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { transcript?: string };
+      if (!detail?.transcript) return;
+      // Optional: check a guiding flag in localStorage to ensure intended routing
+      // But simpler: if input is focused, accept dictated text
+      const isFocused = document.activeElement === messageInputRef.current;
+      if (isFocused) {
+        setMessageText(prev => (prev ? prev + ' ' : '') + detail.transcript);
+      }
+    };
+    window.addEventListener('voice-dictation', onDictation as any);
+    return () => window.removeEventListener('voice-dictation', onDictation as any);
+  }, []);
 
   // When selectedChat changes and connected, fetch messages
   useEffect(()=>{
@@ -389,6 +415,7 @@ function WhatsAppIntegration() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={handleMessageKeyDown}
+                ref={messageInputRef}
                 className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-gray-100"
               />
               <button onClick={handleSendClick} disabled={!messageText.trim()} aria-label="Mesaj Gönder" title="Mesaj Gönder" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">

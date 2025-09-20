@@ -99,6 +99,16 @@ function preprocessTranscript(raw: string): string {
 export function analyzeIntent(transcript: string): VoiceIntent {
   const transcriptNorm = preprocessTranscript(transcript);
   const tnorm = transcriptNorm.toLowerCase().trim();
+  // Helper: extract numeric index from phrases like "1. sonuç", "2 kayıt", "3. müvekkil", or just a number
+  const extractIndex = (s: string): number | null => {
+    if (/\bilk\b/.test(s)) return 1;
+    const m = s.match(/\b(\d{1,3})\b/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (!isNaN(n) && n > 0) return n;
+    }
+    return null;
+  };
   // Settings sub-navigation: "ayarlar sistem", "ayarlar güvenlik" etc.
   if (tnorm.includes('ayar')) {
     const tabMap: Record<string, string> = {
@@ -207,11 +217,172 @@ export function analyzeIntent(transcript: string): VoiceIntent {
   if (tnorm.includes('whatsapp destek') || tnorm.includes('whatsapp') || tnorm.includes('wp destek') || tnorm.includes('7/24 destek') || tnorm.includes('canlı destek')) {
     return { category: 'NAVIGASYON', action: 'NAV_WHATSAPP', parameters: {} };
   }
+  // Notebook LLM navigasyonu (çeşitli varyantlar)
+  if (tnorm.includes('notebook llm') || (tnorm.includes('notebook') && tnorm.includes('llm')) || tnorm.includes('ai notebook') || tnorm.includes('yapay zeka notebook') || tnorm.includes('ai defter')) {
+    return { category: 'NAVIGASYON', action: 'NAV_NOTEBOOK_LLM', parameters: {} };
+  }
   if (tnorm.includes('dosya dönüştürücü') || tnorm.includes('format dönüştür') || tnorm.includes('dosya çevir') || tnorm.includes('belge dönüştür')) {
     return { category: 'NAVIGASYON', action: 'NAV_FILE_CONVERTER', parameters: {} };
   }
   if (tnorm.includes('profil') || tnorm.includes('hesabım') || tnorm.includes('kullanıcı profili') || tnorm.includes('hesap bilgileri')) {
     return { category: 'NAVIGASYON', action: 'NAV_PROFILE', parameters: {} };
+  }
+
+  // ========== PAGE-SPECIFIC INTENTS (deep controls) ==========
+  // Appointments (Randevu) page
+  if (/(randevu|randevular|takvim|ajanda|duruşma|duruşmalar)/.test(tnorm)) {
+    // View switching
+    if (/(liste görünümü|liste|tablo)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_VIEW', parameters: { view: 'list' } };
+    if (/(takvim görünümü|takvim|calendar)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_VIEW', parameters: { view: 'calendar' } };
+    // New appointment
+    if (/(yeni randevu|randevu oluştur|randevu ekle)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_NEW', parameters: {} };
+    // Status filters
+    const statusMap: Record<string, string> = { 'planlandı': 'Planlandı', 'onaylandı': 'Onaylandı', 'beklemede': 'Beklemede', 'tamamlandı': 'Tamamlandı', 'iptal': 'İptal Edildi', 'iptal edildi': 'İptal Edildi' };
+    for (const k of Object.keys(statusMap)) if (tnorm.includes(k) && /(durum|filtre|filtrele)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_STATUS', parameters: { status: statusMap[k] } };
+  // Type filters (e.g., Duruşma, Keşif, Danışmanlık, Noterlik İşlemleri)
+  const typeKeys = ['duruşma', 'uzlaştırma', 'keşif', 'icra', 'noter', 'mahkeme', 'danışmanlık', 'konsültasyon', 'belge', 'imza'];
+  for (const t of typeKeys) if (tnorm.includes(t) && /(tür|tip|filtre|filtrele)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_TYPE', parameters: { type: t } };
+  // Priority filters
+  const prMap: Record<string, string> = { 'acil': 'acil', 'yüksek': 'yüksek', 'normal': 'normal', 'düşük': 'düşük' };
+  for (const p of Object.keys(prMap)) if (tnorm.includes(p) && /(öncelik|priority|filtre|filtrele)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_PRIORITY', parameters: { priority: prMap[p] } };
+    // Search in appointments
+    if (/\bara\b|arama yap|bul|sorgula/.test(tnorm)) {
+      const q = tnorm.replace(/^(randevu(lar)?\s*)?\b(ara|arama yap|bul|sorgula)\s+/, '').trim();
+      return { category: 'PAGE', action: 'APPOINTMENTS_SEARCH', parameters: { query: q } };
+    }
+    // Date range quick filters e.g. "bu hafta", "bu ay", "gelecek hafta", "geçen ay"
+    if (/(bu hafta)/.test(tnorm)) {
+      const now = new Date(); const start = new Date(now); start.setDate(now.getDate() - now.getDay()); const end = new Date(start); end.setDate(start.getDate() + 6);
+      return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_DATE_RANGE', parameters: { from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) } };
+    }
+    if (/(bu ay)/.test(tnorm)) {
+      const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), 1); const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_DATE_RANGE', parameters: { from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) } };
+    }
+    if (/(gelecek hafta|sonraki hafta)/.test(tnorm)) {
+      const now = new Date(); const start = new Date(now); start.setDate(now.getDate() + (7 - now.getDay())); const end = new Date(start); end.setDate(start.getDate() + 6);
+      return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_DATE_RANGE', parameters: { from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) } };
+    }
+    if (/(geçen ay)/.test(tnorm)) {
+      const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth() - 1, 1); const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { category: 'PAGE', action: 'APPOINTMENTS_FILTER_DATE_RANGE', parameters: { from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) } };
+    }
+    if (/(filtreleri temizle|filtreleri sıfırla|temizle)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_CLEAR_FILTERS', parameters: {} };
+    // Calendar navigation
+    if (/(sonraki ay|gelecek ay|ileri)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_CAL_NAV', parameters: { step: 'next' } };
+    if (/(önceki ay|geçen ay|geri)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_CAL_NAV', parameters: { step: 'prev' } };
+    if (/(bugün|bugune|bugune git)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_CAL_NAV', parameters: { step: 'today' } };
+    // Pagination for list view
+    if (/(sonraki sayfa|ileri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_PAGE_NEXT', parameters: {} };
+    if (/(önceki sayfa|geri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_PAGE_PREV', parameters: {} };
+    // Open/edit/delete by index (list view)
+    if (/(aç|göster|düzenle|sil)/.test(tnorm)) {
+      const idx = extractIndex(tnorm);
+      if (idx != null) {
+        if (/sil/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_DELETE_INDEX', parameters: { index: idx } };
+        if (/(düzenle|edit)/.test(tnorm)) return { category: 'PAGE', action: 'APPOINTMENTS_EDIT_INDEX', parameters: { index: idx } };
+        return { category: 'PAGE', action: 'APPOINTMENTS_OPEN_INDEX', parameters: { index: idx } };
+      }
+    }
+  }
+
+  // Advanced Search (İçtihat & Mevzuat)
+  if (/(içtihat|mevzuat|arama sayfası|hukuki arama|karar arama)/.test(tnorm)) {
+    // Mode switching
+    if (/(içtihat modu|içtihat ara)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_SET_MODE', parameters: { mode: 'ictihat' } };
+    if (/(mevzuat modu|mevzuat ara)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_SET_MODE', parameters: { mode: 'mevzuat' } };
+    // Court type
+    const ctMap: Record<string, string> = { yargıtay: 'yargitay', danıştay: 'danistay', 'bölge adliye': 'bam', istinaf: 'istinaf', aym: 'aym', sayıştay: 'sayistay', emsal: 'emsal', hukuk: 'hukuk' };
+    for (const k of Object.keys(ctMap)) if (tnorm.includes(k)) return { category: 'PAGE', action: 'SEARCH_SET_COURT', parameters: { courtType: ctMap[k] } };
+    // Legal area
+    if (/hukuk alanı/.test(tnorm)) {
+      const area = tnorm.split('hukuk alanı')[1]?.trim();
+      if (area) return { category: 'PAGE', action: 'SEARCH_SET_LEGAL_AREA', parameters: { legalArea: area } };
+    }
+    // Quick date ranges e.g., "son 6 ay"
+    const m = tnorm.match(/son\s+(\d{1,2})\s+ay/);
+    if (m) return { category: 'PAGE', action: 'SEARCH_SET_DATE_RANGE', parameters: { months: parseInt(m[1], 10) } };
+    if (/(filtreleri aç|filtreleri kapat|filtreleri göster|filtreleri gizle)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_TOGGLE_FILTERS', parameters: { toggle: true } };
+    // Sort
+    if (/(tarihe göre sırala|en yeni|en güncel|yeni önce)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_SORT', parameters: { by: 'date', dir: 'desc' } };
+    if (/(en eski|eskiye göre)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_SORT', parameters: { by: 'date', dir: 'asc' } };
+    if (/(alakaya göre|ilgili önce|relevans)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_SORT', parameters: { by: 'relevance', dir: 'desc' } };
+    // Pagination and open result by index
+    if (/(sonraki sayfa|ileri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_PAGE_NEXT', parameters: {} };
+    if (/(önceki sayfa|geri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'SEARCH_PAGE_PREV', parameters: {} };
+    if (/(sonuç|kayıt).*(aç|göster)/.test(tnorm) || /(aç|göster).*sonuç/.test(tnorm)) {
+      const idx = extractIndex(tnorm);
+      if (idx != null) return { category: 'PAGE', action: 'SEARCH_OPEN_INDEX', parameters: { index: idx } };
+    }
+    // Run search (query extracted)
+    if (/\bara\b|arama yap|sorgula|bul/.test(tnorm)) {
+      const q = tnorm.replace(/^(içtihat|mevzuat)?\s*(ara|arama yap|sorgula|bul)\s+/, '').trim();
+      return { category: 'PAGE', action: 'SEARCH_RUN', parameters: { query: q } };
+    }
+  }
+
+  // Financials
+  if (/(mali işler|finans|muhasebe|ödemeler|faturalar|tahsilat)/.test(tnorm)) {
+    if (/(genel bakış|overview)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_TAB', parameters: { tab: 'overview' } };
+    if (/(işlemler|transactions)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_TAB', parameters: { tab: 'transactions' } };
+    if (/(raporlar|reports)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_TAB', parameters: { tab: 'reports' } };
+    if (/(sadece gelir|gelirleri göster|gelir filtresi)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_FILTER', parameters: { type: 'income' } };
+    if (/(sadece gider|giderleri göster|gider filtresi)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_FILTER', parameters: { type: 'expense' } };
+    if (/(dışa aktar|indir|csv|excel)/.test(tnorm)) return { category: 'PAGE', action: 'FINANCIALS_EXPORT', parameters: {} };
+    if (/(bu ay|geçen ay|son 3 ay|son 6 ay)/.test(tnorm)) {
+      if (tnorm.includes('bu ay')) return { category: 'PAGE', action: 'FINANCIALS_TIME_RANGE', parameters: { months: 1, mode: 'this' } };
+      if (tnorm.includes('geçen ay')) return { category: 'PAGE', action: 'FINANCIALS_TIME_RANGE', parameters: { months: 1, mode: 'prev' } };
+      if (tnorm.includes('son 3 ay')) return { category: 'PAGE', action: 'FINANCIALS_TIME_RANGE', parameters: { months: 3, mode: 'last' } };
+      if (tnorm.includes('son 6 ay')) return { category: 'PAGE', action: 'FINANCIALS_TIME_RANGE', parameters: { months: 6, mode: 'last' } };
+    }
+  }
+
+  // Clients
+  if (/(müvekkil|müşteri|danışan)/.test(tnorm)) {
+    if (/(yeni müvekkil|müvekkil ekle|müşteri ekle|danışan ekle)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_NEW', parameters: {} };
+    if (/\bara\b|arama yap|bul|sorgula/.test(tnorm)) {
+      const q = tnorm.replace(/^(müvekkil|müşteri|danışan)?\s*(ara|arama yap|bul|sorgula)\s+/, '').trim();
+      return { category: 'PAGE', action: 'CLIENTS_SEARCH', parameters: { query: q } };
+    }
+    if (/(şirkete göre|firma|company)/.test(tnorm)) {
+      const company = tnorm.split(/şirkete göre|firma|company/)[1]?.trim() || '';
+      if (company) return { category: 'PAGE', action: 'CLIENTS_FILTER_COMPANY', parameters: { company } };
+    }
+    if (/(ada göre sırala|isme göre sırala)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_SORT', parameters: { by: 'name', dir: tnorm.includes('azalan') ? 'desc' : 'asc' } };
+    if (/(tarihe göre sırala)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_SORT', parameters: { by: 'date', dir: tnorm.includes('azalan') ? 'desc' : 'asc' } };
+    if (/(filtreleri temizle|filtreleri sıfırla)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_CLEAR_FILTERS', parameters: {} };
+    if (/(sonraki sayfa|ileri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_PAGE_NEXT', parameters: {} };
+    if (/(önceki sayfa|geri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'CLIENTS_PAGE_PREV', parameters: {} };
+    if (/(müvekkil|kayıt|kart|öğe|item).*(aç|göster|seç)/.test(tnorm) || /(aç|göster|seç).*müvekkil/.test(tnorm)) {
+      const idx = extractIndex(tnorm);
+      if (idx != null) return { category: 'PAGE', action: 'CLIENTS_OPEN_INDEX', parameters: { index: idx } };
+    }
+  }
+
+  // Cases
+  if (/(dava|dosya)/.test(tnorm)) {
+    if (/(yeni dava|dava oluştur|dosya aç)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_NEW', parameters: {} };
+    if (/\bara\b|arama yap|bul|sorgula/.test(tnorm)) {
+      const q = tnorm.replace(/^(dava|dosya)?\s*(ara|arama yap|bul|sorgula)\s+/, '').trim();
+      return { category: 'PAGE', action: 'CASES_SEARCH', parameters: { query: q } };
+    }
+    const sMap: Record<string, string> = { 'aktif': 'active', 'kapalı': 'closed', 'tamamlanan': 'closed', 'devam': 'active' };
+    for (const k of Object.keys(sMap)) if (tnorm.includes(k) && /(filtre|filtrele|durum)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_FILTER_STATUS', parameters: { status: sMap[k] } };
+    // Case type and priority filters
+    const typeWords: Record<string, string> = { ticari: 'Ticari Hukuk', 'iş': 'İş Hukuku', aile: 'Aile Hukuku', ceza: 'Ceza Hukuku', idare: 'İdare Hukuku', medeni: 'Medeni Hukuk', borçlar: 'Borçlar Hukuku', miras: 'Miras Hukuku' };
+    for (const k of Object.keys(typeWords)) if (tnorm.includes(k) && /(tür|tip|filtre|filtrele)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_FILTER_TYPE', parameters: { case_type: typeWords[k] } };
+    const prWords: Record<string, string> = { acil: 'Acil', yüksek: 'Yüksek', orta: 'Orta', düşük: 'Düşük' };
+    for (const k of Object.keys(prWords)) if (tnorm.includes(k) && /(öncelik|priority|filtre|filtrele)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_FILTER_PRIORITY', parameters: { priority: prWords[k] } };
+    if (/(tarihe göre sırala)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_SORT', parameters: { by: 'date', dir: tnorm.includes('azalan') ? 'desc' : 'asc' } };
+    if (/(başlığa göre sırala|isme göre sırala)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_SORT', parameters: { by: 'title', dir: tnorm.includes('azalan') ? 'desc' : 'asc' } };
+    if (/(tutara göre sırala)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_SORT', parameters: { by: 'amount', dir: tnorm.includes('artan') ? 'asc' : 'desc' } };
+    if (/(filtreleri temizle|filtreleri sıfırla)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_CLEAR_FILTERS', parameters: {} };
+    if (/(sonraki sayfa|ileri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_PAGE_NEXT', parameters: {} };
+    if (/(önceki sayfa|geri sayfa)/.test(tnorm)) return { category: 'PAGE', action: 'CASES_PAGE_PREV', parameters: {} };
+    if (/(dava|dosya|kayıt|kart|öğe|item).*(aç|göster|seç)/.test(tnorm) || /(aç|göster|seç).*(dava|dosya)/.test(tnorm)) {
+      const idx = extractIndex(tnorm);
+      if (idx != null) return { category: 'PAGE', action: 'CASES_OPEN_INDEX', parameters: { index: idx } };
+    }
   }
 
   const matched = matchCommand(transcript);
@@ -227,7 +398,8 @@ export function analyzeIntent(transcript: string): VoiceIntent {
       if (id === 'nav_cases') return { category: 'NAVIGASYON', action: 'NAV_CASES', parameters: {} };
       if (id === 'nav_clients') return { category: 'NAVIGASYON', action: 'NAV_CLIENTS', parameters: {} };
       if (id === 'nav_calendar' || id === 'nav_appointments') return { category: 'NAVIGASYON', action: 'NAV_APPOINTMENTS', parameters: {} };
-    if (id === 'nav_finance') return { category: 'NAVIGASYON', action: 'NAV_FINANCIALS', parameters: {} };
+      if (id === 'nav_finance') return { category: 'NAVIGASYON', action: 'NAV_FINANCIALS', parameters: {} };
+      if (id === 'nav_notebook_llm') return { category: 'NAVIGASYON', action: 'NAV_NOTEBOOK_LLM', parameters: {} };
       if (id === 'nav_settings') return { category: 'NAVIGASYON', action: 'NAV_SETTINGS', parameters: {} };
     }
   if (id === 'sys_theme_dark' || id === 'view_dark') return { category: 'GORUNUM', action: 'DARK_MODE', parameters: {} };
@@ -257,6 +429,13 @@ export function analyzeIntent(transcript: string): VoiceIntent {
       const act = map[page] || 'NAV_DASHBOARD';
       return { category: 'NAVIGASYON', action: act, parameters: {} };
     }
+        // Dictation target mappings
+        if (ext.action === 'DICTATE_START') {
+          if (id === 'dictate_whatsapp' || ext.parameters?.[0] === 'whatsapp_input') {
+            return { category: 'DİKTE', action: 'DICTATE_START', parameters: { target: 'whatsapp_input' } };
+          }
+          return { category: 'DİKTE', action: 'DICTATE_START', parameters: {} };
+        }
     if (ext.action?.startsWith?.('FILTER_')) {
       const page = ext.action.replace('FILTER_', '');
       return { category: 'LIST', action: 'FILTER', parameters: { page } };
@@ -321,6 +500,10 @@ export function analyzeIntent(transcript: string): VoiceIntent {
   }
 
   // Unknown command
+  // WhatsApp özel dikte tetikleyici (geniş kapsamlı yakalama)
+  if (tnorm.includes('whatsapp') && (tnorm.includes('yaz') || tnorm.includes('mesaj'))) {
+    return { category: 'DİKTE', action: 'DICTATE_START', parameters: { target: 'whatsapp_input' } };
+  }
   return { category: '', action: '', parameters: {} };
 }
 

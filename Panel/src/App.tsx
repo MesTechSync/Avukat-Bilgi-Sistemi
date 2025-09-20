@@ -11,10 +11,11 @@ import ContractGenerator from './components/ContractGenerator';
 import WhatsAppIntegration from './components/WhatsAppIntegration';
 import FileConverter from './components/FileConverter';
 import NotebookLLM from './components/NotebookLLM';
-import Dashboard from './components/Dashboard';
+import EnhancedDashboard from './components/EnhancedDashboard';
 import CaseManagement from './components/CaseManagement';
 import ClientManagement from './components/ClientManagement';
 import AppointmentManagement from './components/AppointmentManagement';
+import EnhancedAppointmentManagement from './components/EnhancedAppointmentManagement';
 import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
@@ -83,7 +84,7 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <EnhancedDashboard onNavigate={setActiveTab} />;
       
       case 'ai-chat':
         return <LegalAssistantChat />;
@@ -105,7 +106,7 @@ function App() {
       case 'clients':
         return <ClientManagement />;
       case 'appointments':
-        return <AppointmentManagement />;
+        return <EnhancedAppointmentManagement onNavigate={setActiveTab} />;
       case 'financials':
         return <FinancialManagement />;
       case 'settings':
@@ -113,7 +114,7 @@ function App() {
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard />;
+        return <EnhancedDashboard onNavigate={setActiveTab} />;
     }
   };
 
@@ -172,6 +173,15 @@ function App() {
           break;
         case 'NAV_SETTINGS':
           setActiveTab('settings');
+          // If a specific tab is requested (from analyzeIntent), notify Settings component
+          try {
+            const tab = (intent as any)?.parameters?.tab;
+            if (tab) {
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('settings-tab-change', { detail: { tab } }));
+              }, 100);
+            }
+          } catch {}
           break;
         case 'NAV_AI_ASSISTANT':
           setActiveTab('ai-chat');
@@ -200,6 +210,82 @@ function App() {
         case 'NAV_NOTEBOOK_LLM':
           setActiveTab('notebook-llm');
           break;
+        // Deep page actions: Appointments
+        case 'APPOINTMENTS_VIEW':
+        case 'APPOINTMENTS_NEW':
+        case 'APPOINTMENTS_FILTER_STATUS':
+        case 'APPOINTMENTS_FILTER_TYPE':
+        case 'APPOINTMENTS_FILTER_PRIORITY':
+        case 'APPOINTMENTS_FILTER_DATE_RANGE':
+        case 'APPOINTMENTS_CLEAR_FILTERS':
+        case 'APPOINTMENTS_SEARCH':
+        case 'APPOINTMENTS_CAL_NAV':
+        case 'APPOINTMENTS_PAGE_NEXT':
+        case 'APPOINTMENTS_PAGE_PREV':
+        case 'APPOINTMENTS_OPEN_INDEX':
+        case 'APPOINTMENTS_EDIT_INDEX':
+        case 'APPOINTMENTS_DELETE_INDEX':
+          setActiveTab('appointments');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('appointments-action', { detail: { intent } }));
+          }, 50);
+          break;
+        // Advanced Search actions
+        case 'SEARCH_SET_MODE':
+        case 'SEARCH_SET_COURT':
+        case 'SEARCH_SET_LEGAL_AREA':
+        case 'SEARCH_SET_DATE_RANGE':
+        case 'SEARCH_TOGGLE_FILTERS':
+        case 'SEARCH_SORT':
+        case 'SEARCH_RUN':
+        case 'SEARCH_PAGE_NEXT':
+        case 'SEARCH_PAGE_PREV':
+        case 'SEARCH_OPEN_INDEX':
+          setActiveTab('search');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('advanced-search-action', { detail: { intent } }));
+          }, 50);
+          break;
+        // Financials actions
+        case 'FINANCIALS_TAB':
+        case 'FINANCIALS_FILTER':
+        case 'FINANCIALS_EXPORT':
+        case 'FINANCIALS_TIME_RANGE':
+          setActiveTab('financials');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('financials-action', { detail: { intent } }));
+          }, 50);
+          break;
+        // Clients actions
+        case 'CLIENTS_NEW':
+        case 'CLIENTS_SEARCH':
+        case 'CLIENTS_FILTER_COMPANY':
+        case 'CLIENTS_SORT':
+        case 'CLIENTS_CLEAR_FILTERS':
+        case 'CLIENTS_PAGE_NEXT':
+        case 'CLIENTS_PAGE_PREV':
+        case 'CLIENTS_OPEN_INDEX':
+          setActiveTab('clients');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('clients-action', { detail: { intent } }));
+          }, 50);
+          break;
+        // Cases actions
+        case 'CASES_NEW':
+        case 'CASES_SEARCH':
+        case 'CASES_FILTER_STATUS':
+        case 'CASES_FILTER_TYPE':
+        case 'CASES_FILTER_PRIORITY':
+        case 'CASES_SORT':
+        case 'CASES_CLEAR_FILTERS':
+        case 'CASES_PAGE_NEXT':
+        case 'CASES_PAGE_PREV':
+        case 'CASES_OPEN_INDEX':
+          setActiveTab('cases');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('cases-action', { detail: { intent } }));
+          }, 50);
+          break;
         case 'SETTINGS_TAB':
           setActiveTab('settings');
           // Ayarlar alt menüsü için özel işlem
@@ -221,10 +307,21 @@ function App() {
             window.dispatchEvent(new CustomEvent('voice-command', { detail: { intent: intentCopy } }));
           }, 0);
           break;
-        case 'DICTATE_START':
-          // Dikte başlatma - tüm bileşenlerde dikte başlatılır
-          window.dispatchEvent(new CustomEvent('dictate-start'));
+        case 'DICTATE_START': {
+          // Dikte başlatma - hedefe göre yönlendir
+          const target = (intent as any)?.parameters?.target as string | undefined;
+          if (target === 'whatsapp_input') {
+            // WhatsApp mesaj alanına odaklan ve dikteyi başlat
+            if (activeTab !== 'whatsapp') setActiveTab('whatsapp');
+            setTimeout(() => {
+              try { window.dispatchEvent(new CustomEvent('focus-whatsapp-input')); } catch {}
+              try { window.dispatchEvent(new CustomEvent('dictate-start', { detail: { target: 'whatsapp_input' } })); } catch {}
+            }, 120);
+          } else {
+            window.dispatchEvent(new CustomEvent('dictate-start'));
+          }
           break;
+        }
         case 'DICTATE_STOP':
           // Dikte durdurma - tüm bileşenlerde dikte durdurulur
           window.dispatchEvent(new CustomEvent('dictate-stop'));
