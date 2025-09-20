@@ -3,6 +3,7 @@ import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Ca
 import { useSupabase } from '../hooks/useSupabase';
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
+import './FinancialManagement.css';
 
 interface FinancialManagementProps {
   onNavigate?: (tab: string) => void;
@@ -270,18 +271,16 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                               <div
                                 className="bg-green-500 h-2 rounded-full"
                                 title={`Gelir: ₺${data.income.toLocaleString()}`}
-                                style={{ ['--w' as any]: `${(data.income / 70000) * 100}%` } as React.CSSProperties}
                               >
-                                <div className="h-2 rounded-full" style={{ width: 'var(--w)' }} />
+                                <div className="h-2 rounded-full financial-bar" style={{ width: `${(data.income / 70000) * 100}%` }} />
                               </div>
                             </div>
                             <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2" aria-label={`Gider barı ${data.month}`}>
                               <div
                                 className="bg-red-500 h-2 rounded-full"
                                 title={`Gider: ₺${data.expense.toLocaleString()}`}
-                                style={{ ['--w' as any]: `${(data.expense / 70000) * 100}%` } as React.CSSProperties}
                               >
-                                <div className="h-2 rounded-full" style={{ width: 'var(--w)' }} />
+                                <div className="h-2 rounded-full financial-bar" style={{ width: `${(data.expense / 70000) * 100}%` }} />
                               </div>
                             </div>
                           </div>
