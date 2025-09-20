@@ -47,7 +47,6 @@ export default defineConfig(({ mode }) => {
       // Enterprise Backend Proxy Configuration
       proxy: {
         '/api': { target, changeOrigin: true },
-        '/health': { target, changeOrigin: true },
         '/wa': { target, changeOrigin: true },
         '/legal': { target, changeOrigin: true },
         '/ai': { target, changeOrigin: true },
