@@ -38,6 +38,7 @@ export default function ClientManagement({ onNavigate }: ClientManagementProps) 
       });
       setShowAddModal(false);
     } catch (error) {
+      alert('Müvekkil eklenirken hata: ' + (error?.message || error));
       console.error('Müvekkil eklenirken hata:', error);
     }
   };
