@@ -35,7 +35,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
     interimResults: true
   });
 
-  // Derive figures from financials if available; otherwise fall back to demo values
+  // Derive figures only from financials; demo fallback kaldırıldı
   const financialData = useMemo(() => {
     if (financials && financials.length > 0) {
       const nums = financials.map(f => ({
@@ -68,11 +68,11 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
       };
     }
     return {
-      totalRevenue: 125000,
-      totalExpenses: 45000,
-      netProfit: 80000,
-      pendingPayments: 25000,
-      monthlyGrowth: 12.5
+      totalRevenue: 0,
+      totalExpenses: 0,
+      netProfit: 0,
+      pendingPayments: 0,
+      monthlyGrowth: 0
     };
   }, [financials]);
 
@@ -87,22 +87,10 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
         status: 'completed' as const
       }));
     }
-    return [
-      { id: 1, type: 'income', description: 'Dava Ücreti - Ahmet Yılmaz', amount: 15000, date: '2024-01-15', status: 'completed' as const },
-      { id: 2, type: 'expense', description: 'Ofis Kirası', amount: 8000, date: '2024-01-14', status: 'completed' as const },
-      { id: 3, type: 'income', description: 'Danışmanlık ücreti', amount: 5000, date: '2024-01-13', status: 'pending' as const },
-      { id: 4, type: 'expense', description: 'Kırtasiye Giderleri', amount: 1200, date: '2024-01-12', status: 'completed' as const }
-    ];
+    return [];
   }, [financials]);
 
-  const monthlyData = [
-    { month: 'Ocak', income: 45000, expense: 15000 },
-    { month: 'Şubat', income: 52000, expense: 18000 },
-    { month: 'Mart', income: 48000, expense: 16000 },
-    { month: 'Nisan', income: 55000, expense: 20000 },
-    { month: 'Mayıs', income: 60000, expense: 22000 },
-    { month: 'Haziran', income: 58000, expense: 19000 }
-  ];
+  const monthlyData = [];
 
   // Voice actions listener
   React.useEffect(() => {
@@ -121,7 +109,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
           break;
         }
         case 'FINANCIALS_FILTER': {
-          // For demo, just switch to transactions tab and maybe highlight; real implementation would filter list
+          // Gerçek implementasyon: sadece gerçek verilerle çalışır
           setActiveTab('transactions');
           break;
         }
