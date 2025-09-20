@@ -533,7 +533,8 @@ function App() {
           }
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          
+          showBackButton={activeTab !== 'dashboard'}
+          onBack={() => setActiveTab('dashboard')}
           right={
             <>
               <HeaderVoiceControl />
