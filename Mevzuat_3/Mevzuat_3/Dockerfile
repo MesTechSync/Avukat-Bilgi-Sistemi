@@ -37,7 +37,7 @@ RUN pip install --upgrade pip \
 # Copy repository (only what we need at runtime)
 COPY Panel/ /app/Panel/
 COPY mevzuat-gov-scraper/ /app/mevzuat-gov-scraper/
-COPY Mevzuat-System/ /app/Mevzuat-System/
+
 
 # Copy built frontend from builder
 COPY --from=frontend-builder /app/Panel/dist/ /app/Panel/dist/
