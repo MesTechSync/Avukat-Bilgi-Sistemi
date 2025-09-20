@@ -6,23 +6,11 @@ import type { Case, Client, Appointment, Document, LegalResearch, Financial } fr
 const mockClients: Client[] = [
   {
     id: 1,
-    name: 'Mehmet Yılmaz',
-    email: 'mehmet@email.com',
-    phone: '0532 123 4567',
-    company: 'ABC Şirket',
-    address: 'İstanbul, Türkiye',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
+  // Demo veri kaldırıldı
   },
   {
     id: 2,
-    name: 'Ayşe Demir',
-    email: 'ayse@email.com',
-    phone: '0543 987 6543',
-    company: 'XYZ Ltd',
-    address: 'Ankara, Türkiye',
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z'
+  // Demo veri kaldırıldı
   },
   {
     id: 3,
