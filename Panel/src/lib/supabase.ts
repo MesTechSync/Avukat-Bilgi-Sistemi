@@ -16,9 +16,8 @@ async function testConnection() {
   }
 }
 
-if (import.meta.url.endsWith('src/lib/supabase.ts')) {
-  testConnection();
-}
+testConnection();
+export { testConnection };
 
 // Database Types
 export interface Case {
