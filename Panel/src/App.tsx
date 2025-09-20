@@ -39,30 +39,58 @@ function App() {
   // Backend health check state
   const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
-  const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number } | null>(null);
+  const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number; endpoint?: string } | null>(null);
+
+  const ENV_BACKEND = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
+  const normalizedEnv = (ENV_BACKEND || '').replace(/\/$/, '');
+
+  const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit & { timeoutMs?: number } = {}) => {
+    const { timeoutMs = 6000, ...rest } = init;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...rest, signal: controller.signal });
+    } finally {
+      clearTimeout(id);
+    }
+  };
 
   const checkBackend = async () => {
-    try {
-      setBackendStatus('checking');
-      const res = await fetch(`/health`, { headers: { 'Accept': 'application/json, text/plain' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        const data = await res.json();
-        setBackendInfo(data);
-      } else {
-        const text = await res.text();
-        if (text.trim().toLowerCase() === 'ok') {
-          setBackendInfo({ service: 'nginx', version: undefined, tools_count: undefined });
+    setBackendStatus('checking');
+    setBackendInfo(null);
+    const candidates: string[] = [];
+    if (normalizedEnv) candidates.push(`${normalizedEnv}/health`);
+    candidates.push('/api/health');
+    candidates.push('/health');
+
+    for (const endpoint of candidates) {
+      try {
+        const res = await fetchWithTimeout(endpoint, {
+          headers: { 'Accept': 'application/json, text/plain' },
+          credentials: 'same-origin',
+          timeoutMs: 6000
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const data = await res.json();
+          setBackendInfo({ ...data, endpoint });
         } else {
-          setBackendInfo(null);
+          const text = await res.text();
+          if (text.trim().toLowerCase() === 'ok') {
+            setBackendInfo({ service: 'nginx', version: undefined, tools_count: undefined, endpoint });
+          } else {
+            setBackendInfo({ service: undefined, version: undefined, tools_count: undefined, endpoint });
+          }
         }
+        setBackendStatus('ok');
+        return;
+      } catch (e) {
+        // try next
       }
-      setBackendStatus('ok');
-    } catch {
-      setBackendInfo(null);
-      setBackendStatus('error');
     }
+    setBackendInfo(null);
+    setBackendStatus('error');
   };
 
   const menuItems = [
@@ -560,7 +588,10 @@ function App() {
           {/* Backend status banner */}
           {backendStatus === 'error' && (
             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100 border border-red-200/50 dark:border-red-800/50">
-              Backend'e bağlanılamadı. Lütfen {backendUrl} adresini kontrol edin.
+              Backend'e bağlanılamadı. Lütfen backend adresini ve reverse proxy ayarlarını kontrol edin.
+              <div className="text-xs mt-1 opacity-80">
+                Denenen uç noktalar: {(import.meta as any).env?.VITE_BACKEND_URL ? ((import.meta as any).env?.VITE_BACKEND_URL.replace(/\/$/,'') + '/health, ') : ''}/api/health, /health
+              </div>
             </div>
           )}
           {backendStatus === 'ok' && backendInfo && (
