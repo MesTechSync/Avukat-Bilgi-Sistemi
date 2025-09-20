@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 20
       - name: Verify frontend build
-        working-directory: Panel
+        working-directory: Mevzuat_3/Mevzuat_3/Panel
         run: |
           npm ci
           npm run build
@@ -25,13 +25,14 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install backend deps
-        working-directory: Panel
+        working-directory: Mevzuat_3/Mevzuat_3/Panel
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Docker build
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: Mevzuat_3/Mevzuat_3
+          file: Mevzuat_3/Mevzuat_3/Dockerfile
           push: false
           tags: avukat-bilgi-sistemi:test
