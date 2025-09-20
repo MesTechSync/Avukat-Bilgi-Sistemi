@@ -182,10 +182,14 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">
-              +15.3%
-            </span>
-            <span className="text-gray-600 dark:text-gray-400 text-sm ml-2">bu ay</span>
+            {financialData.monthlyGrowth !== 0 && (
+              <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">
+                {financialData.monthlyGrowth > 0 ? `+${financialData.monthlyGrowth}%` : `${financialData.monthlyGrowth}%`}
+              </span>
+            )}
+            {financialData.monthlyGrowth !== 0 && (
+              <span className="text-gray-600 dark:text-gray-400 text-sm ml-2">bu ay</span>
+            )}
           </div>
         </div>
 
@@ -202,10 +206,14 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <span className="text-yellow-600 dark:text-yellow-400 text-sm font-medium">
-              5 bekleyen
-            </span>
-            <span className="text-gray-600 dark:text-gray-400 text-sm ml-2">ödeme</span>
+            {financialData.pendingPayments > 0 && (
+              <>
+                <span className="text-yellow-600 dark:text-yellow-400 text-sm font-medium">
+                  {financialData.pendingPayments} bekleyen
+                </span>
+                <span className="text-gray-600 dark:text-gray-400 text-sm ml-2">ödeme</span>
+              </>
+            )}
           </div>
         </div>
       </div>
