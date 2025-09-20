@@ -1,5 +1,5 @@
 param(
-  [int]$Port = 5175
+  [int]$Port = 7000
 )
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path

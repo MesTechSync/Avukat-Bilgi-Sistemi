@@ -5,20 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:7000": "vite --host 0.0.0.0 --port 7000 --strictPort",
+    "backend": "python panel_backend.py",
+    "start": "python panel_backend.py & npm run dev",
     "build": "vite build",
     "preview": "vite preview",
-    "preview:8000": "vite preview --host 0.0.0.0 --port 8000 --strictPort",
     "test": "vitest run --reporter=default",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:aichat": "node scripts/check-ai-chat-integrity.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
-    "dompurify": "^3.1.6",
     "fastest-levenshtein": "^1.0.16",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.1.0",
+    "react-syntax-highlighter": "^15.6.6"
   },
   "devDependencies": {
     "@testing-library/react": "^14.3.1",

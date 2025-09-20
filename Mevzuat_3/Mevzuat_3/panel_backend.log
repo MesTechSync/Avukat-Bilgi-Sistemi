@@ -1,0 +1,457 @@
+2025-09-19 20:44:07,054 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 20:44:07,055 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 20:44:07,056 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 20:44:07,056 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 20:44:07,056 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 20:44:07,056 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 20:44:37,013 - watchfiles.main - INFO - 3 changes detected
+2025-09-19 20:46:19,050 - panel_backend - INFO - Request ad1e4872-6c95-44a1-aaed-fbb4d76035d6 started: GET http://localhost:9000/health
+2025-09-19 20:46:19,051 - panel_backend - INFO - Request ad1e4872-6c95-44a1-aaed-fbb4d76035d6 completed in 0.78ms
+2025-09-19 20:47:12,287 - watchfiles.main - INFO - 1 change detected
+2025-09-19 20:47:28,239 - watchfiles.main - INFO - 3 changes detected
+2025-09-19 20:47:59,011 - watchfiles.main - INFO - 1 change detected
+2025-09-19 20:53:13,648 - watchfiles.main - INFO - 3 changes detected
+2025-09-19 20:53:39,074 - panel_backend - INFO - Request 86a5d0fd-7dc4-4a71-83e9-4364e0beea46 started: GET http://127.0.0.1:9000/health
+2025-09-19 20:53:39,076 - panel_backend - INFO - Request 86a5d0fd-7dc4-4a71-83e9-4364e0beea46 completed in 1.51ms
+2025-09-19 20:53:39,078 - panel_backend - INFO - Request 73f1094d-bafc-4b70-bfb3-f54f92e11d89 started: GET http://127.0.0.1:9000/health
+2025-09-19 20:53:39,079 - panel_backend - INFO - Request 73f1094d-bafc-4b70-bfb3-f54f92e11d89 completed in 1.02ms
+2025-09-19 20:53:39,109 - panel_backend - INFO - Request 2775c1d2-6e95-40ba-b9a4-ee4992d166da started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 20:53:39,110 - panel_backend - INFO - Request 2775c1d2-6e95-40ba-b9a4-ee4992d166da completed in 1.32ms
+2025-09-19 20:53:39,112 - panel_backend - INFO - Request 02f37187-6a2c-44db-940b-84dd6fc52844 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 20:53:39,113 - panel_backend - INFO - Request 02f37187-6a2c-44db-940b-84dd6fc52844 completed in 1.23ms
+2025-09-19 20:55:28,628 - panel_backend - INFO - Request 53bce269-2b98-4fa1-86a7-d0b093db13f5 started: POST http://localhost:9000/api/yargitay/search
+2025-09-19 20:55:28,629 - panel_backend - INFO - Request 53bce269-2b98-4fa1-86a7-d0b093db13f5 completed in 1.48ms
+2025-09-19 20:55:35,729 - panel_backend - INFO - Request a95935b1-b11a-47a2-976c-01a7f1d9df36 started: POST http://localhost:9000/api/yargitay/search
+2025-09-19 20:55:35,731 - panel_backend - INFO - Request a95935b1-b11a-47a2-976c-01a7f1d9df36 completed in 1.27ms
+2025-09-19 20:56:09,672 - panel_backend - INFO - Request 42f0d8a8-bc6e-41f9-a390-37917370b828 started: POST http://localhost:9000/api/yargitay/search
+2025-09-19 20:56:09,673 - panel_backend - INFO - Request 42f0d8a8-bc6e-41f9-a390-37917370b828 completed in 1.26ms
+2025-09-19 20:56:17,004 - panel_backend - INFO - Request 6fd887f0-b094-4c12-af29-6351076959cb started: GET http://localhost:9000/api/databases
+2025-09-19 20:56:17,005 - panel_backend - INFO - Request 6fd887f0-b094-4c12-af29-6351076959cb completed in 1.05ms
+2025-09-19 21:03:03,726 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:04:32,566 - panel_backend - INFO - Request ce02b033-d58f-4a91-9813-9657d7451526 started: GET http://localhost:9000/docs
+2025-09-19 21:04:32,567 - panel_backend - INFO - Request ce02b033-d58f-4a91-9813-9657d7451526 completed in 0.79ms
+2025-09-19 21:04:32,836 - panel_backend - INFO - Request 702c8309-3fe7-4d94-80b8-4f62b8c44a90 started: GET http://localhost:9000/openapi.json
+2025-09-19 21:04:32,853 - panel_backend - INFO - Request 702c8309-3fe7-4d94-80b8-4f62b8c44a90 completed in 17.08ms
+2025-09-19 21:04:39,171 - panel_backend - INFO - Request 3bc0110d-1065-481b-8e82-f6a5e670f3ae started: GET http://127.0.0.1:9000/health
+2025-09-19 21:04:39,172 - panel_backend - INFO - Request 3bc0110d-1065-481b-8e82-f6a5e670f3ae completed in 0.79ms
+2025-09-19 21:04:41,925 - panel_backend - INFO - Request 6c6da6c5-2490-4bd6-8eeb-610dd9fff758 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:04:41,926 - panel_backend - INFO - Request 6c6da6c5-2490-4bd6-8eeb-610dd9fff758 completed in 0.81ms
+2025-09-19 21:04:42,774 - panel_backend - INFO - Request 23230fc0-5cff-4612-b5ae-e6053a34b9fa started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:04:42,775 - panel_backend - INFO - Request 23230fc0-5cff-4612-b5ae-e6053a34b9fa completed in 0.87ms
+2025-09-19 21:04:55,445 - panel_backend - INFO - Request d35f12f3-5b5a-4003-90d5-800cd5d298d4 started: GET http://localhost:9000/
+2025-09-19 21:04:55,445 - panel_backend - INFO - Request d35f12f3-5b5a-4003-90d5-800cd5d298d4 completed in 0.90ms
+2025-09-19 21:15:55,984 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:16:14,090 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:16:35,583 - watchfiles.main - INFO - 3 changes detected
+2025-09-19 21:17:08,025 - panel_backend - INFO - Request a370fb28-0cad-43fb-a8c0-d4a37f922484 started: GET http://localhost:9000/docs
+2025-09-19 21:17:08,026 - panel_backend - INFO - Request a370fb28-0cad-43fb-a8c0-d4a37f922484 completed in 0.77ms
+2025-09-19 21:17:51,637 - panel_backend - INFO - Request a2dd3172-053f-40b3-8183-4f430b13aa80 started: GET http://localhost:9000/api/yargitay/search
+2025-09-19 21:17:51,638 - panel_backend - INFO - Request a2dd3172-053f-40b3-8183-4f430b13aa80 completed in 0.89ms
+2025-09-19 21:18:12,342 - panel_backend - INFO - Request 32ff33fe-d286-49c9-b4ab-fc130a44c457 started: GET http://localhost:9000/api/yargitay/search
+2025-09-19 21:18:12,343 - panel_backend - INFO - Request 32ff33fe-d286-49c9-b4ab-fc130a44c457 completed in 0.52ms
+2025-09-19 21:22:01,685 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:22:17,956 - panel_backend - INFO - Request 4efedfa7-bd00-4775-ba4d-2ae7d3e0052a started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:22:17,957 - panel_backend - INFO - Request 4efedfa7-bd00-4775-ba4d-2ae7d3e0052a completed in 1.10ms
+2025-09-19 21:23:52,154 - watchfiles.main - INFO - 3 changes detected
+2025-09-19 21:23:52,512 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:52,877 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:53,231 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:53,595 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:54,159 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:55,223 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:23:56,289 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:03,002 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:11,160 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:19,377 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:27,378 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:37,724 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:45,841 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:24:53,795 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:01,862 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:11,663 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:14,097 - panel_backend - INFO - Request 9a6b5a18-3c37-4156-8662-a13c4ba698b7 started: GET http://localhost:9000/
+2025-09-19 21:25:14,097 - panel_backend - INFO - Request 9a6b5a18-3c37-4156-8662-a13c4ba698b7 completed in 1.02ms
+2025-09-19 21:25:16,892 - panel_backend - INFO - Request 21e59f48-b22f-4e18-abba-d5a0fb4c0de9 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:25:16,893 - panel_backend - INFO - Request 21e59f48-b22f-4e18-abba-d5a0fb4c0de9 completed in 1.30ms
+2025-09-19 21:25:18,896 - panel_backend - INFO - Request d22ca9ed-63e7-422c-b0ce-085e06c60888 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:25:18,897 - panel_backend - INFO - Request d22ca9ed-63e7-422c-b0ce-085e06c60888 completed in 1.10ms
+2025-09-19 21:25:20,617 - panel_backend - INFO - Request cf603c96-acb9-4049-85d1-f7c3fcfa82b6 started: GET http://localhost:9000/docs
+2025-09-19 21:25:20,617 - panel_backend - INFO - Request cf603c96-acb9-4049-85d1-f7c3fcfa82b6 completed in 0.89ms
+2025-09-19 21:25:20,837 - panel_backend - INFO - Request 03216524-63cb-4652-bf49-4a3a44ded525 started: GET http://localhost:9000/openapi.json
+2025-09-19 21:25:20,838 - panel_backend - INFO - Request 03216524-63cb-4652-bf49-4a3a44ded525 completed in 1.16ms
+2025-09-19 21:25:23,908 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:24,958 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:26,463 - panel_backend - INFO - Request 96a255fa-45c1-40c6-83bd-d02b1112acef started: GET http://localhost:9000/api/yargitay/search
+2025-09-19 21:25:26,463 - panel_backend - INFO - Request 96a255fa-45c1-40c6-83bd-d02b1112acef completed in 0.61ms
+2025-09-19 21:25:33,025 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:38,311 - panel_backend - INFO - Request 3d52e2b3-0408-421f-bc18-43122e429654 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:25:38,312 - panel_backend - INFO - Request 3d52e2b3-0408-421f-bc18-43122e429654 completed in 0.98ms
+2025-09-19 21:25:38,314 - panel_backend - INFO - Request 4bf4bd8b-4fdf-4bb4-95e2-1b9e810ceb8b started: GET http://127.0.0.1:9000/health
+2025-09-19 21:25:38,315 - panel_backend - INFO - Request 4bf4bd8b-4fdf-4bb4-95e2-1b9e810ceb8b completed in 1.18ms
+2025-09-19 21:25:38,343 - panel_backend - INFO - Request 308cf370-c6da-4cc2-822a-a38d2366313b started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:25:38,344 - panel_backend - INFO - Request 308cf370-c6da-4cc2-822a-a38d2366313b completed in 1.04ms
+2025-09-19 21:25:38,347 - panel_backend - INFO - Request dc241a34-7c54-4184-a869-52ca62f14d2c started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:25:38,349 - panel_backend - INFO - Request dc241a34-7c54-4184-a869-52ca62f14d2c completed in 1.28ms
+2025-09-19 21:25:40,850 - panel_backend - INFO - Request 1521f0c1-2ce2-4491-8acc-093871cd770c started: POST http://127.0.0.1:9000/api/yargitay/search
+2025-09-19 21:25:40,854 - panel_backend - INFO - Request 1521f0c1-2ce2-4491-8acc-093871cd770c completed in 4.60ms
+2025-09-19 21:25:44,234 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:25:54,778 - panel_backend - INFO - Request 35a4ce28-5bb9-4672-8b2f-5a368167ed78 started: POST http://127.0.0.1:9000/api/yargitay/search
+2025-09-19 21:25:54,781 - panel_backend - INFO - Request 35a4ce28-5bb9-4672-8b2f-5a368167ed78 completed in 3.61ms
+2025-09-19 21:25:54,866 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:00,525 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:09,798 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:17,797 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:24,453 - panel_backend - INFO - Request 6d6538a4-d372-46ee-80f6-fb1927ce3fbb started: GET http://127.0.0.1:9000/health
+2025-09-19 21:26:24,454 - panel_backend - INFO - Request 6d6538a4-d372-46ee-80f6-fb1927ce3fbb completed in 1.19ms
+2025-09-19 21:26:24,457 - panel_backend - INFO - Request 93fb3229-5f43-4647-bac5-461e03bc0cdc started: GET http://127.0.0.1:9000/health
+2025-09-19 21:26:24,458 - panel_backend - INFO - Request 93fb3229-5f43-4647-bac5-461e03bc0cdc completed in 1.13ms
+2025-09-19 21:26:24,471 - panel_backend - INFO - Request c2f44858-171c-46c1-a3a5-b097a3940f94 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:26:24,472 - panel_backend - INFO - Request c2f44858-171c-46c1-a3a5-b097a3940f94 completed in 1.57ms
+2025-09-19 21:26:24,475 - panel_backend - INFO - Request 5e16cb55-3987-4488-a02f-05feaa5753cd started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:26:24,476 - panel_backend - INFO - Request 5e16cb55-3987-4488-a02f-05feaa5753cd completed in 1.26ms
+2025-09-19 21:26:27,222 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:29,968 - panel_backend - INFO - Request 040c74c9-6427-4f75-a89b-b498c6d7716e started: POST http://127.0.0.1:9000/api/yargitay/search
+2025-09-19 21:26:29,969 - panel_backend - INFO - Request 040c74c9-6427-4f75-a89b-b498c6d7716e completed in 1.55ms
+2025-09-19 21:26:36,395 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:46,369 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:26:54,772 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:02,781 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:11,131 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:19,870 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:27,224 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:35,480 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:42,387 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:51,527 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:27:58,136 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:04,428 - panel_backend - INFO - Request 88b4f41d-f50b-47b7-a127-df96ebbc0b97 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:28:04,429 - panel_backend - INFO - Request 88b4f41d-f50b-47b7-a127-df96ebbc0b97 completed in 0.99ms
+2025-09-19 21:28:04,432 - panel_backend - INFO - Request 6c585b11-4e8c-4f39-8199-c05c997ff194 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:28:04,433 - panel_backend - INFO - Request 6c585b11-4e8c-4f39-8199-c05c997ff194 completed in 0.95ms
+2025-09-19 21:28:04,460 - panel_backend - INFO - Request 936b8a3d-d1ba-4a68-aff0-f79f5c390f83 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:28:04,461 - panel_backend - INFO - Request 936b8a3d-d1ba-4a68-aff0-f79f5c390f83 completed in 1.09ms
+2025-09-19 21:28:04,463 - panel_backend - INFO - Request 11c52880-1d3d-43db-af9f-57adb6fb19e1 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:28:04,464 - panel_backend - INFO - Request 11c52880-1d3d-43db-af9f-57adb6fb19e1 completed in 1.26ms
+2025-09-19 21:28:04,844 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:12,024 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:21,040 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:26,111 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:32,302 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:38,152 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:44,710 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:28:51,154 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:00,373 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:11,567 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:11,630 - panel_backend - INFO - Request 321ca50c-9d87-40fc-8385-ae1d9311750d started: POST http://127.0.0.1:9000/api/yargitay/search
+2025-09-19 21:29:11,631 - panel_backend - INFO - Request 321ca50c-9d87-40fc-8385-ae1d9311750d completed in 1.45ms
+2025-09-19 21:29:18,172 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:25,258 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:31,859 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:38,455 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:45,411 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:52,057 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:29:59,474 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:06,561 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:12,754 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:19,623 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:26,525 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:33,325 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:39,774 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:50,984 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:30:57,289 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:06,213 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:13,263 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:19,775 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:26,859 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:33,559 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:40,209 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:47,157 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:31:53,959 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:00,676 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:07,996 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:16,875 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:24,597 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:33,796 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:34,223 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:34,587 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:34,937 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:35,298 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:44,018 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:51,437 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:51,801 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:32:52,161 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:00,752 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:01,671 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:02,182 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:11,362 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:11,726 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:12,084 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:21,613 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:29,517 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:38,773 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:39,993 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:33:57,280 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:05,187 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:14,092 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:23,443 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:31,502 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:39,355 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:47,959 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:34:58,888 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:05,217 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:13,071 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:21,994 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:30,824 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:39,304 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:47,406 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:35:55,517 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:04,343 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:12,405 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:21,049 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:30,509 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:39,075 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:47,539 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:47,890 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:56,000 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:36:56,629 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:05,092 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:13,255 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:21,307 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:29,708 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:38,110 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:46,577 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:37:54,689 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:02,807 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:11,057 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:19,358 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:27,461 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:36,179 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:44,326 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:38:54,332 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:02,995 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:11,461 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:19,919 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:20,903 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:29,613 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:37,979 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:46,455 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:39:55,114 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:03,328 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:11,593 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:19,659 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:28,116 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:43,772 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:51,474 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:40:59,475 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:41:07,122 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:41:15,149 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:41:23,460 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:41:34,043 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:41:44,105 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:41:44,245 - panel_backend - INFO - Shutting down Panel Backend...
+2025-09-19 21:41:44,747 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:41:45,919 - watchfiles.main - INFO - 7 changes detected
+2025-09-19 21:41:45,920 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 21:41:45,921 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 21:41:45,921 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 21:41:45,921 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 21:41:45,922 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 21:41:45,922 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 21:41:54,782 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:04,751 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:19,337 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:25,645 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:32,653 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:40,584 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:47,588 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:42:55,942 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:03,541 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:12,299 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:21,217 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:30,435 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:30,897 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:40,710 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:43:54,144 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:05,282 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:17,688 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:44:17,900 - panel_backend - INFO - Shutting down Panel Backend...
+2025-09-19 21:44:18,366 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:19,422 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 21:44:19,422 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 21:44:19,423 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 21:44:19,423 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 21:44:19,423 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 21:44:19,424 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 21:44:19,437 - watchfiles.main - INFO - 7 changes detected
+2025-09-19 21:44:40,509 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:46,147 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:46,801 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:44:54,173 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:45:05,106 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:45:10,293 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:45:18,703 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:45:40,199 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:45:49,804 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:00,176 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:09,702 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:10,463 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:19,012 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:27,973 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:36,585 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:45,000 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:46:53,467 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:02,533 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:10,581 - watchfiles.main - INFO - 1 change detected
+2025-09-19 21:47:10,752 - panel_backend - INFO - Shutting down Panel Backend...
+2025-09-19 21:47:11,232 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:11,596 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:12,234 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 21:47:12,235 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 21:47:12,235 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 21:47:12,236 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 21:47:12,236 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 21:47:12,236 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 21:47:12,303 - watchfiles.main - INFO - 7 changes detected
+2025-09-19 21:47:20,459 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:27,556 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:40,546 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:42,312 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:42,967 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:50,093 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:47:57,996 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:05,898 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:14,200 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:23,171 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:31,485 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:41,007 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:48:52,477 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:49:03,839 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:49:15,895 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:49:29,102 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:49:34,114 - panel_backend - INFO - Request da175e65-0922-4db9-941a-e8a8f7eaacb8 started: GET http://localhost:9000/docs
+2025-09-19 21:49:34,115 - panel_backend - INFO - Request da175e65-0922-4db9-941a-e8a8f7eaacb8 completed in 0.91ms
+2025-09-19 21:49:34,281 - panel_backend - INFO - Request 1664ab34-cde1-4058-a9e5-ece50e03f550 started: GET http://localhost:9000/openapi.json
+2025-09-19 21:49:34,292 - panel_backend - INFO - Request 1664ab34-cde1-4058-a9e5-ece50e03f550 completed in 10.76ms
+2025-09-19 21:49:38,967 - panel_backend - INFO - Request db827562-95e2-463a-8f49-c376202ee4a7 started: GET http://localhost:9000/docs
+2025-09-19 21:49:38,968 - panel_backend - INFO - Request db827562-95e2-463a-8f49-c376202ee4a7 completed in 0.79ms
+2025-09-19 21:49:39,024 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:49:39,055 - panel_backend - INFO - Request 65b724ad-d565-4fc5-a2bb-0dc7ad988547 started: GET http://localhost:9000/openapi.json
+2025-09-19 21:49:39,056 - panel_backend - INFO - Request 65b724ad-d565-4fc5-a2bb-0dc7ad988547 completed in 0.70ms
+2025-09-19 21:49:48,551 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:07,134 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:15,989 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:26,168 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:37,107 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:46,980 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:50:53,481 - panel_backend - INFO - Request 434f63b7-2c07-4000-99f1-bb942574c986 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:50:53,483 - panel_backend - INFO - Request 434f63b7-2c07-4000-99f1-bb942574c986 completed in 1.37ms
+2025-09-19 21:50:53,485 - panel_backend - INFO - Request ec460199-da2b-4c34-85eb-80a8d87c2051 started: GET http://127.0.0.1:9000/health
+2025-09-19 21:50:53,487 - panel_backend - INFO - Request ec460199-da2b-4c34-85eb-80a8d87c2051 completed in 1.66ms
+2025-09-19 21:50:53,502 - panel_backend - INFO - Request 164c0c28-e696-447d-bb9b-8c54cad247ec started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:50:53,504 - panel_backend - INFO - Request 164c0c28-e696-447d-bb9b-8c54cad247ec completed in 1.53ms
+2025-09-19 21:50:53,508 - panel_backend - INFO - Request 611a0c38-0665-4485-8632-26b997d02b99 started: GET http://127.0.0.1:9000/api/databases
+2025-09-19 21:50:53,509 - panel_backend - INFO - Request 611a0c38-0665-4485-8632-26b997d02b99 completed in 1.76ms
+2025-09-19 21:50:56,749 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:06,414 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:15,141 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:24,881 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:33,993 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:43,409 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:51:51,868 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:00,373 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:08,540 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:20,349 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:20,759 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:30,127 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:40,551 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:52:49,964 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:00,889 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:10,413 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:19,782 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:29,606 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:42,796 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:53:50,198 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:00,012 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:09,243 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:18,762 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:27,930 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:37,012 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:47,940 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:54:57,001 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:06,384 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:15,618 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:24,948 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:37,100 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:44,367 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:55:55,593 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:56:04,915 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:56:14,002 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:56:23,332 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:56:42,548 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:56:51,931 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:02,322 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:11,683 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:21,217 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:30,181 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:40,014 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:48,715 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:57:57,386 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:07,053 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:15,807 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:24,313 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:32,978 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:41,848 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:50,626 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:58:59,533 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:08,860 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:17,923 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:26,627 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:27,986 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:37,451 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:38,015 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:47,097 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 21:59:56,572 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:05,784 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:15,555 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:25,488 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:35,508 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:37,079 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:00:47,556 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:01,200 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:10,741 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:21,377 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:30,703 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:39,475 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:47,983 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:01:58,220 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:07,087 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:15,614 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:24,974 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:33,485 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:41,750 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:49,613 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:02:58,675 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:09,754 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:19,271 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:28,695 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:37,607 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:46,723 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:03:55,750 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:04:05,171 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:04:14,385 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:04:23,403 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:04:33,223 - watchfiles.main - INFO - 2 changes detected
+2025-09-19 22:04:46,465 - watchfiles.main - INFO - 1 change detected
+2025-09-19 22:30:33,416 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 22:30:33,450 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 22:30:33,450 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 22:30:33,451 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 22:30:33,451 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 22:30:33,451 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 22:30:48,495 - panel_backend - INFO - Shutting down Panel Backend...
+2025-09-19 22:30:58,217 - panel_backend - INFO - Starting Panel Legal Research Backend...
+2025-09-19 22:30:58,217 - panel_backend - INFO - Architecture: Opus-recommended Enterprise Pattern
+2025-09-19 22:30:58,217 - panel_backend - INFO - Features: Circuit Breaker + Auto-Recovery + Fault Tolerance
+2025-09-19 22:30:58,217 - panel_backend - INFO - Access: http://localhost:9000
+2025-09-19 22:30:58,218 - panel_backend - INFO - Docs: http://localhost:9000/docs
+2025-09-19 22:30:58,218 - panel_backend - INFO - Health: http://localhost:9000/health
+2025-09-19 22:31:11,921 - panel_backend - INFO - Shutting down Panel Backend...

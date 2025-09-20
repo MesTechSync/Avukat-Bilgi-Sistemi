@@ -1,0 +1,11 @@
+# Derived from the upstream README; versions are not pinned here.
+scrapy
+selenium
+beautifulsoup4
+customtkinter
+webdriver_manager
+spacy
+tqdm
+git-lfs
+requests
+numpy
