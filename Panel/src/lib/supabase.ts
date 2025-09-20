@@ -1,8 +1,12 @@
 // ...existing code...
 import { createClient } from '@supabase/supabase-js';
 
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(`Supabase environment variables eksik!\nVITE_SUPABASE_URL: ${supabaseUrl}\nVITE_SUPABASE_ANON_KEY: ${supabaseAnonKey}`);
+}
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseAnonKey);
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
