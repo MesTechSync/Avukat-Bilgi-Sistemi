@@ -1,6 +1,10 @@
 
-[setup]
-nixPkgs = ["nodejs_20", "npm-9_x"]
+nixPkgs = [
+	'nodejs_20',
+	'npm-9_x',
+	'curl',
+	'wget'
+]
 nixPkgs = [
 	'nodejs_20',
 	'npm-9_x',
