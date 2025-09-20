@@ -1,38 +1,50 @@
-FROM node:20-alpine AS builder
+# Multi-stage build: build React (Vite) frontend, then run FastAPI backend serving built SPA
+
+# 1) Frontend build stage
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+
+# Copy only Panel assets necessary for build
+COPY Panel/package*.json Panel/
+WORKDIR /app/Panel
+RUN npm ci
+
+COPY Panel/ /app/Panel/
+RUN npm run build
+
+# 2) Python backend stage
+FROM python:3.11-slim AS backend
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Copy package files
-COPY Panel/package.json Panel/package-lock.json* ./
-RUN npm install
+# System deps for lxml (and build tools in case wheels not available)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       build-essential \
+       libxml2-dev \
+       libxslt1-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy source code
-COPY Panel/ ./
+# Copy Python requirements and install
+COPY Panel/requirements.txt /app/Panel/requirements.txt
+RUN pip install --upgrade pip \
+    && pip install -r /app/Panel/requirements.txt
 
-# Build with environment variables (if provided)
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_BACKEND_URL
-ARG VITE_COMMIT_SHA
-ARG VITE_BUILD_TIME
+# Copy repository (only what we need at runtime)
+COPY Panel/ /app/Panel/
+COPY mevzuat-gov-scraper/ /app/mevzuat-gov-scraper/
 
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-ENV VITE_COMMIT_SHA=$VITE_COMMIT_SHA
-ENV VITE_BUILD_TIME=$VITE_BUILD_TIME
 
-RUN npm run build
+# Copy built frontend from builder
+COPY --from=frontend-builder /app/Panel/dist/ /app/Panel/dist/
 
-# Production stage
-FROM nginx:alpine
+EXPOSE 9001
 
-# Copy built files
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app/Panel
 
-# Create nginx configuration (with simple health endpoint)
-ARG SERVER_NAME=localhost
-RUN echo "server {\n  listen 80;\n  server_name ${SERVER_NAME} localhost;\n  location / {\n    root /usr/share/nginx/html;\n    index index.html;\n    try_files $uri $uri/ /index.html;\n  }\n  location = /health {\n    add_header Content-Type text/plain;\n    return 200 'ok';\n  }\n  add_header X-Frame-Options 'SAMEORIGIN' always;\n  add_header X-Content-Type-Options 'nosniff' always;\n  add_header X-XSS-Protection '1; mode=block' always;\n}" > /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Default command: run uvicorn with the production app
+CMD ["uvicorn", "panel_backend_production:app", "--host", "0.0.0.0", "--port", "9001", "--workers", "1"]

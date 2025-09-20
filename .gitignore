@@ -1,0 +1,24 @@
+# Common ignores
+node_modules/
+dist/
+.DS_Store
+*.log
+*.err.log
+__pycache__/
+.venv/
+
+# Local env files
+.env
+.env.*.local
+.env.local
+
+# Build artifacts
+coverage/
+.vite/
+
+# VSCode
+.vscode/*
+!.vscode/tasks.json
+
+# Embedded git repos (do not add nested repositories)
+Mevzuat-System/

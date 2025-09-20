@@ -1,70 +1,46 @@
-# 🏛️ Avukat Bilgi Sistemi (Enterprise)
+# Avukat Bilgi Sistemi (Yeni Sistem)
 
-Hukuk büroları ve kurumsal hukuk ekipleri için geliştirilen, modern bir React + Vite tabanlı ön yüz ve Supabase arka hizmetleri ile çalışan bir yönetim platformu.
+Bu depo yeni sistem için güncellenmiştir. Eski mimari/alt sürümler dikkate alınmaz. Panel (Vite + React) önyüzünü derler ve FastAPI (Uvicorn) arka uç ile aynı konteynerde servis eder.
 
-## 🚀 Özellikler
+## Hızlı Başlangıç
 
-- React 18 + Vite 7 ile hızlı ve modern SPA
-- TailwindCSS ile responsive arayüz
-- Supabase (Auth, Postgres, Storage, Realtime) entegrasyonu
-- Docker + Nginx prod mimarisi, Coolify ile otomatik deploy
-- Domain tabanlı erişim ve güvenlik başlıkları
+- Yerel geliştirme (Windows):
+  - Backend (port 9001): `cd Panel` → `python panel_backend_production.py`
+  - Frontend dev (port 5175): `cd Panel` → `npm run dev`
+  - Sağlık: `http://localhost:9001/health/production`
+  - Docs: `http://localhost:9001/docs`
 
-## 🏗️ Mimarî
+- Docker ile (prod benzeri):
+  1. Proje kökünde: `docker build -t avukat-bilgi-sistemi:latest .`
+  2. Çalıştır: `docker run -p 9001:9001 avukat-bilgi-sistemi:latest`
+  3. Test: `http://localhost:9001/` (SPA), `http://localhost:9001/docs`
 
-İstemci (React SPA) -> Nginx (statik servis) -> Supabase REST/Auth/Realtime -> PostgreSQL
+## Mimarinin Özeti
 
-## 📦 Proje Yapısı
+- Frontend: Vite + React + TypeScript → build çıktısı `Panel/dist`
+- Backend: FastAPI (`Panel/panel_backend_production.py`), Uvicorn 9001
+- Statik servis: Backend, `Panel/dist` içeriğini `/` altında yayınlar
+- Ek klasörler: `mevzuat-gov-scraper`, `Mevzuat-System`
 
-- `Panel/` React/Vite ön yüz uygulaması
-- `Dockerfile` Production imajı (Node 20 build, Nginx serve)
-- `nixpacks.toml` Nixpacks yapılandırması (alternatif build)
-- `package.json` Kök yönlendirici scriptler
+Detaylı mimari için `docs/ARCHITECTURE.md` dosyasına bakınız.
 
-## 🔧 Kurulum (Local)
+## Coolify Üzerinden Dağıtım
 
-1) Gereksinimler: Node.js 20+, npm 10+, Git
-2) Klonla ve kur:
-	- `cd Panel`
-	- `npm install`
-	- `.env.example` dosyasını `.env` olarak kopyalayın ve değerleri doldurun
-3) Çalıştır: `npm run dev`
+- Domain: <https://avukat-bilgi-sistemi.hidlightmedya.tr/>
+- Deploy stratejisi: Dockerfile ile tek imajta frontend build + backend servis
+- Coolify ayarları için `docs/DEPLOY_COOLIFY.md` dosyasına bakınız.
 
-## 🔐 Environment Variables
+## Bağımlılıklar
 
-- `VITE_SUPABASE_URL` (zorunlu)
-- `VITE_SUPABASE_ANON_KEY` (zorunlu)
-- `VITE_BACKEND_URL` (opsiyonel)
+- Python: `Panel/requirements.txt`
+- Node: `Panel/package.json`
 
-`Panel/.env.example` içinde örnekler mevcut.
+## Sağlık ve Gözlem
 
-## 🌐 Deployment (Coolify)
+- Health endpoint: `/health/production`
+- Stats endpoint: `/api/stats/production`
+- Loglar (Windows yerel): `Panel/panel_backend.prod.log` ve `.err.log`
 
-- Branch: `main`
-- Build: Dockerfile (önerilir) veya Nixpacks
-- Node: 20.x
-- Ortam değişkenlerini Coolify Environment bölümüne ekleyin
-- Domain izinleri için:
-	- `vite.config.ts` içinde `preview.allowedHosts` listesinde domain mevcut
-	- Nginx `server_name` Dockerfile’da yapılandırıldı
+## Lisans
 
-## 🧪 Test & Sağlık Kontrolleri
-
-- Build doğrulama: `cd Panel && npm run build`
-- Smoke test: sitenin ana sayfası 200 dönmeli
-- Health endpoint (opsiyonel backend varsa): `/health`
-
-## 🛡️ Güvenlik
-
-- HTTPS zorunlu (Coolify/Proxy ile)
-- Nginx security headers
-- Supabase RLS politikaları önerilir
-
-## 📜 Lisans
-
-MIT
-
-## 🤖 AI Komut Şablonu
-
-- Hukuk odaklı şablon: `AI_COMMAND_TEMPLATE_v3.md`
-
+Proje lisansı ve telif hakları; bu deponun lisans dosyasında (varsa) belirtilir.

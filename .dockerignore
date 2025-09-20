@@ -1,21 +1,25 @@
-# Git & VCS
+# Node artifacts
+Panel/node_modules
+Panel/.vite
+Panel/dist
+
+# Python
+**/__pycache__
+**/*.pyc
+
+# VCS
 .git
 .gitignore
 
-# Node
-node_modules
-npm-debug.log*
-
-# Panel app artifacts
-Panel/node_modules
-Panel/dist
-Panel/.vite
-Panel/.env*
-
-# OS/editor
-.DS_Store
+# IDE
 .vscode
+.idea
 
-# Supabase local configs
-Panel/supabase/.temp
-Panel/supabase/.branches
+# Logs
+**/*.log
+
+# Temp
+.DS_Store
+Thumbs.db
+tmp/
+temp/
