@@ -19,8 +19,9 @@ import EnhancedAppointmentManagement from './components/EnhancedAppointmentManag
 import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
-import VoiceControl from './components/VoiceControl';
+import HeaderVoiceControl from './components/HeaderVoiceControl';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
+import Header from './components/layout/Header';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -477,103 +478,82 @@ function App() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl shadow-lg border-b border-white/20 dark:border-gray-700/50 px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left side - Menu button and title */}
-            <div className="flex items-center gap-4">
-              {/* Menu button - always visible on mobile, hidden on desktop when sidebar is open */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                title={sidebarOpen ? 'Menüyü daralt' : 'Menüyü genişlet'}
-                className={`p-2 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm ${
-                  sidebarOpen ? 'hidden lg:block' : 'block'
-                }`}
+        {/* Top Bar - unified header */}
+        <Header
+          title={menuItems.find(item => item.id === activeTab)?.label || 'Ana Sayfa'}
+          subtitle={
+            activeTab === 'dashboard' ? 'Hukuki süreçlerinizi yönetin ve takip edin' :
+            activeTab === 'search' ? 'Milyonlarca karar arasından arama yapın' :
+            activeTab === 'petition-writer' ? 'AI ile profesyonel dilekçeler oluşturun' :
+            activeTab === 'contract-generator' ? 'Hukuki sözleşmelerinizi hazırlayın' :
+            activeTab === 'whatsapp' ? '7/24 WhatsApp üzerinden hukuki destek' :
+            activeTab === 'cases' ? 'Davalarınızı organize edin ve takip edin' :
+            activeTab === 'clients' ? 'Müvekkillerinizi yönetin' :
+            activeTab === 'appointments' ? 'Randevularınızı planlayın' :
+            activeTab === 'financials' ? 'Mali durumunuzu takip edin' :
+            activeTab === 'settings' ? 'Sistem ayarlarınızı yapılandırın' :
+            activeTab === 'profile' ? 'Profil bilgilerinizi yönetin' : undefined
+          }
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          
+          right={
+            <>
+              <HeaderVoiceControl />
+              <button 
+                onClick={toggleTheme}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
+                title={darkMode ? 'Gündüz moduna geç' : 'Gece moduna geç'}
+                aria-label="Tema değiştir"
               >
-                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-            
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {menuItems.find(item => item.id === activeTab)?.label || 'Ana Sayfa'}
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {activeTab === 'dashboard' && 'Hukuki süreçlerinizi yönetin ve takip edin'}
-                  
-                  {activeTab === 'search' && 'Milyonlarca karar arasından arama yapın'}
-                  {activeTab === 'petition-writer' && 'AI ile profesyonel dilekçeler oluşturun'}
-                  {activeTab === 'contract-generator' && 'Hukuki sözleşmelerinizi hazırlayın'}
-                  {activeTab === 'whatsapp' && '7/24 WhatsApp üzerinden hukuki destek'}
-                  {activeTab === 'cases' && 'Davalarınızı organize edin ve takip edin'}
-                  {activeTab === 'clients' && 'Müvekkillerinizi yönetin'}
-                  {activeTab === 'appointments' && 'Randevularınızı planlayın'}
-                  {activeTab === 'financials' && 'Mali durumunuzu takip edin'}
-                  {activeTab === 'settings' && 'Sistem ayarlarınızı yapılandırın'}
-                  {activeTab === 'profile' && 'Profil bilgilerinizi yönetin'}
-                </p>
-              </div>
-            </div>
-            
-            {/* Right side - Actions and user */}
-            <div className="flex items-center gap-4">
-              {/* Quick Actions */}
-              <div className="flex items-center gap-2">
-                {/* Theme Toggle Button */}
-                <button 
-                  onClick={toggleTheme}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
-                  title={darkMode ? 'Gündüz moduna geç' : 'Gece moduna geç'}
-                >
-                  {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                </button>
-                
-                <button title="Bildirimler" className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm">
-                  <Bell className="w-5 h-5" />
-                </button>
-                {/* Backend Health Button */}
-                <button
-                  onClick={checkBackend}
-                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/50 transition-all duration-200 backdrop-blur-sm shadow-sm"
-                  title={`Backend: ${backendUrl}`}
-                >
-                  {backendStatus === 'checking' ? (
-                    <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                  ) : backendStatus === 'ok' ? (
-                    <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  ) : backendStatus === 'error' ? (
-                    <X className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  ) : (
-                    <div className="w-2 h-2 rounded-full bg-gray-400" />
-                  )}
-                  <span className="hidden sm:inline text-sm text-gray-700 dark:text-gray-300">
-                    {backendStatus === 'ok' ? 'Backend: Sağlıklı' : backendStatus === 'error' ? 'Backend: Hata' : backendStatus === 'checking' ? 'Backend: Kontrol ediliyor' : 'Backend'}
-                  </span>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('settings')}
-                  title="Ayarlar"
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
-                >
-                  <SettingsIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* User Profile */}
+              <button title="Bildirimler" aria-label="Bildirimler" className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm">
+                <Bell className="w-5 h-5" />
+              </button>
+              <button
+                onClick={checkBackend}
+                className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/50 transition-all duration-200 backdrop-blur-sm shadow-sm"
+                title={`Backend: ${backendUrl}`}
+                aria-label="Backend sağlığını kontrol et"
+              >
+                {backendStatus === 'checking' ? (
+                  <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
+                ) : backendStatus === 'ok' ? (
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                ) : backendStatus === 'error' ? (
+                  <X className="w-4 h-4 text-red-600 dark:text-red-400" />
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-gray-400" />
+                )}
+                <span className="hidden sm:inline text-sm text-gray-700 dark:text-gray-300">
+                  {backendStatus === 'ok' ? 'Backend: Sağlıklı' : backendStatus === 'error' ? 'Backend: Hata' : backendStatus === 'checking' ? 'Backend: Kontrol ediliyor' : 'Backend'}
+                </span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('settings')}
+                title="Ayarlar"
+                aria-label="Ayarlar"
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
+              >
+                <SettingsIcon className="w-5 h-5" />
+              </button>
               <button 
                 onClick={() => setActiveTab('profile')}
                 className="flex items-center gap-3 pl-4 border-l border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg p-2 transition-all duration-200"
+                aria-label="Profil"
               >
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
                   <span className="text-white text-sm font-medium">MZA</span>
                 </div>
-                <div className="text-sm">
+                <div className="hidden md:block text-sm">
                   <p className="font-medium text-gray-900 dark:text-white">Av. Mehmet Zeki Alagöz</p>
                   <p className="text-gray-500 dark:text-gray-400">Premium Üye</p>
                 </div>
               </button>
-            </div>
-          </div>
-        </header>
+            </>
+          }
+        />
 
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
@@ -589,8 +569,8 @@ function App() {
             </div>
           )}
           {renderContent()}
-          {/* Floating voice control */}
-          <VoiceControl />
+          {/* Floating voice control (hidden to keep UI clean) */}
+          {/* <VoiceControl /> */}
         </main>
       </div>
     </div>

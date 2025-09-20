@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, DollarSign, AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import { useDictation } from '../hooks/useDictation';
+import DictationButton from './DictationButton';
 
 export default function CaseManagement() {
   const { cases, clients, addCase, updateCase, deleteCase, loading } = useSupabase();
@@ -25,6 +27,26 @@ export default function CaseManagement() {
     priority: 'Orta',
     amount: '',
     description: ''
+  });
+
+  // Dikte: Açıklama alanı için
+  const {
+    isListening: isDictatingDesc,
+    isSupported: isDictationSupported,
+    interimText: descInterimText,
+    startDictation: startDescDictation,
+    stopDictation: stopDescDictation,
+    clearDictation: clearDescDictation
+  } = useDictation({
+    onResult: (text) => {
+      setNewCase(prev => ({
+        ...prev,
+        description: (prev.description || '') + (prev.description ? ' ' : '') + text
+      }));
+      clearDescDictation();
+    },
+    continuous: false,
+    interimResults: true
   });
 
   // Voice actions listener
@@ -176,12 +198,8 @@ export default function CaseManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dava Yönetimi
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Davalarınızı organize edin ve takip edin
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dava Yönetimi</h2>
+          <p className="text-gray-600 dark:text-gray-400">Davalarınızı organize edin ve takip edin</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -438,9 +456,20 @@ export default function CaseManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Açıklama
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Açıklama
+                  </label>
+                  <DictationButton
+                    isListening={isDictatingDesc}
+                    isSupported={isDictationSupported}
+                    onStart={startDescDictation}
+                    onStop={stopDescDictation}
+                    size="sm"
+                    className="ml-2"
+                    title="Açıklamaya dikte et"
+                  />
+                </div>
                 <textarea
                   rows={3}
                   value={newCase.description}
@@ -448,6 +477,9 @@ export default function CaseManagement() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Dava hakkında detaylar..."
                 />
+                {isDictatingDesc && descInterimText && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{descInterimText}</div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-4">

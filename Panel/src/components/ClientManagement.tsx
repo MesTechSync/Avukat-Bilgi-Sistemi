@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Search, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Calendar } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import { useDictation } from '../hooks/useDictation';
+import DictationButton from './DictationButton';
 
 export default function ClientManagement() {
   const { clients, addClient, updateClient, deleteClient, loading } = useSupabase();
@@ -20,6 +22,26 @@ export default function ClientManagement() {
     phone: '',
     company: '',
     address: ''
+  });
+
+  // Dikte: Adres alanı için
+  const {
+    isListening: isDictatingAddress,
+    isSupported: isDictationSupported,
+    interimText: addressInterimText,
+    startDictation: startAddressDictation,
+    stopDictation: stopAddressDictation,
+    clearDictation: clearAddressDictation
+  } = useDictation({
+    onResult: (text) => {
+      setNewClient(prev => ({
+        ...prev,
+        address: (prev.address || '') + (prev.address ? ' ' : '') + text
+      }));
+      clearAddressDictation();
+    },
+    continuous: false,
+    interimResults: true
   });
 
   // Voice actions listener
@@ -331,15 +353,29 @@ export default function ClientManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Adres
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Adres
+                  </label>
+                  <DictationButton
+                    isListening={isDictatingAddress}
+                    isSupported={isDictationSupported}
+                    onStart={startAddressDictation}
+                    onStop={stopAddressDictation}
+                    size="sm"
+                    className="ml-2"
+                    title="Adrese dikte et"
+                  />
+                </div>
                 <textarea
                   rows={3}
                   value={newClient.address}
                   onChange={(e) => setNewClient({...newClient, address: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Adres" title="Adres"
                 />
+                {isDictatingAddress && addressInterimText && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{addressInterimText}</div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-4">

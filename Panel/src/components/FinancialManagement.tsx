@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import { useDictation } from '../hooks/useDictation';
+import DictationButton from './DictationButton';
 
 interface FinancialManagementProps {
   onNavigate?: (tab: string) => void;
@@ -10,6 +12,27 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { financials } = useSupabase();
+  const [newTx, setNewTx] = useState({ type: 'income', description: '', amount: '', date: '' });
+
+  // Dikte: Yeni işlem açıklaması için
+  const {
+    isListening: isDictatingTxDesc,
+    isSupported: isDictationSupported,
+    interimText: txInterimText,
+    startDictation: startTxDictation,
+    stopDictation: stopTxDictation,
+    clearDictation: clearTxDictation
+  } = useDictation({
+    onResult: (text) => {
+      setNewTx(prev => ({
+        ...prev,
+        description: (prev.description || '') + (prev.description ? ' ' : '') + text
+      }));
+      clearTxDictation();
+    },
+    continuous: false,
+    interimResults: true
+  });
 
   // Derive figures from financials if available; otherwise fall back to demo values
   const financialData = useMemo(() => {
@@ -493,21 +516,37 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   İşlem Türü
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" aria-label="İşlem türü seçimi" title="İşlem türü">
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" aria-label="İşlem türü seçimi" title="İşlem türü" value={newTx.type} onChange={(e)=>setNewTx(prev=>({...prev, type: e.target.value}))}>
                   <option value="income">Gelir</option>
                   <option value="expense">Gider</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Açıklama
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Açıklama
+                  </label>
+                  <DictationButton
+                    isListening={isDictatingTxDesc}
+                    isSupported={isDictationSupported}
+                    onStart={startTxDictation}
+                    onStop={stopTxDictation}
+                    size="sm"
+                    className="ml-2"
+                    title="Açıklamaya dikte et"
+                  />
+                </div>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="İşlem açıklaması"
                   title="İşlem açıklaması"
+                  value={newTx.description}
+                  onChange={(e)=>setNewTx(prev=>({...prev, description: e.target.value}))}
                 />
+                {isDictatingTxDesc && txInterimText && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{txInterimText}</div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -518,6 +557,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="0.00"
                   title="Tutar"
+                  value={newTx.amount}
+                  onChange={(e)=>setNewTx(prev=>({...prev, amount: e.target.value}))}
                 />
               </div>
               <div>
@@ -529,6 +570,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   aria-label="Tarih seçimi"
                   title="Tarih"
+                  value={newTx.date}
+                  onChange={(e)=>setNewTx(prev=>({...prev, date: e.target.value}))}
                 />
               </div>
               <div className="flex gap-3 pt-4">

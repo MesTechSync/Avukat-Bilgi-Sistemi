@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, ChevronLeft, ChevronRight, Clock, Edit, Trash2, Search, Filter, User, MapPin, Bell, Phone, Mail } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Calendar, ChevronLeft, ChevronRight, Clock, Edit, Trash2, Search, Filter, User, MapPin, Bell, Phone, Mail, X } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
+import { useDictation } from '../hooks/useDictation';
+import DictationButton from './DictationButton';
 
 interface EnhancedAppointment {
   id: number;
@@ -60,6 +62,8 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<EnhancedAppointment | null>(null);
+  // Keep a ref to the primary trigger button to restore focus after closing modal with ESC
+  const newAppointmentButtonRef = useRef<HTMLButtonElement | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -69,6 +73,27 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Dikte: Notlar alanına eklemek için hook
+  const {
+    isListening: isDictatingNotes,
+    isSupported: isDictationSupported,
+    interimText: notesInterimText,
+    startDictation: startNotesDictation,
+    stopDictation: stopNotesDictation,
+    clearDictation: clearNotesDictation
+  } = useDictation({
+    onResult: (text) => {
+      setFormData(prev => ({
+        ...prev,
+        notes: (prev.notes || '') + (prev.notes ? ' ' : '') + text
+      }));
+      clearNotesDictation();
+    },
+    continuous: false,
+    interimResults: true
+  });
 
   // Form state keeps select values as strings to work smoothly with HTML inputs
   interface AppointmentFormData {
@@ -374,6 +399,46 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
     return () => window.removeEventListener('appointments-action', handler);
   }, []);
 
+  // Close modal with Escape key and restore focus to the trigger
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsModalOpen(false);
+        setEditingAppointment(null);
+        resetForm();
+        // Restore focus to the main trigger if available
+        setTimeout(() => newAppointmentButtonRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isModalOpen]);
+
+  // Focus first input and lock body scroll while modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      // lock scroll
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      // focus first input
+      setTimeout(() => firstInputRef.current?.focus(), 0);
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isModalOpen]);
+
+  // Centralized modal close helper
+  const closeModal = React.useCallback(() => {
+    setIsModalOpen(false);
+    setEditingAppointment(null);
+    resetForm();
+    setTimeout(() => newAppointmentButtonRef.current?.focus(), 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 p-4">
       <div className="max-w-7xl mx-auto">
@@ -414,6 +479,7 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                 </button>
               </div>
               <button
+                ref={newAppointmentButtonRef}
                 onClick={() => setIsModalOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-1"
               >
@@ -488,12 +554,24 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     return (
                       <div
                         key={day}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => {
                           setFormData(prev => ({
                             ...prev,
                             date: new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0]
                           }));
                           setIsModalOpen(true);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setFormData(prev => ({
+                              ...prev,
+                              date: new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0]
+                            }));
+                            setIsModalOpen(true);
+                          }
                         }}
                         className={`p-2 h-28 border-2 rounded-xl cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
                           isToday 
@@ -508,9 +586,18 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                           {dayAppointments.slice(0, 2).map(apt => (
                             <div
                               key={apt.id}
+                              role="button"
+                              tabIndex={0}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 editAppointment(apt);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  editAppointment(apt);
+                                }
                               }}
                               className={`text-xs p-1 rounded-lg truncate cursor-pointer hover:shadow-md transition-all ${getStatusColor(apt.status)}`}
                             >
@@ -767,22 +854,45 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
 
         {/* Enhanced Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="appointment-modal-title"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                closeModal();
+              }
+            }}
+          >
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/50">
               <div className="p-6">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-                  {editingAppointment ? 'Randevu Düzenle' : 'Yeni Randevu'}
-                </h2>
+                <div className="flex items-start justify-between mb-6">
+                  <h2 id="appointment-modal-title" className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {editingAppointment ? 'Randevu Düzenle' : 'Yeni Randevu'}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
+                    aria-label="Kapat"
+                    title="Kapat"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="apt-title" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Randevu Başlığı *
                       </label>
                       <input
+                        id="apt-title"
                         type="text"
                         required
+                        ref={firstInputRef}
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         className="w-full px-4 py-3 bg-white/70 dark:bg-gray-700/70 border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -791,10 +901,11 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="apt-clientName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Müvekkil Adı *
                       </label>
                       <input
+                        id="apt-clientName"
                         type="text"
                         required
                         value={formData.clientName}
@@ -832,10 +943,11 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="apt-type" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Randevu Türü *
                       </label>
                       <select
+                        id="apt-type"
                         required
                         value={formData.type}
                         onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
@@ -867,10 +979,11 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="apt-date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Tarih *
                       </label>
                       <input
+                        id="apt-date"
                         type="date"
                         required
                         value={formData.date}
@@ -882,10 +995,11 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="apt-time" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Saat *
                       </label>
                       <input
+                        id="apt-time"
                         type="time"
                         required
                         value={formData.time}
@@ -964,9 +1078,20 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Notlar
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Notlar
+                      </label>
+                      <DictationButton
+                        isListening={isDictatingNotes}
+                        isSupported={isDictationSupported}
+                        onStart={startNotesDictation}
+                        onStop={stopNotesDictation}
+                        size="sm"
+                        className="ml-2"
+                        title="Notlara dikte et"
+                      />
+                    </div>
                     <textarea
                       rows={4}
                       value={formData.notes}
@@ -974,16 +1099,17 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                       className="w-full px-4 py-3 bg-white/70 dark:bg-gray-700/70 border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Ek notlar, özel istekler, hatırlatmalar..."
                     />
+                    {isDictatingNotes && notesInterimText && (
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">
+                        {notesInterimText}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-end gap-3 pt-6">
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setEditingAppointment(null);
-                        resetForm();
-                      }}
+                      onClick={closeModal}
                       className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
                     >
                       İptal
