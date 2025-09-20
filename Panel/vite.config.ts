@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
 
   return {
   plugins: [react(), devHealthPlugin],
+  envPrefix: 'VITE_',
     test: {
       environment: 'jsdom',
     },
