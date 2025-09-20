@@ -1,43 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
-// Demo mode için mock Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://demo.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-key'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Mock Supabase client for demo purposes
-const createMockSupabaseClient = () => {
-  return {
-    from: (table: string) => ({
-      select: (columns?: string) => ({
-        order: (column: string, options?: any) => Promise.resolve({ data: [], error: null }),
-        eq: (column: string, value: any) => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: null, error: null })
-          })
-        })
-      }),
-      insert: (data: any) => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: { id: Date.now(), ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, error: null })
-        })
-      }),
-      update: (data: any) => ({
-        eq: (column: string, value: any) => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: { id: value, ...data, updated_at: new Date().toISOString() }, error: null })
-          })
-        })
-      }),
-      delete: () => ({
-        eq: (column: string, value: any) => Promise.resolve({ error: null })
-      })
-    })
-  }
-}
-
-export const supabase = import.meta.env.VITE_SUPABASE_URL ? 
-  createClient(supabaseUrl, supabaseAnonKey) : 
-  createMockSupabaseClient() as any
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database Types
 export interface Case {
