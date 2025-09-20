@@ -3,26 +3,7 @@ import { supabase } from '../lib/supabase'
 import type { Case, Client, Appointment, Document, LegalResearch, Financial } from '../lib/supabase'
 
 // Mock data for demo purposes
-const mockClients: Client[] = [
-  {
-    id: 1,
-  // Demo veri kaldırıldı
-  },
-  {
-    id: 2,
-  // Demo veri kaldırıldı
-  },
-  {
-    id: 3,
-    name: 'Ali Kaya',
-    email: 'ali@email.com',
-    phone: '0554 456 7890',
-    company: 'Bireysel',
-    address: 'İzmir, Türkiye',
-    created_at: '2024-01-03T00:00:00Z',
-    updated_at: '2024-01-03T00:00:00Z'
-  }
-]
+const mockClients: Client[] = [];
 
 const mockCases: Case[] = [
   {
