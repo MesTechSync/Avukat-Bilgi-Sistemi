@@ -53,10 +53,7 @@ export default function VoiceControl({
   const [showSuggestionsPanel, setShowSuggestionsPanel] = useState(false);
   const [quickCommands, setQuickCommands] = useState<string[]>([]);
 
-  // Desteklenmiyorsa gizle
-  if (!isSupported) {
-    return null;
-  }
+  // Not: Hooks sırası tutarlılığı için erken return kullanmıyoruz.
 
   // Hızlı komutları yükle
   useEffect(() => {
@@ -64,30 +61,7 @@ export default function VoiceControl({
     setQuickCommands(commands.slice(0, 4));
   }, [getCommandSuggestions]);
 
-  // Hata durumunda göster
-  if (error) {
-    return (
-      <div className={`fixed ${position === 'bottom-right' ? 'bottom-4 right-4' : 
-        position === 'bottom-left' ? 'bottom-4 left-4' :
-        position === 'top-right' ? 'top-4 right-4' : 'top-4 left-4'} z-50`}>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg max-w-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              <span className="text-sm font-medium">Ses Sistemi Hatası</span>
-            </div>
-            <button
-              onClick={clearError}
-              className="text-red-500 hover:text-red-700 ml-2"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-sm mt-1">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // Not: Hata durumunda da hooks'lar çağrıldıktan sonra içerikte koşullu render yapacağız.
 
   // Ana mikrofon butonu
   const getButtonSize = () => {
@@ -129,10 +103,34 @@ export default function VoiceControl({
 
   return (
     <>
-      {/* Ana mikrofon butonu */}
-      <div className={`fixed ${position === 'bottom-right' ? 'bottom-4 right-4' : 
-        position === 'bottom-left' ? 'bottom-4 left-4' :
-        position === 'top-right' ? 'top-4 right-4' : 'top-4 left-4'} z-50`}>
+      {/* Hata paneli (yalnızca hata varsa) */}
+      {error ? (
+        <div className={`fixed ${position === 'bottom-right' ? 'bottom-4 right-4' : 
+          position === 'bottom-left' ? 'bottom-4 left-4' :
+          position === 'top-right' ? 'top-4 right-4' : 'top-4 left-4'} z-50`}>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg max-w-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span className="text-sm font-medium">Ses Sistemi Hatası</span>
+              </div>
+              <button
+                onClick={clearError}
+                className="text-red-500 hover:text-red-700 ml-2"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Sistem destekleniyorsa ana arayüz */}
+      {!error && isSupported ? (
+        <div className={`fixed ${position === 'bottom-right' ? 'bottom-4 right-4' : 
+          position === 'bottom-left' ? 'bottom-4 left-4' :
+          position === 'top-right' ? 'top-4 right-4' : 'top-4 left-4'} z-50`}>
         <div className="flex flex-col items-end space-y-2">
           {/* Transcript paneli */}
           {showTranscript && showTranscriptPanel && (
@@ -319,9 +317,10 @@ export default function VoiceControl({
           )}
         </div>
       </div>
+      ) : null}
 
       {/* Ayarlar paneli */}
-      {showSettings && (
+      {showSettings && !error && isSupported && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
