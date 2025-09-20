@@ -18,6 +18,17 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Query, Depends, Body
+
+# Başlatma hatalarını ekrana yazdırmak için
+import sys
+def print_startup_error():
+    try:
+        # Normal başlatma kodu
+        pass
+    except Exception as e:
+        print(f"\n\n[BAŞLATMA HATASI] {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -290,14 +301,18 @@ active_connections = 0
 async def lifespan(app: FastAPI):
     """Application lifespan management - startup and shutdown"""
     # Startup
-    logger.info("Starting Panel Legal Research Backend...")
-    logger.info("Architecture: Opus-recommended Enterprise Pattern")
-    logger.info("Features: Circuit Breaker + Auto-Recovery + Fault Tolerance")
-    logger.info("Access: http://localhost:9000")
-    logger.info("Docs: http://localhost:9000/docs")
-    logger.info("Health: http://localhost:9000/health")
-    
-    # Initialize enterprise components
+    try:
+        logger.info("Starting Panel Legal Research Backend...")
+        logger.info("Architecture: Opus-recommended Enterprise Pattern")
+        logger.info("Features: Circuit Breaker + Auto-Recovery + Fault Tolerance")
+        logger.info("Access: http://localhost:9000")
+        logger.info("Docs: http://localhost:9000/docs")
+        logger.info("Health: http://localhost:9000/health")
+        # Initialize enterprise components
+    except Exception as e:
+        logger.error(f"[LIFESPAN HATASI] {e}")
+        import traceback
+        traceback.print_exc()
     try:
         # Mock: Initialize database connections
         await asyncio.sleep(0.1)  # Simulate connection setup
@@ -953,15 +968,6 @@ async def root():
 # APPLICATION ENTRY POINT
 # ============================================================================
 
-if __name__ == "__main__":
-    print("=" * 80)
-    print("PANEL ICTIHAT & MEVZUAT LEGAL RESEARCH BACKEND")
-    print("=" * 80)
-    print("Starting Enterprise-Grade Legal Research System...")
-    print("Architecture: Opus Enterprise Patterns")
-    print("Features: Circuit Breaker + Auto-Recovery + Fault Tolerance")
-    print("Access: http://localhost:9000")
-    print("Docs: http://localhost:9000/docs")
     print("Health: http://localhost:9000/health")
     print("=" * 80)
     
