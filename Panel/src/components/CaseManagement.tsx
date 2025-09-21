@@ -192,7 +192,11 @@ export default function CaseManagement() {
         console.log('Cases tablosu kolonları:', Object.keys(existingCases[0]));
       }
       
-      // Sadece mevcut kolonları kullan
+      // Müvekkil adını client_id'den al
+      const selectedClient = clients.find(c => c.id === newCase.client_id);
+      const clientName = selectedClient ? selectedClient.name : 'Bilinmeyen Müvekkil';
+      
+      // Tüm mevcut kolonları kullan
       const caseData = {
         title: newCase.title,
         case_type: newCase.case_type,
@@ -201,6 +205,7 @@ export default function CaseManagement() {
         amount: newCase.amount ? parseFloat(newCase.amount.toString()) : null,
         description: newCase.description,
         deadline: newCase.deadline || null,
+        client_name: clientName,
         user_id: '00000000-0000-0000-0000-000000000000'
       };
       
@@ -313,8 +318,7 @@ export default function CaseManagement() {
   };
 
   const getClientName = (case_) => {
-    // Şimdilik müvekkil bilgisi yok, daha sonra client_id ile bağlantı kurulacak
-    return 'Müvekkil Bilgisi Yok';
+    return case_.client_name || 'Bilinmeyen Müvekkil';
   };
 
   return (

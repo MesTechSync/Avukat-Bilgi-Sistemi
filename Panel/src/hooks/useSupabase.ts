@@ -52,6 +52,7 @@ export const useSupabase = () => {
         amount: caseData.amount ? parseFloat(caseData.amount.toString()) : null,
         description: caseData.description,
         deadline: caseData.deadline || null,
+        client_name: caseData.client_name,
         user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
       };
       

@@ -48,6 +48,7 @@ export interface Case {
   user_id: string
   title: string
   case_number?: string
+  client_id?: string
   client_name?: string
   case_type?: string
   status: string
