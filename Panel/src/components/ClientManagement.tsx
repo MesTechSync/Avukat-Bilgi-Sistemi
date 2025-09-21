@@ -7,6 +7,9 @@ import DictationButton from './DictationButton';
 export default function ClientManagement() {
   const { clients, addClient, updateClient, deleteClient, loading } = useSupabase();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -17,6 +20,14 @@ export default function ClientManagement() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const [newClient, setNewClient] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    address: ''
+  });
+
+  const [editClient, setEditClient] = useState({
     name: '',
     email: '',
     phone: '',
@@ -131,6 +142,34 @@ export default function ClientManagement() {
     }
   };
 
+  const handleViewClient = (client) => {
+    setSelectedClient(client);
+    setShowViewModal(true);
+  };
+
+  const handleEditClient = (client) => {
+    setSelectedClient(client);
+    setEditClient({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      company: client.company || '',
+      address: client.address || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateClient = async (e) => {
+    e.preventDefault();
+    try {
+      await updateClient(selectedClient.id, editClient);
+      setShowEditModal(false);
+      setSelectedClient(null);
+    } catch (error) {
+      console.error('Müvekkil güncellenirken hata:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -214,10 +253,16 @@ export default function ClientManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Müvekkili görüntüle" aria-label="Müvekkili görüntüle">
+                <button 
+                  onClick={() => handleViewClient(client)}
+                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Müvekkili görüntüle" aria-label="Müvekkili görüntüle"
+                >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Müvekkili düzenle" aria-label="Müvekkili düzenle">
+                <button 
+                  onClick={() => handleEditClient(client)}
+                  className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Müvekkili düzenle" aria-label="Müvekkili düzenle"
+                >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button 
@@ -392,6 +437,197 @@ export default function ClientManagement() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {loading ? 'Ekleniyor...' : 'Müvekkil Ekle'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Client Modal */}
+      {showViewModal && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Müvekkil Detayları
+                </h3>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-2xl">
+                    {selectedClient.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {selectedClient.name}
+                  </h4>
+                  {selectedClient.company && (
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {selectedClient.company}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                  <Mail className="w-5 h-5" />
+                  <a href={`mailto:${selectedClient.email}`} className="hover:text-blue-600 transition-colors">
+                    {selectedClient.email}
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                  <Phone className="w-5 h-5" />
+                  <a href={`tel:${selectedClient.phone}`} className="hover:text-blue-600 transition-colors">
+                    {selectedClient.phone}
+                  </a>
+                </div>
+
+                {selectedClient.company && (
+                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                    <Building className="w-5 h-5" />
+                    <span>{selectedClient.company}</span>
+                  </div>
+                )}
+
+                {selectedClient.address && (
+                  <div className="flex items-start gap-3 text-gray-600 dark:text-gray-400">
+                    <MapPin className="w-5 h-5 mt-0.5" />
+                    <span className="line-clamp-3">{selectedClient.address}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <Calendar className="w-5 h-5" />
+                  <span>Kayıt: {new Date(selectedClient.created_at).toLocaleDateString('tr-TR')}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Kapat
+                </button>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    handleEditClient(selectedClient);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Düzenle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Client Modal */}
+      {showEditModal && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Müvekkili Düzenle
+              </h3>
+            </div>
+            
+            <form onSubmit={handleUpdateClient} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Ad Soyad *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editClient.name}
+                  onChange={(e) => setEditClient({...editClient, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Ad Soyad" title="Ad Soyad"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  E-posta *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editClient.email}
+                  onChange={(e) => setEditClient({...editClient, email: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="E-posta" title="E-posta"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Telefon *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={editClient.phone}
+                  onChange={(e) => setEditClient({...editClient, phone: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Telefon" title="Telefon"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Şirket
+                </label>
+                <input
+                  type="text"
+                  value={editClient.company}
+                  onChange={(e) => setEditClient({...editClient, company: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Şirket" title="Şirket"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Adres
+                </label>
+                <textarea
+                  rows={3}
+                  value={editClient.address}
+                  onChange={(e) => setEditClient({...editClient, address: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Adres" title="Adres"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {loading ? 'Güncelleniyor...' : 'Güncelle'}
                 </button>
               </div>
             </form>

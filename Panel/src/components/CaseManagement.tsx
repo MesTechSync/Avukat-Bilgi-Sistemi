@@ -7,6 +7,8 @@ import DictationButton from './DictationButton';
 export default function CaseManagement() {
   const { cases, clients, addCase, updateCase, deleteCase, loading } = useSupabase();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -19,6 +21,17 @@ export default function CaseManagement() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const [newCase, setNewCase] = useState({
+    title: '',
+    client_id: '',
+    case_type: '',
+    status: 'Beklemede',
+    deadline: '',
+    priority: 'Orta',
+    amount: '',
+    description: ''
+  });
+
+  const [editCase, setEditCase] = useState({
     title: '',
     client_id: '',
     case_type: '',
@@ -160,6 +173,37 @@ export default function CaseManagement() {
     }
   };
 
+  const handleViewCase = (case_) => {
+    setSelectedCase(case_);
+    setShowViewModal(true);
+  };
+
+  const handleEditCase = (case_) => {
+    setSelectedCase(case_);
+    setEditCase({
+      title: case_.title,
+      client_id: case_.client_id,
+      case_type: case_.case_type,
+      status: case_.status,
+      deadline: case_.deadline || '',
+      priority: case_.priority,
+      amount: case_.amount || '',
+      description: case_.description || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCase = async (e) => {
+    e.preventDefault();
+    try {
+      await updateCase(selectedCase.id, editCase);
+      setShowEditModal(false);
+      setSelectedCase(null);
+    } catch (error) {
+      console.error('Dava güncellenirken hata:', error);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Tamamlandı':
@@ -258,10 +302,16 @@ export default function CaseManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Davayı görüntüle" aria-label="Davayı görüntüle">
+                <button 
+                  onClick={() => handleViewCase(case_)}
+                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Davayı görüntüle" aria-label="Davayı görüntüle"
+                >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Davayı düzenle" aria-label="Davayı düzenle">
+                <button 
+                  onClick={() => handleEditCase(case_)}
+                  className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Davayı düzenle" aria-label="Davayı düzenle"
+                >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button 
@@ -495,6 +545,259 @@ export default function CaseManagement() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {loading ? 'Ekleniyor...' : 'Dava Ekle'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Case Modal */}
+      {showViewModal && selectedCase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Dava Detayları
+                </h3>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {selectedCase.title}
+                </h4>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedCase.status)}`}>
+                    {selectedCase.status}
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedCase.case_type}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                    <Users className="w-5 h-5" />
+                    <span>{getClientName(selectedCase.client_id)}</span>
+                  </div>
+
+                  {selectedCase.deadline && (
+                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                      <Calendar className="w-5 h-5" />
+                      <span>Son Tarih: {new Date(selectedCase.deadline).toLocaleDateString('tr-TR')}</span>
+                    </div>
+                  )}
+
+                  {selectedCase.amount && (
+                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                      <DollarSign className="w-5 h-5" />
+                      <span>{selectedCase.amount} TL</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className={`w-5 h-5 ${getPriorityColor(selectedCase.priority)}`} />
+                    <span className={`text-sm font-medium ${getPriorityColor(selectedCase.priority)}`}>
+                      {selectedCase.priority}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="font-medium">Oluşturulma Tarihi:</span><br />
+                    {new Date(selectedCase.created_at).toLocaleDateString('tr-TR')}
+                  </div>
+                </div>
+              </div>
+
+              {selectedCase.description && (
+                <div>
+                  <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Açıklama</h5>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    {selectedCase.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Kapat
+                </button>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    handleEditCase(selectedCase);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Düzenle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Case Modal */}
+      {showEditModal && selectedCase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Davayı Düzenle
+              </h3>
+            </div>
+            
+            <form onSubmit={handleUpdateCase} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dava Başlığı *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCase.title}
+                    onChange={(e) => setEditCase({...editCase, title: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Dava başlığı" title="Dava başlığı"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Müvekkil *
+                  </label>
+                  <select
+                    required
+                    value={editCase.client_id}
+                    onChange={(e) => setEditCase({...editCase, client_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
+                  >
+                    <option value="">Müvekkil Seçin</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dava Türü *
+                  </label>
+                  <select
+                    required
+                    value={editCase.case_type}
+                    onChange={(e) => setEditCase({...editCase, case_type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava türü" aria-label="Dava türü"
+                  >
+                    <option value="">Dava Türü Seçin</option>
+                    {caseTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Durum
+                  </label>
+                  <select
+                    value={editCase.status}
+                    onChange={(e) => setEditCase({...editCase, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava durumu" aria-label="Dava durumu"
+                  >
+                    {statusOptions.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Son Tarih
+                  </label>
+                  <input
+                    type="date"
+                    value={editCase.deadline}
+                    onChange={(e) => setEditCase({...editCase, deadline: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Son tarih" aria-label="Son tarih"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Öncelik
+                  </label>
+                  <select
+                    value={editCase.priority}
+                    onChange={(e) => setEditCase({...editCase, priority: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Öncelik" aria-label="Öncelik"
+                  >
+                    {priorityOptions.map(priority => (
+                      <option key={priority} value={priority}>{priority}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tutar (TL)
+                  </label>
+                  <input
+                    type="text"
+                    value={editCase.amount}
+                    onChange={(e) => setEditCase({...editCase, amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="0" title="Tutar"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Açıklama
+                </label>
+                <textarea
+                  rows={3}
+                  value={editCase.description}
+                  onChange={(e) => setEditCase({...editCase, description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Dava hakkında detaylar..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {loading ? 'Güncelleniyor...' : 'Güncelle'}
                 </button>
               </div>
             </form>
