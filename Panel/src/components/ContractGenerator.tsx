@@ -212,9 +212,9 @@ export default function ContractGenerator() {
     if (geminiApiKey) {
       try {
         geminiService.initialize(geminiApiKey);
-        console.log('Gemini servisi başlatıldı');
+        console.log('✅ Gemini servisi başlatıldı:', geminiApiKey.substring(0, 10) + '...');
       } catch (error) {
-        console.error('Gemini başlatma hatası:', error);
+        console.error('❌ Gemini başlatma hatası:', error);
       }
     }
     
@@ -225,16 +225,49 @@ export default function ContractGenerator() {
     if (finalOpenaiKey) {
       try {
         openaiService.initialize(finalOpenaiKey);
-        console.log('OpenAI servisi başlatıldı');
+        console.log('✅ OpenAI servisi başlatıldı:', finalOpenaiKey.substring(0, 10) + '...');
         // Eğer state'de yoksa environment variable'dan set et
         if (!openaiApiKey && envOpenaiKey) {
           setOpenaiApiKey(envOpenaiKey);
         }
       } catch (error) {
-        console.error('OpenAI başlatma hatası:', error);
+        console.error('❌ OpenAI başlatma hatası:', error);
       }
     }
+    
+    // Servis durumlarını kontrol et
+    console.log('🔍 AI Servis Durumları:');
+    console.log('  - Gemini:', geminiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
+    console.log('  - OpenAI:', openaiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
   }, [geminiApiKey, openaiApiKey]);
+
+  // AI Servislerini Test Et
+  const testAIServices = () => {
+    console.log('🧪 AI Servisleri Test Ediliyor...');
+    console.log('Gemini API Key:', geminiApiKey ? '✅ Mevcut' : '❌ Yok');
+    console.log('OpenAI API Key:', openaiApiKey ? '✅ Mevcut' : '❌ Yok');
+    console.log('Gemini Servisi:', geminiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
+    console.log('OpenAI Servisi:', openaiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
+    
+    // Servisleri yeniden başlat
+    if (geminiApiKey) {
+      try {
+        geminiService.initialize(geminiApiKey);
+        console.log('✅ Gemini yeniden başlatıldı');
+      } catch (error) {
+        console.error('❌ Gemini başlatma hatası:', error);
+      }
+    }
+    
+    if (openaiApiKey) {
+      try {
+        openaiService.initialize(openaiApiKey);
+        console.log('✅ OpenAI yeniden başlatıldı');
+      } catch (error) {
+        console.error('❌ OpenAI başlatma hatası:', error);
+      }
+    }
+  };
 
   // AI Comparison function
   const compareAIResponses = async (prompt: string) => {
@@ -568,7 +601,14 @@ Bu bilgilere göre profesyonel bir hukuki sözleşme hazırla. Türk hukuk siste
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg">
               <FileText className="w-8 h-8 text-white" />
           </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={testAIServices}
+                className="p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
+                title="AI Servislerini Test Et"
+              >
+                <Bot className="w-5 h-5" />
+              </button>
               <button
                 onClick={() => setShowAISettings(!showAISettings)}
                 className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
