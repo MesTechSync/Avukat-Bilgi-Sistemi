@@ -185,6 +185,10 @@ export const useSupabase = () => {
     loading,
     error,
     
+    // Setters
+    setCases,
+    setClients,
+    
     // Case methods
     addCase,
     updateCase,

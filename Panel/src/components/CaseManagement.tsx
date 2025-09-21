@@ -6,7 +6,7 @@ import DictationButton from './DictationButton';
 import { supabase } from '../lib/supabase';
 
 export default function CaseManagement() {
-  const { cases, clients, addCase, updateCase, deleteCase, loading } = useSupabase();
+  const { cases, clients, addCase, updateCase, deleteCase, loading, setCases } = useSupabase();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
