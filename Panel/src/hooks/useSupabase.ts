@@ -41,16 +41,27 @@ export const useSupabase = () => {
   // CRUD Operations for Cases
   const addCase = async (caseData: Omit<Case, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      console.log('Supabase addCase çağrıldı:', caseData);
+      
       // Mock user_id for now - in real app this would come from auth
       const dataToInsert = {
         ...caseData,
         user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
       };
+      
+      console.log('Supabase\'e gönderilecek veri:', dataToInsert);
       const { data, error } = await supabase.from('cases').insert([dataToInsert]).select()
-      if (error) throw error
+      
+      if (error) {
+        console.error('Supabase hatası:', error);
+        throw new Error(`Supabase hatası: ${error.message}`);
+      }
+      
+      console.log('Supabase\'den dönen veri:', data);
       setCases(prev => [data[0], ...prev])
       return data[0]
     } catch (err) {
+      console.error('addCase hatası:', err);
       setError(err instanceof Error ? err.message : 'Dava eklenirken hata oluştu')
       throw err
     }

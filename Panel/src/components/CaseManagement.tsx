@@ -155,6 +155,22 @@ export default function CaseManagement() {
 
   const handleAddCase = async (e) => {
     e.preventDefault();
+    console.log('Dava ekleme başlatıldı:', newCase);
+    
+    // Form validasyonu
+    if (!newCase.title.trim()) {
+      alert('Dava başlığı gereklidir!');
+      return;
+    }
+    if (!newCase.client_id) {
+      alert('Müvekkil seçimi gereklidir!');
+      return;
+    }
+    if (!newCase.case_type) {
+      alert('Dava türü seçimi gereklidir!');
+      return;
+    }
+    
     try {
       // Müvekkil ID'sini client_name'e çevir
       const selectedClient = clients.find(c => c.id === newCase.client_id);
@@ -163,7 +179,10 @@ export default function CaseManagement() {
         client_name: selectedClient ? selectedClient.name : 'Bilinmeyen Müvekkil'
       };
       
-      await addCase(caseData);
+      console.log('Gönderilecek veri:', caseData);
+      const result = await addCase(caseData);
+      console.log('Dava başarıyla eklendi:', result);
+      
       setNewCase({
         title: '',
         client_id: '',
@@ -175,8 +194,10 @@ export default function CaseManagement() {
         description: ''
       });
       setShowAddModal(false);
+      alert('Dava başarıyla eklendi!');
     } catch (error) {
       console.error('Dava eklenirken hata:', error);
+      alert('Dava eklenirken hata oluştu: ' + error.message);
     }
   };
 
