@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileText, Download, Copy, Save, Wand2, Building, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react';
+import { FileText, Download, Copy, Save, Wand2, Building, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare, Bot, Zap, Settings, Key, RefreshCw } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
+import { geminiService } from '../services/geminiService';
+import { openaiService } from '../services/openaiService';
 
 interface ContractTemplate {
   id: string;
@@ -186,7 +188,102 @@ export default function ContractGenerator() {
   const [aiSuggestions, setAiSuggestions] = useState<string>('');
   const [optClauses, setOptClauses] = useState<Record<string, boolean>>({});
 
-  // Dikte hook'u - form alanları için
+  // AI Settings
+  const [showAISettings, setShowAISettings] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState<string>('AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk');
+  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
+  const [useCustomContract, setUseCustomContract] = useState(false);
+  const [customContractData, setCustomContractData] = useState({
+    contractType: '',
+    description: '',
+    requirements: [''],
+    parties: [''],
+    additionalInfo: ''
+  });
+  const [aiComparison, setAiComparison] = useState<{
+    gemini: string;
+    openai: string;
+    winner: 'gemini' | 'openai' | null;
+  }>({ gemini: '', openai: '', winner: null });
+
+  // AI Services initialization
+  useEffect(() => {
+    if (geminiApiKey) {
+      geminiService.initialize(geminiApiKey);
+    }
+    if (openaiApiKey) {
+      openaiService.initialize(openaiApiKey);
+    }
+  }, [geminiApiKey, openaiApiKey]);
+
+  // AI Comparison function
+  const compareAIResponses = async (prompt: string) => {
+    setAiLoading(true);
+    setAiComparison({ gemini: '', openai: '', winner: null });
+    
+    try {
+      const promises = [];
+      
+      if (geminiService.isInitialized()) {
+        promises.push(
+          geminiService.analyzeText('Sözleşme oluştur', prompt)
+            .then(result => ({ type: 'gemini', result }))
+            .catch(error => ({ type: 'gemini', result: `Hata: ${error.message}` }))
+        );
+      }
+      
+      if (openaiService.isInitialized()) {
+        promises.push(
+          openaiService.generateContract({
+            contractType: customContractData.contractType,
+            description: customContractData.description,
+            requirements: customContractData.requirements.filter(r => r.trim()),
+            parties: customContractData.parties.filter(p => p.trim()),
+            additionalInfo: customContractData.additionalInfo
+          })
+          .then(result => ({ type: 'openai', result }))
+          .catch(error => ({ type: 'openai', result: `Hata: ${error.message}` }))
+        );
+      }
+      
+      const results = await Promise.all(promises);
+      
+      let geminiResult = '';
+      let openaiResult = '';
+      
+      results.forEach(result => {
+        if (result.type === 'gemini') {
+          geminiResult = result.result;
+        } else if (result.type === 'openai') {
+          openaiResult = result.result;
+        }
+      });
+      
+      // Simple comparison logic - choose the longer, more detailed response
+      let winner: 'gemini' | 'openai' | null = null;
+      if (geminiResult && openaiResult) {
+        winner = geminiResult.length > openaiResult.length ? 'gemini' : 'openai';
+      } else if (geminiResult) {
+        winner = 'gemini';
+      } else if (openaiResult) {
+        winner = 'openai';
+      }
+      
+      setAiComparison({ gemini: geminiResult, openai: openaiResult, winner });
+      
+      // Set the winner as the generated contract
+      if (winner === 'gemini') {
+        setGeneratedContract(geminiResult);
+      } else if (winner === 'openai') {
+        setGeneratedContract(openaiResult);
+      }
+      
+    } catch (error) {
+      console.error('AI karşılaştırma hatası:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
   const {
     isListening: isDictating,
     isSupported: isDictationSupported,
@@ -314,14 +411,38 @@ export default function ContractGenerator() {
     return Object.keys(errs).length === 0;
   };
 
-  const generateContract = () => {
-    if (!selectedTemplate) return;
+  const generateContract = async () => {
+    if (!selectedTemplate && !useCustomContract) return;
 
     setIsGenerating(true);
 
-    setTimeout(() => {
-      if (!validate()) { setIsGenerating(false); return; }
-      let contract = selectedTemplate.template;
+    try {
+      if (useCustomContract) {
+        // Custom contract generation with AI
+        const prompt = `
+Sözleşme Türü: ${customContractData.contractType}
+Açıklama: ${customContractData.description}
+
+Taraflar:
+${customContractData.parties.filter(p => p.trim()).map(party => `- ${party}`).join('\n')}
+
+Gereksinimler:
+${customContractData.requirements.filter(r => r.trim()).map(req => `- ${req}`).join('\n')}
+
+${customContractData.additionalInfo ? `Ek Bilgiler:\n${customContractData.additionalInfo}` : ''}
+
+Bu bilgilere göre profesyonel bir hukuki sözleşme hazırla. Türk hukuk sistemine uygun, detaylı ve profesyonel bir sözleşme oluştur.
+`;
+        
+        await compareAIResponses(prompt);
+      } else {
+        // Template-based generation
+        if (!validate()) { 
+          setIsGenerating(false); 
+          return; 
+        }
+        
+        let contract = selectedTemplate!.template;
       
       // Replace placeholders with form data
       Object.entries(formData).forEach(([key, value]) => {
@@ -334,7 +455,7 @@ export default function ContractGenerator() {
       contract = contract.replace(/\{DATE\}/g, today);
 
       // Append optional clauses
-      const lib = (optionalClauses as any)[selectedTemplate.id] || {};
+        const lib = (optionalClauses as any)[selectedTemplate!.id] || {};
       const selectedKeys = Object.keys(optClauses).filter(k => optClauses[k]);
       if (selectedKeys.length) {
         const appendix = selectedKeys.map(k => lib[k]?.text).filter(Boolean).join('\n\n');
@@ -344,8 +465,13 @@ export default function ContractGenerator() {
       }
 
       setGeneratedContract(contract);
+      }
+    } catch (error) {
+      console.error('Sözleşme oluşturma hatası:', error);
+      alert('Sözleşme oluşturulurken hata oluştu: ' + (error as Error).message);
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyToClipboard = () => {
@@ -413,58 +539,358 @@ export default function ContractGenerator() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-            <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1"></div>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg">
+              <FileText className="w-8 h-8 text-white" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Yapay Zeka Destekli Sözleşme Oluşturucu
-            </h2>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={() => setShowAISettings(!showAISettings)}
+                className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
+                title="AI Ayarları"
+              >
+                <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            AI Destekli Sözleşme Oluşturucu
+          </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Profesyonel hukuki sözleşmelerinizi kolayca hazırlayın
-            </p>
+            Gemini ve OpenAI ile profesyonel hukuki sözleşmelerinizi oluşturun
+          </p>
+          
+          {/* AI Status */}
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+              geminiService.isInitialized() 
+                ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
+                : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+            }`}>
+              <Bot className="w-4 h-4" />
+              Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}
+            </div>
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+              openaiService.isInitialized() 
+                ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
+                : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+            }`}>
+              <Zap className="w-4 h-4" />
+              OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}
+            </div>
           </div>
         </div>
 
-        {/* Template Selection */}
-        {!selectedTemplate && (
+        {/* AI Settings Panel */}
+        {showAISettings && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8 mb-8">
+            <div className="flex items-center gap-3 mb-6 text-gray-800 dark:text-gray-200">
+              <Key className="w-5 h-5 text-green-600" />
+              <span className="text-lg font-semibold">AI API Ayarları</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Gemini API Key */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                <label htmlFor="gemini-key" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Gemini API Key *
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    id="gemini-key"
+                    type="password"
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    placeholder="AIzaSyC... (Gemini API key'inizi girin)"
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                  />
+                  <button
+                    onClick={() => {
+                      if (geminiApiKey.trim()) {
+                        geminiService.initialize(geminiApiKey);
+                        alert('Gemini API Key başarıyla ayarlandı!');
+                      } else {
+                        alert('Lütfen geçerli bir Gemini API key girin');
+                      }
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <Bot className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* OpenAI API Key */}
+              <div>
+                <label htmlFor="openai-key" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  OpenAI API Key *
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    id="openai-key"
+                    type="password"
+                    value={openaiApiKey}
+                    onChange={(e) => setOpenaiApiKey(e.target.value)}
+                    placeholder="sk-proj-... (OpenAI API key'inizi girin)"
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 transition-all duration-300"
+                  />
+                  <button
+                    onClick={() => {
+                      if (openaiApiKey.trim()) {
+                        openaiService.initialize(openaiApiKey);
+                        alert('OpenAI API Key başarıyla ayarlandı!');
+                      } else {
+                        alert('Lütfen geçerli bir OpenAI API key girin');
+                      }
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <Zap className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">ℹ️ Bilgi</h4>
+              <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                <p>• <strong>Gemini:</strong> Google'ın AI modeli, Türkçe desteği güçlü</p>
+                <p>• <strong>OpenAI:</strong> GPT-4 modeli, profesyonel sözleşmeler için optimize</p>
+                <p>• <strong>Karşılaştırma:</strong> Her iki AI da çalışır ve en iyi sonucu seçer</p>
+                <p>• <strong>Güvenlik:</strong> API key'leriniz tarayıcınızda saklanır</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Template Selection */}
+        {!selectedTemplate && !useCustomContract && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               Sözleşme Türü Seçin
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => setUseCustomContract(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Wand2 className="w-4 h-4" />
+                AI ile Sıfırdan Oluştur
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {contractTemplates.map((template) => (
                 <div
                   key={template.id}
                   onClick={() => handleTemplateSelect(template)}
-                  className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all group"
+                  className="group p-6 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 dark:from-gray-700 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl border-2 border-blue-100 dark:border-blue-800/30 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
-                      <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="w-6 h-6" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
                         {template.name}
                       </h4>
-                      <p className="text-sm text-green-600 dark:text-green-400 mb-2">
+                      <p className="text-sm text-green-600 dark:text-green-400 mb-2 font-semibold">
                         {template.category}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                         {template.description}
                       </p>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>{template.fields.length} alan</span>
-                        <span>•</span>
-                        <span>Otomatik oluşturma</span>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {template.fields.length} alan
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Wand2 className="w-3 h-3" />
+                          AI destekli
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Contract Form */}
+        {useCustomContract && !generatedContract && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  AI ile Sıfırdan Sözleşme Oluştur
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Gemini ve OpenAI ile özel sözleşmenizi oluşturun
+                </p>
+              </div>
+              <button
+                onClick={() => setUseCustomContract(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                ← Geri Dön
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Contract Type */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Sözleşme Türü *
+                </label>
+                <input
+                  type="text"
+                  value={customContractData.contractType}
+                  onChange={(e) => setCustomContractData(prev => ({ ...prev, contractType: e.target.value }))}
+                  placeholder="Örn: İş Sözleşmesi, Kira Sözleşmesi, Satış Sözleşmesi"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Açıklama *
+                </label>
+                <textarea
+                  value={customContractData.description}
+                  onChange={(e) => setCustomContractData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Sözleşmenin amacını ve kapsamını detaylı olarak açıklayın..."
+                  rows={3}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                />
+              </div>
+
+              {/* Parties */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Taraflar *
+                </label>
+                <div className="space-y-2">
+                  {customContractData.parties.map((party, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={party}
+                        onChange={(e) => {
+                          const newParties = [...customContractData.parties];
+                          newParties[index] = e.target.value;
+                          setCustomContractData(prev => ({ ...prev, parties: newParties }));
+                        }}
+                        placeholder={`Taraf ${index + 1} (Ad, Soyad, Şirket Adı vb.)`}
+                        className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                      />
+                      {customContractData.parties.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const newParties = customContractData.parties.filter((_, i) => i !== index);
+                            setCustomContractData(prev => ({ ...prev, parties: newParties }));
+                          }}
+                          className="px-3 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setCustomContractData(prev => ({ ...prev, parties: [...prev.parties, ''] }))}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+                  >
+                    + Taraf Ekle
+                  </button>
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Gereksinimler *
+                </label>
+                <div className="space-y-2">
+                  {customContractData.requirements.map((req, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={req}
+                        onChange={(e) => {
+                          const newReqs = [...customContractData.requirements];
+                          newReqs[index] = e.target.value;
+                          setCustomContractData(prev => ({ ...prev, requirements: newReqs }));
+                        }}
+                        placeholder={`Gereksinim ${index + 1}`}
+                        className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                      />
+                      {customContractData.requirements.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const newReqs = customContractData.requirements.filter((_, i) => i !== index);
+                            setCustomContractData(prev => ({ ...prev, requirements: newReqs }));
+                          }}
+                          className="px-3 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setCustomContractData(prev => ({ ...prev, requirements: [...prev.requirements, ''] }))}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+                  >
+                    + Gereksinim Ekle
+                  </button>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Ek Bilgiler
+                </label>
+                <textarea
+                  value={customContractData.additionalInfo}
+                  onChange={(e) => setCustomContractData(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                  placeholder="Özel şartlar, ödeme koşulları, süreler vb. ek bilgiler..."
+                  rows={3}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-300"
+                />
+              </div>
+
+              {/* Generate Button */}
+              <div className="flex gap-4">
+                <button
+                  onClick={generateContract}
+                  disabled={isGenerating || !customContractData.contractType.trim() || !customContractData.description.trim()}
+                  className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  {isGenerating ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Wand2 className="w-5 h-5" />
+                  )}
+                  {isGenerating ? 'AI Sözleşme Oluşturuyor...' : 'AI ile Sözleşme Oluştur'}
+                </button>
+                
+                <button
+                  onClick={() => setUseCustomContract(false)}
+                  className="px-6 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
+                >
+                  İptal
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -629,52 +1055,131 @@ export default function ContractGenerator() {
 
         {/* Generated Contract */}
         {generatedContract && (
+          <div className="space-y-6">
+            {/* AI Comparison Results */}
+            {aiComparison.gemini && aiComparison.openai && (
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <RefreshCw className="w-6 h-6 text-purple-600" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    AI Karşılaştırma Sonuçları
+                  </h3>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Gemini Result */}
+                  <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                    aiComparison.winner === 'gemini' 
+                      ? 'border-green-300 bg-green-50/50 dark:border-green-600 dark:bg-green-900/20' 
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Bot className="w-6 h-6 text-green-600" />
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Gemini Sonucu
+                      </h4>
+                      {aiComparison.winner === 'gemini' && (
+                        <span className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 rounded-full text-sm font-semibold">
+                          KAZANDI
+                        </span>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed">
+                        {aiComparison.gemini}
+                      </pre>
+                    </div>
+                    <button
+                      onClick={() => setGeneratedContract(aiComparison.gemini)}
+                      className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                    >
+                      Bu Sonucu Kullan
+                    </button>
+                  </div>
+
+                  {/* OpenAI Result */}
+                  <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                    aiComparison.winner === 'openai' 
+                      ? 'border-purple-300 bg-purple-50/50 dark:border-purple-600 dark:bg-purple-900/20' 
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Zap className="w-6 h-6 text-purple-600" />
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        OpenAI Sonucu
+                      </h4>
+                      {aiComparison.winner === 'openai' && (
+                        <span className="px-3 py-1 bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 rounded-full text-sm font-semibold">
+                          KAZANDI
+                        </span>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed">
+                        {aiComparison.openai}
+                      </pre>
+                    </div>
+                    <button
+                      onClick={() => setGeneratedContract(aiComparison.openai)}
+                      className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                    >
+                      Bu Sonucu Kullan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Final Contract */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+              <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Oluşturulan Sözleşme
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedTemplate?.name}
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {useCustomContract ? customContractData.contractType : selectedTemplate?.name}
                 </p>
               </div>
-              <div className="flex gap-2">
+                <div className="flex gap-3">
                 <button
-                  onClick={() => setGeneratedContract('')}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    onClick={() => {
+                      setGeneratedContract('');
+                      setAiComparison({ gemini: '', openai: '', winner: null });
+                    }}
+                    className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
                 >
                   ← Düzenle
                 </button>
                 <button
                   onClick={copyToClipboard}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
                 >
                   <Copy className="w-4 h-4" />
                   Kopyala
                 </button>
                 <button
                   onClick={downloadContract}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
                 >
                   <Download className="w-4 h-4" />
                   İndir
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300">
                   <Save className="w-4 h-4" />
                   Kaydet
                 </button>
               </div>
             </div>
             
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
               <pre className="whitespace-pre-wrap text-sm text-gray-900 dark:text-white font-mono leading-relaxed">
                 {generatedContract}
               </pre>
             </div>
 
             {leftoverPlaceholders.length > 0 && (
-              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-900 dark:text-yellow-200 flex items-start gap-2">
+                <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-sm text-yellow-900 dark:text-yellow-200 flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 mt-0.5" />
                 <div>
                   <strong>Dikkat:</strong> Aşağıdaki yer tutucular hâlâ metinde bulunuyor. İlgili alanları doldurduğunuzdan emin olun: {leftoverPlaceholders.join(', ')}
@@ -682,11 +1187,12 @@ export default function ContractGenerator() {
               </div>
             )}
 
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>⚠️ Önemli Uyarı:</strong> Bu sözleşme AI tarafından oluşturulmuş bir şablondur. 
+                  <strong>⚠️ Önemli Uyarı:</strong> Bu sözleşme AI tarafından oluşturulmuştur. 
                 Kullanmadan önce mutlaka bir hukuk uzmanından görüş alın ve yerel mevzuata uygunluğunu kontrol ettirin.
               </p>
+              </div>
             </div>
           </div>
         )}
