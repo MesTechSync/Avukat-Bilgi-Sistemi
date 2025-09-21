@@ -218,11 +218,18 @@ export default function ContractGenerator() {
       }
     }
     
-    // OpenAI'yi başlat
-    if (openaiApiKey) {
+    // OpenAI'yi başlat - environment variable'dan otomatik al
+    const envOpenaiKey = (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
+    const finalOpenaiKey = openaiApiKey || envOpenaiKey;
+    
+    if (finalOpenaiKey) {
       try {
-        openaiService.initialize(openaiApiKey);
+        openaiService.initialize(finalOpenaiKey);
         console.log('OpenAI servisi başlatıldı');
+        // Eğer state'de yoksa environment variable'dan set et
+        if (!openaiApiKey && envOpenaiKey) {
+          setOpenaiApiKey(envOpenaiKey);
+        }
       } catch (error) {
         console.error('OpenAI başlatma hatası:', error);
       }
