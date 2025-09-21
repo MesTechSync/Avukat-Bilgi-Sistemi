@@ -393,9 +393,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health endpoints for frontend checks and ops
-@app.get("/health")
-async def health():
+
+# Tek bir health response fonksiyonu, tüm endpointlere bağlanır
+def get_health_response():
     uptime = time.time() - startup_time
     return {
         "status": "ok",
@@ -409,52 +409,12 @@ async def health():
         },
     }
 
-# Ekstra: /api/health endpointi de aynı sonucu döner
-@app.get("/api/health")
-async def api_health():
-    uptime = time.time() - startup_time
-    return {
-        "status": "ok",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": "2.0.0",
-        "uptime_seconds": round(uptime, 2),
-        "api_endpoints": {
-            "search/yargitay": True,
-            "search/danistay": True,
-            "search/emsal": True,
-        },
-    }
-
-@app.get("/health/production")
-async def health_production():
-    # Same payload for now; kept as a distinct endpoint for prod probes
-    uptime = time.time() - startup_time
-    return {
-        "status": "ok",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": "2.0.0",
-        "uptime_seconds": round(uptime, 2),
-        "api_endpoints": {
-            "search/yargitay": True,
-            "search/danistay": True,
-            "search/emsal": True,
-        },
-    }
-
-    @app.get("/api/health/production")
-    async def api_health_production():
-        uptime = time.time() - startup_time
-        return {
-            "status": "ok",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "version": "2.0.0",
-            "uptime_seconds": round(uptime, 2),
-            "api_endpoints": {
-                "search/yargitay": True,
-                "search/danistay": True,
-                "search/emsal": True,
-            },
-        }
+@app.get("/health", tags=["Monitoring"])
+@app.get("/api/health", tags=["Monitoring"])
+@app.get("/health/production", tags=["Monitoring"])
+@app.get("/api/health/production", tags=["Monitoring"])
+async def health_all():
+    return get_health_response()
 
 # Request tracking middleware
 @app.middleware("http")
@@ -754,7 +714,7 @@ async def get_danistay_document(document_id: str):
     Essential for administrative law research and government compliance analysis.
     """
     try:
-        logger.info(f"Fetching Danistay document: {document_id}")
+        logger.info(f"Fetching Danıştay document: {document_id}")
         
         # Mock document content
         document_content = f"""
@@ -983,9 +943,9 @@ async def root():
 # APPLICATION ENTRY POINT
 # ============================================================================
 
+if __name__ == "__main__":
     print("Health: http://localhost:9000/health")
     print("=" * 80)
-    
     uvicorn.run(
         "panel_backend_enterprise:app",
         host="0.0.0.0",

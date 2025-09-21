@@ -22,22 +22,22 @@ export default function CaseManagement() {
 
   const [newCase, setNewCase] = useState({
     title: '',
-    client_id: '',
+    client_name: '',
     case_type: '',
-    status: 'Beklemede',
+    status: 'active',
     deadline: '',
-    priority: 'Orta',
+    priority: 'medium',
     amount: '',
     description: ''
   });
 
   const [editCase, setEditCase] = useState({
     title: '',
-    client_id: '',
+    client_name: '',
     case_type: '',
-    status: 'Beklemede',
+    status: 'active',
     deadline: '',
-    priority: 'Orta',
+    priority: 'medium',
     amount: '',
     description: ''
   });
@@ -123,10 +123,10 @@ export default function CaseManagement() {
   ];
 
   const statusOptions = [
-    'Beklemede', 'Devam Ediyor', 'İnceleme', 'Tamamlandı', 'İptal'
+    'active', 'closed', 'archived'
   ];
 
-  const priorityOptions = ['Düşük', 'Orta', 'Yüksek', 'Acil'];
+  const priorityOptions = ['low', 'medium', 'high', 'urgent'];
 
   const filteredCases = cases
     .filter(case_ => {
@@ -159,11 +159,11 @@ export default function CaseManagement() {
       await addCase(newCase);
       setNewCase({
         title: '',
-        client_id: '',
+        client_name: '',
         case_type: '',
-        status: 'Beklemede',
+        status: 'active',
         deadline: '',
-        priority: 'Orta',
+        priority: 'medium',
         amount: '',
         description: ''
       });
@@ -182,12 +182,12 @@ export default function CaseManagement() {
     setSelectedCase(case_);
     setEditCase({
       title: case_.title,
-      client_id: case_.client_id,
-      case_type: case_.case_type,
+      client_name: case_.client_name || '',
+      case_type: case_.case_type || '',
       status: case_.status,
       deadline: case_.deadline || '',
       priority: case_.priority,
-      amount: case_.amount || '',
+      amount: case_.amount?.toString() || '',
       description: case_.description || ''
     });
     setShowEditModal(true);
@@ -206,14 +206,12 @@ export default function CaseManagement() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Tamamlandı':
+      case 'closed':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'Devam Ediyor':
+      case 'active':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'İnceleme':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'İptal':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
@@ -221,20 +219,21 @@ export default function CaseManagement() {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'Acil':
+      case 'urgent':
         return 'text-red-600';
-      case 'Yüksek':
+      case 'high':
         return 'text-orange-600';
-      case 'Orta':
+      case 'medium':
         return 'text-yellow-600';
-      default:
+      case 'low':
         return 'text-green-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
-  const getClientName = (clientId) => {
-    const client = clients.find(c => c.id === clientId);
-    return client ? client.name : 'Bilinmeyen Müvekkil';
+  const getClientName = (case_) => {
+    return case_.client_name || 'Bilinmeyen Müvekkil';
   };
 
   return (
@@ -326,7 +325,7 @@ export default function CaseManagement() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Users className="w-4 h-4" />
-                <span>{getClientName(case_.client_id)}</span>
+                <span>{getClientName(case_)}</span>
               </div>
 
               {case_.deadline && (
@@ -415,21 +414,15 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Müvekkil *
+                    Müvekkil Adı *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
-                    value={newCase.client_id}
-                    onChange={(e) => setNewCase({...newCase, client_id: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
-                  >
-                    <option value="">Müvekkil Seçin</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
+                    value={newCase.client_name}
+                    onChange={(e) => setNewCase({...newCase, client_name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Müvekkil adı" title="Müvekkil adı"
+                  />
                 </div>
 
                 <div>
@@ -591,7 +584,7 @@ export default function CaseManagement() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                     <Users className="w-5 h-5" />
-                    <span>{getClientName(selectedCase.client_id)}</span>
+                    <span>{getClientName(selectedCase)}</span>
                   </div>
 
                   {selectedCase.deadline && (
@@ -682,21 +675,15 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Müvekkil *
+                    Müvekkil Adı *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
-                    value={editCase.client_id}
-                    onChange={(e) => setEditCase({...editCase, client_id: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
-                  >
-                    <option value="">Müvekkil Seçin</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
+                    value={editCase.client_name}
+                    onChange={(e) => setEditCase({...editCase, client_name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Müvekkil adı" title="Müvekkil adı"
+                  />
                 </div>
 
                 <div>

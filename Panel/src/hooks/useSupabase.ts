@@ -41,7 +41,12 @@ export const useSupabase = () => {
   // CRUD Operations for Cases
   const addCase = async (caseData: Omit<Case, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase.from('cases').insert([{ ...caseData }]).select()
+      // Mock user_id for now - in real app this would come from auth
+      const dataToInsert = {
+        ...caseData,
+        user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
+      };
+      const { data, error } = await supabase.from('cases').insert([dataToInsert]).select()
       if (error) throw error
       setCases(prev => [data[0], ...prev])
       return data[0]
@@ -51,7 +56,7 @@ export const useSupabase = () => {
     }
   }
 
-  const updateCase = async (id: number, updates: Partial<Case>) => {
+  const updateCase = async (id: string, updates: Partial<Case>) => {
     try {
       const { data, error } = await supabase.from('cases').update({ ...updates }).eq('id', id).select()
       if (error) throw error
@@ -63,7 +68,7 @@ export const useSupabase = () => {
     }
   }
 
-  const deleteCase = async (id: number) => {
+  const deleteCase = async (id: string) => {
     try {
       const { error } = await supabase.from('cases').delete().eq('id', id)
       if (error) throw error
@@ -77,7 +82,12 @@ export const useSupabase = () => {
   // CRUD Operations for Clients
   const addClient = async (clientData: Omit<Client, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase.from('clients').insert([{ ...clientData }]).select()
+      // Mock user_id for now - in real app this would come from auth
+      const dataToInsert = {
+        ...clientData,
+        user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
+      };
+      const { data, error } = await supabase.from('clients').insert([dataToInsert]).select()
       if (error) throw error
       setClients(prev => [data[0], ...prev])
       return data[0]
@@ -87,7 +97,7 @@ export const useSupabase = () => {
     }
   }
 
-  const updateClient = async (id: number, updates: Partial<Client>) => {
+  const updateClient = async (id: string, updates: Partial<Client>) => {
     try {
       const { data, error } = await supabase.from('clients').update({ ...updates }).eq('id', id).select()
       if (error) throw error
@@ -99,7 +109,7 @@ export const useSupabase = () => {
     }
   }
 
-  const deleteClient = async (id: number) => {
+  const deleteClient = async (id: string) => {
     try {
       const { error } = await supabase.from('clients').delete().eq('id', id)
       if (error) throw error

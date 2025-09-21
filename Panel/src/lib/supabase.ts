@@ -25,62 +25,69 @@ export { testConnection };
 
 // Database Types
 export interface Case {
-  id: number
+  id: string
+  user_id: string
   title: string
-  client_id: number
-  case_type: string
+  case_number?: string
+  client_name?: string
+  case_type?: string
   status: string
-  deadline: string
   priority: string
-  amount: string
+  amount?: number
   description?: string
+  deadline?: string
   created_at: string
   updated_at: string
 }
 
 export interface Client {
-  id: number
+  id: string
+  user_id: string
   name: string
-  email: string
-  phone: string
-  company: string
+  email?: string
+  phone?: string
+  company?: string
   address?: string
+  notes?: string
   created_at: string
   updated_at: string
 }
 
 export interface Appointment {
-  id: number
+  id: string
+  user_id: string
   title: string
   date: string
   time: string
-  type: string
+  type?: string
   status: string
-  client_id?: number
-  case_id?: number
+  client_id?: string
+  case_id?: string
   description?: string
   created_at: string
   updated_at: string
 }
 
 export interface Document {
-  id: number
+  id: string
+  user_id: string
   title: string
   type: string
   category: string
   file_path: string
-  case_id?: number
-  client_id?: number
+  case_id?: string
+  client_id?: string
   created_at: string
   updated_at: string
 }
 
 export interface LegalResearch {
-  id: number
+  id: string
+  user_id: string
   title: string
-  source: string
-  category: string
-  relevance: string
+  source?: string
+  category?: string
+  relevance?: string
   content?: string
   url?: string
   created_at: string
@@ -88,14 +95,15 @@ export interface LegalResearch {
 }
 
 export interface Financial {
-  id: number
+  id: string
+  user_id: string
   type: 'income' | 'expense'
-  amount: string
+  amount: number
   description: string
-  category: string
+  category?: string
   date: string
-  case_id?: number
-  client_id?: number
+  case_id?: string
+  client_id?: string
   created_at: string
   updated_at: string
 }
