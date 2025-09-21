@@ -206,7 +206,7 @@ export default function CaseManagement() {
         description: newCase.description,
         deadline: newCase.deadline || null,
         client_name: clientName,
-        user_id: '00000000-0000-0000-0000-000000000000'
+        user_id: null
       };
       
       console.log('Supabase\'e gönderilecek veri:', caseData);

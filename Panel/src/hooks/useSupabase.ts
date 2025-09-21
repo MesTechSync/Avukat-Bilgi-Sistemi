@@ -53,7 +53,7 @@ export const useSupabase = () => {
         description: caseData.description,
         deadline: caseData.deadline || null,
         client_name: caseData.client_name,
-        user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
+        user_id: null // Foreign key constraint'i bypass etmek için
       };
       
       console.log('Supabase\'e gönderilecek veri:', dataToInsert);
@@ -103,7 +103,7 @@ export const useSupabase = () => {
       // Mock user_id for now - in real app this would come from auth
       const dataToInsert = {
         ...clientData,
-        user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
+        user_id: null // Foreign key constraint'i bypass etmek için
       };
       const { data, error } = await supabase.from('clients').insert([dataToInsert]).select()
       if (error) throw error
