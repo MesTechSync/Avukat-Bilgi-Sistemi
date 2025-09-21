@@ -441,6 +441,21 @@ async def health_production():
         },
     }
 
+    @app.get("/api/health/production")
+    async def api_health_production():
+        uptime = time.time() - startup_time
+        return {
+            "status": "ok",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "version": "2.0.0",
+            "uptime_seconds": round(uptime, 2),
+            "api_endpoints": {
+                "search/yargitay": True,
+                "search/danistay": True,
+                "search/emsal": True,
+            },
+        }
+
 # Request tracking middleware
 @app.middleware("http")
 async def track_requests(request: Request, call_next):
