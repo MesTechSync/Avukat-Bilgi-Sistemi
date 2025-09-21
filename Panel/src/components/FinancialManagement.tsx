@@ -12,7 +12,7 @@ interface FinancialManagementProps {
 const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  const { financials } = useSupabase();
+  const { financials, addFinancial, setFinancials } = useSupabase();
   const [newTx, setNewTx] = useState({ type: 'income', description: '', amount: '', date: '' });
 
   // Dikte: Yeni işlem açıklaması için
@@ -91,6 +91,53 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
   }, [financials]);
 
   const monthlyData = [];
+
+  // Form submit handler
+  const handleSubmitTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Mali işlem ekleme başlatıldı:', newTx);
+    
+    // Form validasyonu
+    if (!newTx.description.trim()) {
+      alert('Açıklama gereklidir!');
+      return;
+    }
+    if (!newTx.amount || parseFloat(newTx.amount) <= 0) {
+      alert('Geçerli bir tutar giriniz!');
+      return;
+    }
+    if (!newTx.date) {
+      alert('Tarih seçimi gereklidir!');
+      return;
+    }
+    
+    try {
+      const financialData = {
+        type: newTx.type,
+        description: newTx.description,
+        amount: parseFloat(newTx.amount),
+        date: newTx.date,
+        category: newTx.type === 'income' ? 'Gelir' : 'Gider',
+        status: 'completed'
+      };
+      
+      console.log('Gönderilecek mali veri:', financialData);
+      const result = await addFinancial(financialData);
+      console.log('Mali işlem başarıyla eklendi:', result);
+      
+      setNewTx({
+        type: 'income',
+        description: '',
+        amount: '',
+        date: ''
+      });
+      setShowAddTransaction(false);
+      alert('Mali işlem başarıyla eklendi!');
+    } catch (error) {
+      console.error('Mali işlem eklenirken hata:', error);
+      alert('Mali işlem eklenirken hata oluştu: ' + error.message);
+    }
+  };
 
   // Voice actions listener
   React.useEffect(() => {
@@ -506,7 +553,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Yeni İşlem Ekle
             </h3>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmitTransaction}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   İşlem Türü

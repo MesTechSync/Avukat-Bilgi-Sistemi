@@ -174,6 +174,58 @@ export const useSupabase = () => {
     }
   }
 
+  // CRUD Operations for Financials
+  const addFinancial = async (financialData: Omit<Financial, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      console.log('Supabase addFinancial çağrıldı:', financialData);
+      
+      // Mock user_id for now - in real app this would come from auth
+      const dataToInsert = {
+        ...financialData,
+        user_id: null // Foreign key constraint'i bypass etmek için
+      };
+      
+      console.log('Supabase\'e gönderilecek financial veri:', dataToInsert);
+      const { data, error } = await supabase.from('financials').insert([dataToInsert]).select()
+      
+      if (error) {
+        console.error('Supabase financial hatası:', error);
+        throw new Error(`Supabase hatası: ${error.message}`);
+      }
+      
+      console.log('Supabase\'den dönen financial veri:', data);
+      setFinancials(prev => [data[0], ...prev])
+      return data[0]
+    } catch (err) {
+      console.error('addFinancial hatası:', err);
+      setError(err instanceof Error ? err.message : 'Mali işlem eklenirken hata oluştu')
+      throw err
+    }
+  }
+
+  const updateFinancial = async (id: string, updates: Partial<Financial>) => {
+    try {
+      const { data, error } = await supabase.from('financials').update({ ...updates }).eq('id', id).select()
+      if (error) throw error
+      setFinancials(prev => prev.map(f => f.id === id ? data[0] : f))
+      return data[0]
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Mali işlem güncellenirken hata oluştu')
+      throw err
+    }
+  }
+
+  const deleteFinancial = async (id: string) => {
+    try {
+      const { error } = await supabase.from('financials').delete().eq('id', id)
+      if (error) throw error
+      setFinancials(prev => prev.filter(f => f.id !== id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Mali işlem silinirken hata oluştu')
+      throw err
+    }
+  }
+
   return {
     // Data
     cases,
@@ -188,6 +240,7 @@ export const useSupabase = () => {
     // Setters
     setCases,
     setClients,
+    setFinancials,
     
     // Case methods
     addCase,
@@ -202,6 +255,11 @@ export const useSupabase = () => {
     // Appointment methods
     addAppointment,
     updateAppointment,
-    deleteAppointment
+    deleteAppointment,
+    
+    // Financial methods
+    addFinancial,
+    updateFinancial,
+    deleteFinancial
   }
 }
