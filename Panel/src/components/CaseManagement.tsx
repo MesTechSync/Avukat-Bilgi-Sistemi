@@ -172,11 +172,15 @@ export default function CaseManagement() {
     }
     
     try {
-      // Müvekkil ID'sini client_name'e çevir
-      const selectedClient = clients.find(c => c.id === newCase.client_id);
+      // Sadece mevcut kolonları kullan
       const caseData = {
-        ...newCase,
-        client_name: selectedClient ? selectedClient.name : 'Bilinmeyen Müvekkil'
+        title: newCase.title,
+        case_type: newCase.case_type,
+        status: newCase.status,
+        priority: newCase.priority,
+        amount: newCase.amount,
+        description: newCase.description,
+        deadline: newCase.deadline
       };
       
       console.log('Gönderilecek veri:', caseData);
@@ -272,7 +276,8 @@ export default function CaseManagement() {
   };
 
   const getClientName = (case_) => {
-    return case_.client_name || 'Bilinmeyen Müvekkil';
+    // Şimdilik müvekkil bilgisi yok, daha sonra client_id ile bağlantı kurulacak
+    return 'Müvekkil Bilgisi Yok';
   };
 
   return (

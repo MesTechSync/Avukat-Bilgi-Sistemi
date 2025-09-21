@@ -45,7 +45,13 @@ export const useSupabase = () => {
       
       // Mock user_id for now - in real app this would come from auth
       const dataToInsert = {
-        ...caseData,
+        title: caseData.title,
+        case_type: caseData.case_type,
+        status: caseData.status,
+        priority: caseData.priority,
+        amount: caseData.amount ? parseFloat(caseData.amount.toString()) : null,
+        description: caseData.description,
+        deadline: caseData.deadline || null,
         user_id: '00000000-0000-0000-0000-000000000000' // Mock admin user
       };
       

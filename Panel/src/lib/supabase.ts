@@ -12,11 +12,30 @@ console.log('Supabase Key:', supabaseAnonKey);
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function testConnection() {
-  const { data, error } = await supabase.from('clients').select('*').limit(1);
-  if (error) {
-    console.error('Bağlantı hatası:', error);
+  console.log('Supabase bağlantısı test ediliyor...');
+  
+  // Test clients table
+  const { data: clientData, error: clientError } = await supabase.from('clients').select('*').limit(1);
+  if (clientError) {
+    console.error('Clients tablosu hatası:', clientError);
   } else {
-    console.log('Bağlantı başarılı, örnek veri:', data);
+    console.log('Clients tablosu başarılı:', clientData);
+  }
+  
+  // Test cases table structure
+  const { data: caseData, error: caseError } = await supabase.from('cases').select('*').limit(1);
+  if (caseError) {
+    console.error('Cases tablosu hatası:', caseError);
+  } else {
+    console.log('Cases tablosu başarılı:', caseData);
+  }
+  
+  // Test cases table columns specifically
+  const { data: caseColumns, error: columnError } = await supabase.rpc('get_table_columns', { table_name: 'cases' });
+  if (columnError) {
+    console.log('Column bilgisi alınamadı (normal):', columnError.message);
+  } else {
+    console.log('Cases tablosu kolonları:', caseColumns);
   }
 }
 
