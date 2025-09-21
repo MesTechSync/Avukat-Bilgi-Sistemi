@@ -563,13 +563,63 @@ Bu bilgilere göre profesyonel bir hukuki sözleşme hazırla. Türk hukuk siste
     if (!selectedTemplate) return;
     setAiLoading(true);
     setAiSuggestions('');
+    
     const summary = Object.entries(formData).map(([k,v]) => `- ${k}: ${v || '-'}`).join('\n');
     const prompt = `Aşağıdaki sözleşme türü ve bilgiler ışığında, Türk hukuku genel ilkeleri ile uyumlu kısa madde önerileri, eksik görülen noktalar ve risk uyarıları üret. Cevabı maddeler halinde, sade Türkçe yaz. Uygulanabildiği ölçüde İş Kanunu/TBK gibi temel mevzuata atıf yapabilirsin. Özel danışmanlık vermeden, genel şablon ve dil öner.\n\nSözleşme türü: ${selectedTemplate.name}\nAçıklama: ${selectedTemplate.description}\nVerilen bilgiler:\n${summary}`;
+    
     try {
-      const data = await postJsonWithFallback('/api/ai/chat', { query: prompt, model: 'auto', context: [] });
-      if (data?.content) setAiSuggestions(String(data.content));
+      // Gemini ve OpenAI servislerini kullan
+      const promises = [];
+      
+      if (geminiService.isInitialized()) {
+        promises.push(
+          geminiService.analyzeText('Sözleşme önerileri', prompt)
+            .then(result => ({ type: 'gemini', result }))
+            .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}` }))
+        );
+      }
+      
+      if (openaiService.isInitialized()) {
+        promises.push(
+          openaiService.generateContract({
+            contractType: selectedTemplate.name,
+            description: selectedTemplate.description,
+            requirements: ['AI önerileri'],
+            parties: ['Taraflar'],
+            additionalInfo: prompt
+          })
+          .then(result => ({ type: 'openai', result }))
+          .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}` }))
+        );
+      }
+      
+      if (promises.length === 0) {
+        setAiSuggestions('❌ AI servisleri aktif değil. Lütfen API key\'leri kontrol edin.');
+        return;
+      }
+      
+      const results = await Promise.all(promises);
+      
+      // En iyi sonucu seç (daha uzun ve detaylı olanı)
+      let bestResult = '';
+      let bestLength = 0;
+      
+      results.forEach(result => {
+        if (result.result.length > bestLength) {
+          bestResult = result.result;
+          bestLength = result.result.length;
+        }
+      });
+      
+      if (bestResult) {
+        setAiSuggestions(bestResult);
+      } else {
+        setAiSuggestions('❌ AI servislerinden yanıt alınamadı.');
+      }
+      
     } catch (e: any) {
-      setAiSuggestions(`AI önerileri alınamadı: ${e?.message || e}`);
+      console.error('AI önerileri hatası:', e);
+      setAiSuggestions(`❌ AI önerileri alınamadı: ${e?.message || e}`);
     } finally {
       setAiLoading(false);
     }

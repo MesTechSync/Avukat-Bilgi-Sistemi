@@ -15,6 +15,8 @@ import {
   searchPetitionsByCategory,
   searchPetitionsByKeyword 
 } from '../data/realPetitions';
+import { geminiService } from '../services/geminiService';
+import { openaiService } from '../services/openaiService';
 
 export type Model = 'gpt-4' | 'gemini' | 'auto';
 
@@ -603,18 +605,111 @@ export default function LegalAssistantChat() {
   const clearChat = () => setMessages([{ id: 'welcome', role: 'assistant', content: '🔄 **Sohbet temizlendi!**\n\nYeni bir hukuki soru sorabilirsiniz. Size en detaylı şekilde yardımcı olmaya çalışacağım.', timestamp: new Date().toISOString(), model: 'auto' }]);
 
   const send = async () => {
-    if (!input.trim() || loading) return; const q = input.trim(); setInput('');
+    if (!input.trim() || loading) return; 
+    const q = input.trim(); 
+    setInput('');
     const userMsg: ChatMessage = { id: 'u-' + Date.now(), role: 'user', content: q, timestamp: new Date().toISOString() };
-    setMessages(m => [...m, userMsg]); setLoading(true);
-    const tid = 't-' + Date.now(); setMessages(m => [...m, { id: tid, role: 'assistant', content: '🤔 Sorunuzu analiz ediyorum ve size en faydalı bilgiyi hazırlıyorum...', timestamp: new Date().toISOString(), model: 'auto' }]);
+    setMessages(m => [...m, userMsg]); 
+    setLoading(true);
+    const tid = 't-' + Date.now(); 
+    setMessages(m => [...m, { id: tid, role: 'assistant', content: '🤔 Sorunuzu analiz ediyorum ve size en faydalı bilgiyi hazırlıyorum...', timestamp: new Date().toISOString(), model: 'auto' }]);
+    
     try {
-      await new Promise(r => setTimeout(r, 340));
+      // Gerçek AI servislerini kullan
       const analysis = analyze(q);
-      const ans = model === 'auto' ? chooseBest(q, analysis) : { content: buildAnswer(q, model, analysis), model: model === 'auto' ? 'gpt-4' : model, confidence: 0.9 } as AIResponse;
-      setMessages(m => m.filter(x => x.id !== tid).concat({ id: 'a-' + Date.now(), role: 'assistant', content: ans.content, timestamp: new Date().toISOString(), model, actualModel: ans.model, confidence: ans.confidence }));
-    } catch {
-      setMessages(m => m.filter(x => x.id !== tid).concat({ id: 'err-' + Date.now(), role: 'assistant', content: '❌ **Üzgünüm, bir teknik sorun oluştu.**\n\nLütfen sorunuzu tekrar yazarmısınız? Size yardımcı olmak istiyorum.', timestamp: new Date().toISOString(), model: 'auto', isError: true }));
-    } finally { setLoading(false); }
+      let response: AIResponse;
+      
+      if (model === 'auto') {
+        // Otomatik seçim: Gemini ve OpenAI'yi karşılaştır
+        const promises = [];
+        
+        if (geminiService.isInitialized()) {
+          promises.push(
+            geminiService.analyzeText('Hukuki soru', q)
+              .then(result => ({ type: 'gemini', result, confidence: 0.9 }))
+              .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}`, confidence: 0.1 }))
+          );
+        }
+        
+        if (openaiService.isInitialized()) {
+          promises.push(
+            openaiService.generateContract({
+              contractType: 'Hukuki Danışmanlık',
+              description: q,
+              requirements: ['Hukuki analiz'],
+              parties: ['Danışan'],
+              additionalInfo: 'Bu bir hukuki soru. Detaylı analiz ve öneriler sun.'
+            })
+            .then(result => ({ type: 'openai', result, confidence: 0.9 }))
+            .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}`, confidence: 0.1 }))
+          );
+        }
+        
+        if (promises.length === 0) {
+          // AI servisleri aktif değilse demo moda geç
+          await new Promise(r => setTimeout(r, 340));
+          response = chooseBest(q, analysis);
+        } else {
+          const results = await Promise.all(promises);
+          // En iyi sonucu seç
+          let bestResult = '';
+          let bestModel: 'gpt-4' | 'gemini' = 'gpt-4';
+          let bestConfidence = 0;
+          
+          results.forEach(result => {
+            if (result.confidence > bestConfidence) {
+              bestResult = result.result;
+              bestModel = result.type === 'gemini' ? 'gemini' : 'gpt-4';
+              bestConfidence = result.confidence;
+            }
+          });
+          
+          response = { content: bestResult, model: bestModel, confidence: bestConfidence };
+        }
+      } else {
+        // Belirli model seçimi
+        if (model === 'gemini' && geminiService.isInitialized()) {
+          const result = await geminiService.analyzeText('Hukuki soru', q);
+          response = { content: result, model: 'gemini', confidence: 0.9 };
+        } else if (model === 'gpt-4' && openaiService.isInitialized()) {
+          const result = await openaiService.generateContract({
+            contractType: 'Hukuki Danışmanlık',
+            description: q,
+            requirements: ['Hukuki analiz'],
+            parties: ['Danışan'],
+            additionalInfo: 'Bu bir hukuki soru. Detaylı analiz ve öneriler sun.'
+          });
+          response = { content: result, model: 'gpt-4', confidence: 0.9 };
+        } else {
+          // Seçilen model aktif değilse demo moda geç
+          await new Promise(r => setTimeout(r, 340));
+          response = { content: buildAnswer(q, model, analysis), model: model === 'auto' ? 'gpt-4' : model, confidence: 0.9 };
+        }
+      }
+      
+      setMessages(m => m.filter(x => x.id !== tid).concat({ 
+        id: 'a-' + Date.now(), 
+        role: 'assistant', 
+        content: response.content, 
+        timestamp: new Date().toISOString(), 
+        model, 
+        actualModel: response.model, 
+        confidence: response.confidence 
+      }));
+      
+    } catch (error) {
+      console.error('Chat hatası:', error);
+      setMessages(m => m.filter(x => x.id !== tid).concat({ 
+        id: 'err-' + Date.now(), 
+        role: 'assistant', 
+        content: '❌ **Üzgünüm, bir teknik sorun oluştu.**\n\nLütfen sorunuzu tekrar yazarmısınız? Size yardımcı olmak istiyorum.', 
+        timestamp: new Date().toISOString(), 
+        model: 'auto', 
+        isError: true 
+      }));
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const onKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
