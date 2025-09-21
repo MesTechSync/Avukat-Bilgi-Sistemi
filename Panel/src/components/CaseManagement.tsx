@@ -24,9 +24,9 @@ export default function CaseManagement() {
     title: '',
     client_name: '',
     case_type: '',
-    status: 'active',
+    status: 'Beklemede',
     deadline: '',
-    priority: 'medium',
+    priority: 'Orta',
     amount: '',
     description: ''
   });
@@ -35,9 +35,9 @@ export default function CaseManagement() {
     title: '',
     client_name: '',
     case_type: '',
-    status: 'active',
+    status: 'Beklemede',
     deadline: '',
-    priority: 'medium',
+    priority: 'Orta',
     amount: '',
     description: ''
   });
@@ -123,10 +123,10 @@ export default function CaseManagement() {
   ];
 
   const statusOptions = [
-    'active', 'closed', 'archived'
+    'Beklemede', 'Devam Ediyor', 'İnceleme', 'Tamamlandı', 'İptal'
   ];
 
-  const priorityOptions = ['low', 'medium', 'high', 'urgent'];
+  const priorityOptions = ['Düşük', 'Orta', 'Yüksek', 'Acil'];
 
   const filteredCases = cases
     .filter(case_ => {
@@ -161,9 +161,9 @@ export default function CaseManagement() {
         title: '',
         client_name: '',
         case_type: '',
-        status: 'active',
+        status: 'Beklemede',
         deadline: '',
-        priority: 'medium',
+        priority: 'Orta',
         amount: '',
         description: ''
       });
@@ -206,12 +206,14 @@ export default function CaseManagement() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'closed':
+      case 'Tamamlandı':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'active':
+      case 'Devam Ediyor':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+      case 'İnceleme':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'İptal':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
@@ -219,13 +221,13 @@ export default function CaseManagement() {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'urgent':
+      case 'Acil':
         return 'text-red-600';
-      case 'high':
+      case 'Yüksek':
         return 'text-orange-600';
-      case 'medium':
+      case 'Orta':
         return 'text-yellow-600';
-      case 'low':
+      case 'Düşük':
         return 'text-green-600';
       default:
         return 'text-gray-600';
