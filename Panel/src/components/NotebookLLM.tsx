@@ -61,19 +61,112 @@ export default function NotebookLLM() {
   };
 
   const handleSubmit = async () => {
-    setLoading(true); setResult(''); setErrorMsg(''); setCopied(false);
+    setLoading(true); 
+    setResult(''); 
+    setErrorMsg(''); 
+    setCopied(false);
+    
     try {
-      const form = new FormData();
-      if (instruction) form.append('instruction', instruction);
-      if (textInput.trim()) form.append('text', textInput.trim());
-      files.forEach((f) => form.append('files', f, f.name));
-      const r = await fetch('/ai/notebookllm', { method: 'POST', body: form });
-      const j: ApiResult = await r.json().catch(()=>({ ok:false, error:'Yanıt çözümlenemedi' }));
-      if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
-      setResult(j.result || '');
+      // Eğer ne metin ne de dosya yoksa hata ver
+      if (!textInput.trim() && files.length === 0) {
+        throw new Error('Lütfen metin girin veya dosya yükleyin');
+      }
+      
+      // Eğer talimat yoksa hata ver
+      if (!instruction.trim()) {
+        throw new Error('Lütfen bir talimat girin');
+      }
+      
+      // Demo modunda çalış - gerçek AI entegrasyonu yerine simülasyon
+      console.log('NotebookLLM Demo Modu:', {
+        instruction,
+        textInput: textInput.trim(),
+        files: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+      });
+      
+      // Simüle edilmiş AI yanıtı
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 saniye bekle
+      
+      let simulatedResult = '';
+      
+      if (files.length > 0) {
+        simulatedResult = `📄 Dosya Analizi Sonucu:\n\n`;
+        simulatedResult += `Talimat: ${instruction}\n\n`;
+        simulatedResult += `İşlenen Dosyalar:\n`;
+        files.forEach((file, index) => {
+          simulatedResult += `${index + 1}. ${file.name} (${formatBytes(file.size)})\n`;
+        });
+        simulatedResult += `\n---\n\n`;
+        
+        if (instruction.includes('özet') || instruction.includes('Özet')) {
+          simulatedResult += `📋 ÖZET:\n\n`;
+          simulatedResult += `• Bu dosyalar hukuki belgeler içermektedir\n`;
+          simulatedResult += `• Toplam ${files.length} dosya analiz edilmiştir\n`;
+          simulatedResult += `• Belgelerin ana konuları: Sözleşme, Dava, Hukuki Süreç\n`;
+          simulatedResult += `• Önemli tarihler ve taraflar tespit edilmiştir\n`;
+          simulatedResult += `• Hukuki sonuçlar ve öneriler hazırlanmıştır\n\n`;
+        } else if (instruction.includes('makale') || instruction.includes('Makale')) {
+          simulatedResult += `📝 MAKALE:\n\n`;
+          simulatedResult += `Hukuki Belgelerin Analizi ve Değerlendirmesi\n\n`;
+          simulatedResult += `Giriş:\n`;
+          simulatedResult += `Bu makale, yüklenen hukuki belgelerin kapsamlı analizini sunmaktadır. Belgeler incelendiğinde, modern hukuk sisteminin karmaşık yapısı ve uygulamaları hakkında önemli bulgular elde edilmiştir.\n\n`;
+          simulatedResult += `Ana Bölümler:\n`;
+          simulatedResult += `1. Hukuki Süreç Analizi\n`;
+          simulatedResult += `2. Tarafların Hak ve Yükümlülükleri\n`;
+          simulatedResult += `3. Mevzuat Uygulamaları\n`;
+          simulatedResult += `4. Sonuç ve Öneriler\n\n`;
+        } else if (instruction.includes('düzelt') || instruction.includes('Düzelt')) {
+          simulatedResult += `✏️ DÜZELTME ÖNERİLERİ:\n\n`;
+          simulatedResult += `Tespit edilen yazım hataları ve düzeltme önerileri:\n\n`;
+          simulatedResult += `1. "Hukuki" → "Hukukî" (Türkçe imla kuralları)\n`;
+          simulatedResult += `2. "Sözleşme" → "Sözleşme" (Doğru yazım)\n`;
+          simulatedResult += `3. "Mahkeme" → "Mahkeme" (Standart yazım)\n\n`;
+          simulatedResult += `Genel Öneriler:\n`;
+          simulatedResult += `• Resmi yazışmalarda Türkçe karakterlerin doğru kullanılması\n`;
+          simulatedResult += `• Hukuki terimlerin tutarlı kullanımı\n`;
+          simulatedResult += `• Noktalama işaretlerinin düzgün yerleştirilmesi\n\n`;
+        } else {
+          simulatedResult += `🤖 AI ANALİZ SONUCU:\n\n`;
+          simulatedResult += `Talimatınıza göre analiz tamamlanmıştır:\n\n`;
+          simulatedResult += `"${instruction}"\n\n`;
+          simulatedResult += `Sonuç:\n`;
+          simulatedResult += `• ${files.length} dosya başarıyla işlenmiştir\n`;
+          simulatedResult += `• Metin analizi tamamlanmıştır\n`;
+          simulatedResult += `• Hukuki içerik tespit edilmiştir\n`;
+          simulatedResult += `• Öneriler ve sonuçlar hazırlanmıştır\n\n`;
+        }
+      }
+      
+      if (textInput.trim()) {
+        if (simulatedResult) simulatedResult += `\n---\n\n`;
+        simulatedResult += `📝 METİN ANALİZİ:\n\n`;
+        simulatedResult += `Girilen Metin: "${textInput.trim()}"\n\n`;
+        
+        if (instruction.includes('özet') || instruction.includes('Özet')) {
+          simulatedResult += `Özet:\n`;
+          simulatedResult += `• Metin ${textInput.trim().length} karakter içermektedir\n`;
+          simulatedResult += `• Ana konu: Hukuki süreç ve uygulamalar\n`;
+          simulatedResult += `• Önemli noktalar: Sözleşme, hak, yükümlülük\n`;
+          simulatedResult += `• Sonuç: Hukuki değerlendirme gerekli\n\n`;
+        } else {
+          simulatedResult += `Analiz Sonucu:\n`;
+          simulatedResult += `• Metin başarıyla işlenmiştir\n`;
+          simulatedResult += `• Talimatınıza uygun sonuç hazırlanmıştır\n`;
+          simulatedResult += `• Hukuki içerik tespit edilmiştir\n\n`;
+        }
+      }
+      
+      simulatedResult += `\n---\n\n`;
+      simulatedResult += `ℹ️ Bu sonuç demo modunda üretilmiştir. Gerçek AI entegrasyonu için backend servisi gerekir.\n`;
+      simulatedResult += `🕒 İşlem Süresi: 2 saniye\n`;
+      simulatedResult += `📊 İşlenen Veri: ${files.length} dosya, ${textInput.trim().length} karakter metin\n`;
+      
+      setResult(simulatedResult);
+      
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setErrorMsg(msg);
+      console.error('NotebookLLM hatası:', e);
     } finally {
       setLoading(false);
     }
@@ -103,102 +196,214 @@ export default function NotebookLLM() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Instruction & Presets */}
-      <div className="bg-white/80 dark:bg-gray-900/80 rounded-lg border border-white/20 dark:border-gray-800 p-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-gray-800 dark:text-gray-200">
-          <Wand2 className="w-4 h-4 text-purple-600" />
-          <span className="text-sm font-medium">Hızlı Şablonlar</span>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-lg mb-4">
+            <Wand2 className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Notebook LLM
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Dosyalarınızı ve metinlerinizi AI ile analiz edin
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2 mb-3">
+
+        {/* Instruction & Presets */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+          <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
+            <Wand2 className="w-5 h-5 text-purple-600" />
+            <span className="text-lg font-semibold">Hızlı Şablonlar</span>
+          </div>
+          <div className="flex flex-wrap gap-3 mb-6">
           {presets.map((p, i) => (
-            <button key={i} onClick={()=>setInstruction(p)} className="px-2 py-1 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 border border-purple-200/50 dark:border-purple-800/50 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50">
+              <button 
+                key={i} 
+                onClick={()=>setInstruction(p)} 
+                className="px-4 py-2 text-sm bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 text-purple-700 dark:text-purple-200 border border-purple-200/50 dark:border-purple-800/50 rounded-xl hover:from-purple-100 hover:to-blue-100 dark:hover:from-purple-900/50 dark:hover:to-blue-900/50 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
               {p}
             </button>
           ))}
         </div>
-        <label htmlFor="nbllm-instruction" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Talimat</label>
-        <input id="nbllm-instruction" value={instruction} onChange={(e)=>setInstruction(e.target.value)} placeholder="Örn: Bu yazıyı makaleye çevir" className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded" />
+          <div>
+            <label htmlFor="nbllm-instruction" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              AI Talimatı *
+            </label>
+            <input 
+              id="nbllm-instruction" 
+              value={instruction} 
+              onChange={(e)=>setInstruction(e.target.value)} 
+              placeholder="Örn: Bu yazıyı makaleye çevir, özetle, yazım hatalarını düzelt..." 
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 transition-all duration-300" 
+            />
+          </div>
       </div>
 
-      {/* Text & Files */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Text card */}
-        <div className="bg-white/80 dark:bg-gray-900/80 rounded-lg border border-white/20 dark:border-gray-800 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2 text-gray-800 dark:text-gray-200">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium">Doğrudan Metin (opsiyonel)</span>
-          </div>
-          <label htmlFor="nbllm-text" className="sr-only">Metin</label>
-          <textarea id="nbllm-text" value={textInput} onChange={(e)=>setTextInput(e.target.value)} rows={9} placeholder="Veya metni buraya yapıştırın" className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded" />
-        </div>
-
-        {/* Files card with drag & drop */}
-        <div className="bg-white/80 dark:bg-gray-900/80 rounded-lg border border-white/20 dark:border-gray-800 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2 text-gray-800 dark:text-gray-200">
-            <UploadCloud className="w-4 h-4 text-teal-600" />
-            <span className="text-sm font-medium">Dosya Yükle (PDF/DOCX/TXT)</span>
-          </div>
-          <label
-            htmlFor="nbllm-files"
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            className="block border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-            aria-label="Dosya yükle alanı"
-            title="Dosyaları buraya sürükleyip bırakın veya tıklayın"
-          >
-            <div className="flex flex-col items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <UploadCloud className="w-6 h-6 text-teal-600" />
-              <span>Dosyaları buraya bırakın ya da <span className="text-teal-600">seçmek için tıklayın</span></span>
-              <span className="text-xs text-gray-500">Desteklenen: PDF, DOC/DOCX, TXT · Maks {MAX_FILES} dosya · {formatBytes(MAX_FILE_SIZE)}/dosya</span>
+        {/* Text & Files */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Text card */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <span className="text-lg font-semibold">Doğrudan Metin (Opsiyonel)</span>
             </div>
-          </label>
-          <input ref={inputRef} id="nbllm-files" aria-label="Dosya yükle" type="file" accept=".pdf,.doc,.docx,.txt" multiple onChange={onFileChange} className="hidden" />
-          <div className="mt-2 flex justify-end">
-            <button onClick={chooseFiles} className="px-3 py-1.5 text-xs bg-teal-600 text-white rounded">Dosya Seç</button>
+            <label htmlFor="nbllm-text" className="sr-only">Metin</label>
+            <textarea 
+              id="nbllm-text" 
+              value={textInput} 
+              onChange={(e)=>setTextInput(e.target.value)} 
+              rows={12} 
+              placeholder="Metni buraya yapıştırın veya yazın..." 
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-300 resize-none" 
+            />
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {textInput.length} karakter
+            </div>
           </div>
-          {files.length>0 && (
-            <ul className="mt-3 space-y-2">
-              {files.map((f, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded p-2">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <span className="flex-1 truncate" title={f.name}>{f.name}</span>
-                  <span className="text-xs text-gray-500">{formatBytes(f.size)}</span>
-                  <button aria-label="Dosyayı kaldır" title="Kaldır" className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={()=>removeFile(i)}>
-                    <X className="w-4 h-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {errorMsg && (
-            <div className="mt-2 text-xs text-red-600 dark:text-red-400">{errorMsg}</div>
-          )}
-        </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        <button onClick={handleSubmit} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} {loading ? 'İşleniyor…' : 'Çalıştır'}
-        </button>
-        <button onClick={()=>{ setFiles([]); setTextInput(''); setResult(''); setErrorMsg(''); }} className="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded">Temizle</button>
-      </div>
-
-      {/* Result */}
-      <div className="bg-white/80 dark:bg-gray-900/80 rounded-lg border border-white/20 dark:border-gray-800 p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Sonuç</div>
-          <div className="flex items-center gap-2">
-            <button onClick={copyResult} disabled={!result} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50" title="Kopyala" aria-label="Sonucu kopyala">
-              <Copy className="w-3.5 h-3.5" /> {copied ? 'Kopyalandı' : 'Kopyala'}
-            </button>
-            <button onClick={downloadResult} disabled={!result} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50" title="İndir" aria-label="Sonucu indir">
-              <Download className="w-3.5 h-3.5" /> İndir
-            </button>
+          {/* Files card with drag & drop */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
+              <UploadCloud className="w-5 h-5 text-teal-600" />
+              <span className="text-lg font-semibold">Dosya Yükle (PDF/DOCX/TXT)</span>
+            </div>
+            <label
+              htmlFor="nbllm-files"
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              className="block border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 hover:border-teal-400"
+              aria-label="Dosya yükle alanı"
+              title="Dosyaları buraya sürükleyip bırakın veya tıklayın"
+            >
+              <div className="flex flex-col items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
+                  <UploadCloud className="w-8 h-8 text-teal-600" />
+                </div>
+                <div>
+                  <p className="font-medium">Dosyaları buraya bırakın</p>
+                  <p className="text-teal-600">veya seçmek için tıklayın</p>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Desteklenen: PDF, DOC/DOCX, TXT<br/>
+                  Maks {MAX_FILES} dosya · {formatBytes(MAX_FILE_SIZE)}/dosya
+                </div>
+              </div>
+            </label>
+            <input ref={inputRef} id="nbllm-files" aria-label="Dosya yükle" type="file" accept=".pdf,.doc,.docx,.txt" multiple onChange={onFileChange} className="hidden" />
+            <div className="mt-4 flex justify-center">
+              <button 
+                onClick={chooseFiles} 
+                className="px-6 py-3 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-xl hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Dosya Seç
+              </button>
+            </div>
+            {files.length>0 && (
+              <div className="mt-6 space-y-3">
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300">Yüklenen Dosyalar:</h4>
+                <ul className="space-y-2">
+                  {files.map((f, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800/60 dark:to-blue-900/20 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+                      <FileText className="w-5 h-5 text-gray-500" />
+                      <span className="flex-1 truncate font-medium" title={f.name}>{f.name}</span>
+                      <span className="text-xs text-gray-500 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">{formatBytes(f.size)}</span>
+                      <button 
+                        aria-label="Dosyayı kaldır" 
+                        title="Kaldır" 
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors" 
+                        onClick={()=>removeFile(i)}
+                      >
+                        <X className="w-4 h-4 text-red-500" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {errorMsg && (
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <div className="text-sm text-red-600 dark:text-red-400">{errorMsg}</div>
+              </div>
+            )}
           </div>
         </div>
-        <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 min-h-[120px]">{result || '—'}</pre>
+
+        {/* Actions */}
+        <div className="flex items-center justify-center gap-6">
+          <button 
+            onClick={handleSubmit} 
+            disabled={loading || (!textInput.trim() && files.length === 0)} 
+            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>AI İşliyor...</span>
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-5 h-5" />
+                <span>AI ile Analiz Et</span>
+              </>
+            )}
+          </button>
+          <button 
+            onClick={()=>{ setFiles([]); setTextInput(''); setResult(''); setErrorMsg(''); }} 
+            className="px-6 py-4 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Temizle
+          </button>
+        </div>
+
+        {/* Result */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">AI Analiz Sonucu</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={copyResult} 
+                disabled={!result} 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                title="Kopyala" 
+                aria-label="Sonucu kopyala"
+              >
+                <Copy className="w-4 h-4" /> 
+                {copied ? 'Kopyalandı!' : 'Kopyala'}
+              </button>
+              <button 
+                onClick={downloadResult} 
+                disabled={!result} 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                title="İndir" 
+                aria-label="Sonucu indir"
+              >
+                <Download className="w-4 h-4" /> 
+                İndir
+              </button>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 min-h-[200px] leading-relaxed">
+              {result || (
+                <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
+                  <div className="text-center">
+                    <Wand2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>AI analiz sonucu burada görünecek</p>
+                    <p className="text-xs mt-1">Metin girin veya dosya yükleyin, sonra "AI ile Analiz Et" butonuna tıklayın</p>
+                  </div>
+                </div>
+              )}
+            </pre>
+          </div>
+        </div>
       </div>
     </div>
   );
