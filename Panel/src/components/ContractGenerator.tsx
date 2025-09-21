@@ -208,16 +208,23 @@ export default function ContractGenerator() {
 
   // AI Services initialization
   useEffect(() => {
+    // Gemini'yi başlat
     if (geminiApiKey) {
-      geminiService.initialize(geminiApiKey);
+      try {
+        geminiService.initialize(geminiApiKey);
+        console.log('Gemini servisi başlatıldı');
+      } catch (error) {
+        console.error('Gemini başlatma hatası:', error);
+      }
     }
     
-    // OpenAI API key'i environment variable'dan veya state'den al
-    const openaiKey = openaiApiKey || (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
-    if (openaiKey) {
-      openaiService.initialize(openaiKey);
-      if (!openaiApiKey) {
-        setOpenaiApiKey(openaiKey);
+    // OpenAI'yi başlat
+    if (openaiApiKey) {
+      try {
+        openaiService.initialize(openaiApiKey);
+        console.log('OpenAI servisi başlatıldı');
+      } catch (error) {
+        console.error('OpenAI başlatma hatası:', error);
       }
     }
   }, [geminiApiKey, openaiApiKey]);
