@@ -211,8 +211,14 @@ export default function ContractGenerator() {
     if (geminiApiKey) {
       geminiService.initialize(geminiApiKey);
     }
-    if (openaiApiKey) {
-      openaiService.initialize(openaiApiKey);
+    
+    // OpenAI API key'i environment variable'dan veya state'den al
+    const openaiKey = openaiApiKey || (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
+    if (openaiKey) {
+      openaiService.initialize(openaiKey);
+      if (!openaiApiKey) {
+        setOpenaiApiKey(openaiKey);
+      }
     }
   }, [geminiApiKey, openaiApiKey]);
 
