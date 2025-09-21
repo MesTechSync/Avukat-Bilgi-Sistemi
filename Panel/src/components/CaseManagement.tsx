@@ -22,7 +22,7 @@ export default function CaseManagement() {
 
   const [newCase, setNewCase] = useState({
     title: '',
-    client_name: '',
+    client_id: '',
     case_type: '',
     status: 'Beklemede',
     deadline: '',
@@ -33,7 +33,7 @@ export default function CaseManagement() {
 
   const [editCase, setEditCase] = useState({
     title: '',
-    client_name: '',
+    client_id: '',
     case_type: '',
     status: 'Beklemede',
     deadline: '',
@@ -156,10 +156,17 @@ export default function CaseManagement() {
   const handleAddCase = async (e) => {
     e.preventDefault();
     try {
-      await addCase(newCase);
+      // Müvekkil ID'sini client_name'e çevir
+      const selectedClient = clients.find(c => c.id === newCase.client_id);
+      const caseData = {
+        ...newCase,
+        client_name: selectedClient ? selectedClient.name : 'Bilinmeyen Müvekkil'
+      };
+      
+      await addCase(caseData);
       setNewCase({
         title: '',
-        client_name: '',
+        client_id: '',
         case_type: '',
         status: 'Beklemede',
         deadline: '',
@@ -180,9 +187,11 @@ export default function CaseManagement() {
 
   const handleEditCase = (case_) => {
     setSelectedCase(case_);
+    // Müvekkil adını ID'ye çevir
+    const clientId = clients.find(c => c.name === case_.client_name)?.id || '';
     setEditCase({
       title: case_.title,
-      client_name: case_.client_name || '',
+      client_id: clientId,
       case_type: case_.case_type || '',
       status: case_.status,
       deadline: case_.deadline || '',
@@ -196,7 +205,14 @@ export default function CaseManagement() {
   const handleUpdateCase = async (e) => {
     e.preventDefault();
     try {
-      await updateCase(selectedCase.id, editCase);
+      // Müvekkil ID'sini client_name'e çevir
+      const selectedClient = clients.find(c => c.id === editCase.client_id);
+      const caseData = {
+        ...editCase,
+        client_name: selectedClient ? selectedClient.name : 'Bilinmeyen Müvekkil'
+      };
+      
+      await updateCase(selectedCase.id, caseData);
       setShowEditModal(false);
       setSelectedCase(null);
     } catch (error) {
@@ -416,15 +432,21 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Müvekkil Adı *
+                    Müvekkil *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    value={newCase.client_name}
-                    onChange={(e) => setNewCase({...newCase, client_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Müvekkil adı" title="Müvekkil adı"
-                  />
+                    value={newCase.client_id}
+                    onChange={(e) => setNewCase({...newCase, client_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
+                  >
+                    <option value="">Müvekkil Seçin</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -677,15 +699,21 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Müvekkil Adı *
+                    Müvekkil *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    value={editCase.client_name}
-                    onChange={(e) => setEditCase({...editCase, client_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Müvekkil adı" title="Müvekkil adı"
-                  />
+                    value={editCase.client_id}
+                    onChange={(e) => setEditCase({...editCase, client_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Müvekkil seçimi" aria-label="Müvekkil seçimi"
+                  >
+                    <option value="">Müvekkil Seçin</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
