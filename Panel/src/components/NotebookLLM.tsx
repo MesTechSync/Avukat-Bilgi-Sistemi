@@ -18,22 +18,28 @@ function formatBytes(n: number) {
 
 export default function NotebookLLM() {
   const [files, setFiles] = useState<File[]>([]);
-  const [instruction, setInstruction] = useState('Bu dosyayı oku ve kısa bir özet çıkar.');
+  const [instruction, setInstruction] = useState('Bu belgeyi hukuki açıdan analiz et ve önemli noktaları özetle.');
   const [textInput, setTextInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const [apiKey, setApiKey] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk');
   const [showSettings, setShowSettings] = useState(false);
-  const [useRealAI, setUseRealAI] = useState(false);
+  const [useRealAI, setUseRealAI] = useState(true);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const presets = [
-    'Bu yazıyı bir makaleye çevir',
-    'Bu dosyadaki yazım hatalarını düzelt',
-    'Metni özetle (en fazla 10 madde)',
-    'Resmî üslupta tekrar yaz',
+    'Bu sözleşmeyi analiz et ve riskleri belirle',
+    'Bu dava dosyasını özetle ve ana noktaları çıkar',
+    'Bu belgeyi hukuki açıdan değerlendir',
+    'Bu metindeki hukuki terimleri açıkla',
+    'Bu sözleşmedeki tarafların hak ve yükümlülüklerini listele',
+    'Bu dava sürecindeki önemli tarihleri belirle',
+    'Bu belgeyi mahkeme için hazırla',
+    'Bu sözleşmedeki eksik maddeleri tespit et',
+    'Bu dava dosyasındaki delilleri analiz et',
+    'Bu metni resmi hukuki dile çevir'
   ];
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -285,10 +291,10 @@ export default function NotebookLLM() {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Notebook LLM
+            Avukat AI Asistanı
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Dosyalarınızı ve metinlerinizi AI ile analiz edin
+            Hukuki belgelerinizi ve dava dosyalarınızı AI ile analiz edin
           </p>
           <div className="mt-4 flex items-center justify-center gap-4">
             <div className={`px-4 py-2 rounded-full text-sm font-medium ${
@@ -386,12 +392,12 @@ export default function NotebookLLM() {
           </div>
         )}
 
-        {/* Instruction & Presets */}
+      {/* Instruction & Presets */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
           <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
             <Wand2 className="w-5 h-5 text-purple-600" />
             <span className="text-lg font-semibold">Hızlı Şablonlar</span>
-          </div>
+        </div>
           <div className="flex flex-wrap gap-3 mb-6">
           {presets.map((p, i) => (
               <button 
@@ -563,8 +569,8 @@ export default function NotebookLLM() {
                 <Download className="w-4 h-4" /> 
                 İndir
             </button>
-            </div>
           </div>
+        </div>
           <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 min-h-[200px] leading-relaxed">
               {result || (

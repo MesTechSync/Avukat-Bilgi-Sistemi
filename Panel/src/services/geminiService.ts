@@ -31,14 +31,19 @@ export class GeminiService {
 
     try {
       const prompt = `
-Sen bir hukuki asistan AI'sın. Aşağıdaki talimatı takip ederek metni analiz et:
+Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip ederek metni analiz et:
 
 TALİMAT: ${instruction}
 
 METİN:
 ${text}
 
-Lütfen talimatı takip ederek detaylı bir analiz yap. Türkçe yanıt ver ve hukuki terminolojiyi doğru kullan.
+Lütfen talimatı takip ederek detaylı bir hukuki analiz yap. Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun. Analizini şu başlıklar altında organize et:
+- Ana Bulgular
+- Hukuki Değerlendirme  
+- Risk Analizi
+- Öneriler
+- Yasal Dayanaklar
 `;
 
       const result = await this.model.generateContent(prompt);
@@ -58,7 +63,7 @@ Lütfen talimatı takip ederek detaylı bir analiz yap. Türkçe yanıt ver ve h
 
     try {
       const prompt = `
-Sen bir hukuki asistan AI'sın. Aşağıdaki talimatı takip ederek dosyayı analiz et:
+Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip ederek dosyayı analiz et:
 
 TALİMAT: ${instruction}
 
@@ -67,7 +72,12 @@ DOSYA ADI: ${fileName}
 DOSYA İÇERİĞİ:
 ${fileContent}
 
-Lütfen talimatı takip ederek dosyayı detaylı analiz et. Türkçe yanıt ver ve hukuki terminolojiyi doğru kullan.
+Lütfen talimatı takip ederek dosyayı detaylı hukuki analiz et. Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun. Analizini şu başlıklar altında organize et:
+- Dosya Özeti
+- Hukuki Değerlendirme
+- Risk Analizi
+- Öneriler
+- Yasal Dayanaklar
 `;
 
       const result = await this.model.generateContent(prompt);
@@ -94,14 +104,19 @@ Lütfen talimatı takip ederek dosyayı detaylı analiz et. Türkçe yanıt ver 
       });
 
       const prompt = `
-Sen bir hukuki asistan AI'sın. Aşağıdaki talimatı takip ederek dosyaları analiz et:
+Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip ederek dosyaları analiz et:
 
 TALİMAT: ${instruction}
 
 DOSYALAR:
 ${filesContent}
 
-Lütfen talimatı takip ederek tüm dosyaları birlikte analiz et. Türkçe yanıt ver ve hukuki terminolojiyi doğru kullan.
+Lütfen talimatı takip ederek tüm dosyaları birlikte detaylı hukuki analiz et. Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun. Analizini şu başlıklar altında organize et:
+- Dosyalar Arası İlişki Analizi
+- Hukuki Değerlendirme
+- Risk Analizi
+- Öneriler
+- Yasal Dayanaklar
 `;
 
       const result = await this.model.generateContent(prompt);
