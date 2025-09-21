@@ -3,6 +3,7 @@ import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, DollarSign, AlertTri
 import { useSupabase } from '../hooks/useSupabase';
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
+import { supabase } from '../lib/supabase';
 
 export default function CaseManagement() {
   const { cases, clients, addCase, updateCase, deleteCase, loading } = useSupabase();
@@ -155,7 +156,8 @@ export default function CaseManagement() {
 
   const handleAddCase = async (e) => {
     e.preventDefault();
-    console.log('Dava ekleme başlatıldı:', newCase);
+    console.log('=== DAVA EKLEME BAŞLADI ===');
+    console.log('Form verisi:', newCase);
     
     // Form validasyonu
     if (!newCase.title.trim()) {
@@ -172,20 +174,54 @@ export default function CaseManagement() {
     }
     
     try {
+      // Önce mevcut cases tablosunu kontrol et
+      console.log('Mevcut cases tablosu kontrol ediliyor...');
+      const { data: existingCases, error: fetchError } = await supabase
+        .from('cases')
+        .select('*')
+        .limit(1);
+      
+      if (fetchError) {
+        console.error('Cases tablosu okuma hatası:', fetchError);
+        alert('Veritabanı bağlantı hatası: ' + fetchError.message);
+        return;
+      }
+      
+      console.log('Cases tablosu mevcut, örnek veri:', existingCases);
+      if (existingCases && existingCases.length > 0) {
+        console.log('Cases tablosu kolonları:', Object.keys(existingCases[0]));
+      }
+      
       // Sadece mevcut kolonları kullan
       const caseData = {
         title: newCase.title,
         case_type: newCase.case_type,
         status: newCase.status,
         priority: newCase.priority,
-        amount: newCase.amount,
+        amount: newCase.amount ? parseFloat(newCase.amount.toString()) : null,
         description: newCase.description,
-        deadline: newCase.deadline
+        deadline: newCase.deadline || null,
+        user_id: '00000000-0000-0000-0000-000000000000'
       };
       
-      console.log('Gönderilecek veri:', caseData);
-      const result = await addCase(caseData);
-      console.log('Dava başarıyla eklendi:', result);
+      console.log('Supabase\'e gönderilecek veri:', caseData);
+      
+      // Direkt Supabase çağrısı yap
+      const { data: insertData, error: insertError } = await supabase
+        .from('cases')
+        .insert([caseData])
+        .select();
+      
+      if (insertError) {
+        console.error('Supabase insert hatası:', insertError);
+        alert('Dava eklenirken hata oluştu: ' + insertError.message);
+        return;
+      }
+      
+      console.log('Dava başarıyla eklendi:', insertData);
+      
+      // Local state'i güncelle
+      setCases(prev => [insertData[0], ...prev]);
       
       setNewCase({
         title: '',
@@ -199,8 +235,9 @@ export default function CaseManagement() {
       });
       setShowAddModal(false);
       alert('Dava başarıyla eklendi!');
+      
     } catch (error) {
-      console.error('Dava eklenirken hata:', error);
+      console.error('Dava eklenirken genel hata:', error);
       alert('Dava eklenirken hata oluştu: ' + error.message);
     }
   };
