@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Phone, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2 } from 'lucide-react';
+import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2 } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 
 // Import all components
@@ -8,7 +8,6 @@ import LegalAssistantChat from './components/LegalAssistantChat';
 import AdvancedSearch from './components/AdvancedSearch';
 import PetitionWriter from './components/PetitionWriter';
 import ContractGenerator from './components/ContractGenerator';
-import WhatsAppIntegration from './components/WhatsAppIntegration';
 import FileConverter from './components/FileConverter';
 import NotebookLLM from './components/NotebookLLM';
 import EnhancedDashboard from './components/EnhancedDashboard';
@@ -108,7 +107,6 @@ function App() {
   { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
-  { id: 'whatsapp', label: 'WhatsApp Destek', icon: Phone, color: 'text-green-500', badge: '7/24' },
   { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
   { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
     { id: 'cases', label: 'Dava Yönetimi', icon: Gavel, color: 'text-red-600' },
@@ -133,8 +131,6 @@ function App() {
         return <PetitionWriter />;
       case 'contract-generator':
         return <ContractGenerator />;
-      case 'whatsapp':
-        return <WhatsAppIntegration />;
       case 'file-converter':
         return <FileConverter />;
       case 'notebook-llm':
@@ -232,9 +228,6 @@ function App() {
           break;
         case 'NAV_CONTRACT_GENERATOR':
           setActiveTab('contract-generator');
-          break;
-        case 'NAV_WHATSAPP':
-          setActiveTab('whatsapp');
           break;
         case 'NAV_FILE_CONVERTER':
           setActiveTab('file-converter');

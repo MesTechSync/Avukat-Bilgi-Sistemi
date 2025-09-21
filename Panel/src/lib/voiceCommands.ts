@@ -11,7 +11,6 @@ export type CommandAction =
   | 'NAV_SEARCH'
   | 'NAV_CONTRACT_GENERATOR'
   | 'NAV_PETITION_WRITER'
-  | 'NAV_WHATSAPP'
   | 'NAV_FILE_CONVERTER'
   | 'NAV_FINANCIALS'
   | 'NAV_PROFILE'
@@ -210,15 +209,6 @@ export const VOICE_COMMANDS: ExtendedVoiceCommand[] = [
     parameters: ['contract-generator'],
     description: 'Sözleşme Oluşturucuya git',
     examples: ['Sözleşme oluştur', 'Kontrat hazırla', 'Mukavele oluştur']
-  },
-  {
-    id: 'nav_whatsapp',
-    category: 'NAVIGASYON',
-    patterns: ['whatsapp destek', 'whatsapp', 'wp destek', '7/24 destek', 'canlı destek'],
-    action: 'NAVIGATE',
-    parameters: ['whatsapp'],
-    description: 'WhatsApp Destek sayfasına git',
-    examples: ['WhatsApp destek', '7/24 destek', 'Canlı destek']
   },
   {
     id: 'nav_file_converter',

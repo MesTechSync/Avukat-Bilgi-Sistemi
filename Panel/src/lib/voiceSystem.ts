@@ -214,9 +214,6 @@ export function analyzeIntent(transcript: string): VoiceIntent {
   if (tnorm.includes('sözleşme oluştur') || tnorm.includes('kontrat hazırla') || tnorm.includes('sözleşme yaz') || tnorm.includes('mukavele oluştur') || tnorm.includes('anlaşma yap')) {
     return { category: 'NAVIGASYON', action: 'NAV_CONTRACT_GENERATOR', parameters: {} };
   }
-  if (tnorm.includes('whatsapp destek') || tnorm.includes('whatsapp') || tnorm.includes('wp destek') || tnorm.includes('7/24 destek') || tnorm.includes('canlı destek')) {
-    return { category: 'NAVIGASYON', action: 'NAV_WHATSAPP', parameters: {} };
-  }
   // Notebook LLM navigasyonu (çeşitli varyantlar)
   if (tnorm.includes('notebook llm') || (tnorm.includes('notebook') && tnorm.includes('llm')) || tnorm.includes('ai notebook') || tnorm.includes('yapay zeka notebook') || tnorm.includes('ai defter')) {
     return { category: 'NAVIGASYON', action: 'NAV_NOTEBOOK_LLM', parameters: {} };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, Bell, Plus, Scale, FileCheck, AlertTriangle, Star, Bot, Search, FileText, Phone } from 'lucide-react';
+import { BarChart3, Users, Gavel, Calendar, DollarSign, TrendingUp, Clock, CheckCircle, Bell, Plus, Scale, FileCheck, AlertTriangle, Star, Bot, Search, FileText } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
 
 interface DashboardProps {
@@ -359,18 +359,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     </div>
                   </button>
 
-                  <button 
-                    onClick={() => onNavigate?.('whatsapp')}
-                    className="group p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 hover:from-orange-100 hover:to-red-100 dark:hover:from-orange-900/30 dark:hover:to-red-900/30 rounded-xl border border-orange-200 dark:border-orange-700 transition-all duration-200 hover:scale-105"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-8 h-8 text-orange-600 dark:text-orange-400" />
-                      <div className="text-left">
-                        <h4 className="font-semibold text-orange-900 dark:text-orange-300">WhatsApp</h4>
-                        <p className="text-xs text-orange-700 dark:text-orange-400">7/24 destek</p>
-                      </div>
-                    </div>
-                  </button>
                 </div>
               </div>
 
