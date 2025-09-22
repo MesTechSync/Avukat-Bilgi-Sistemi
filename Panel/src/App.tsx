@@ -84,7 +84,9 @@ function App() {
 
     for (const endpoint of candidates) {
       try {
-        console.log(`🔍 Backend kontrol ediliyor: ${endpoint}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔍 Backend kontrol ediliyor: ${endpoint}`);
+        }
         const res = await fetchWithTimeout(endpoint, {
           method: 'GET',
           headers: { 
@@ -96,7 +98,9 @@ function App() {
         });
         
         if (!res.ok) {
-          console.log(`⚠️ Backend endpoint ${endpoint} returned ${res.status}`);
+          if (import.meta.env.DEV) {
+            console.log(`⚠️ Backend endpoint ${endpoint} returned ${res.status}`);
+          }
           continue; // try next endpoint
         }
         
@@ -109,26 +113,36 @@ function App() {
           const text = await res.text();
           // HTML yanıt kontrolü - eğer HTML döndürüyorsa frontend servisi
           if (text.includes('<!doctype html>') || text.includes('<html')) {
-            console.log(`⚠️ Frontend servisi yanıt verdi (backend değil): ${endpoint}`);
+            if (import.meta.env.DEV) {
+              console.log(`⚠️ Frontend servisi yanıt verdi (backend değil): ${endpoint}`);
+            }
             continue; // Bu bir backend değil, sonraki endpoint'i dene
           } else if (text.trim().toLowerCase() === 'ok' || text.trim().toLowerCase() === 'healthy') {
             setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
-            console.log(`✅ Backend health check başarılı: ${endpoint}`);
+            if (import.meta.env.DEV) {
+              console.log(`✅ Backend health check başarılı: ${endpoint}`);
+            }
           } else {
             setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
-            console.log(`✅ Backend yanıt aldı: ${endpoint} - ${text.substring(0, 100)}...`);
+            if (import.meta.env.DEV) {
+              console.log(`✅ Backend yanıt aldı: ${endpoint} - ${text.substring(0, 100)}...`);
+            }
           }
         }
         setBackendStatus('ok');
         return;
       } catch (e) {
-        console.log(`❌ Backend endpoint ${endpoint} başarısız:`, e);
+        if (import.meta.env.DEV) {
+          console.log(`❌ Backend endpoint ${endpoint} başarısız:`, e);
+        }
         // try next
       }
     }
     
     // Tüm endpoint'ler başarısız oldu
-    console.log('❌ Tüm backend endpoint\'leri başarısız oldu');
+    if (import.meta.env.DEV) {
+      console.log('❌ Tüm backend endpoint\'leri başarısız oldu');
+    }
     setBackendInfo(null);
     setBackendStatus('error');
   };

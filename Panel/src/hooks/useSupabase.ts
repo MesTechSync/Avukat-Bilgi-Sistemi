@@ -27,7 +27,9 @@ export const useSupabase = () => {
             console.error('Cases tablosu hatası:', caseError)
           } else {
             setCases(caseData || [])
-            console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt')
+            if (import.meta.env.DEV) {
+              console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt')
+            }
           }
         } catch (err) {
           console.error('Cases tablosu bağlantı hatası:', err)
@@ -40,7 +42,9 @@ export const useSupabase = () => {
             console.error('Clients tablosu hatası:', clientError)
           } else {
             setClients(clientData || [])
-            console.log('✅ Clients tablosu başarılı:', clientData?.length || 0, 'kayıt')
+            if (import.meta.env.DEV) {
+              console.log('✅ Clients tablosu başarılı:', clientData?.length || 0, 'kayıt')
+            }
           }
         } catch (err) {
           console.error('Clients tablosu bağlantı hatası:', err)
@@ -54,13 +58,17 @@ export const useSupabase = () => {
             if (appointmentError.message.includes('Could not find the table') || 
                 appointmentError.message.includes('relation') ||
                 appointmentError.code === '42P01') {
-              console.log('Appointments tablosu mevcut değil (normal):', appointmentError.message)
+              if (import.meta.env.DEV) {
+                console.log('Appointments tablosu mevcut değil (normal):', appointmentError.message)
+              }
             } else {
               console.error('Appointments tablosu hatası:', appointmentError)
             }
           } else {
             setAppointments(appointmentData || [])
-            console.log('✅ Appointments tablosu başarılı:', appointmentData?.length || 0, 'kayıt')
+            if (import.meta.env.DEV) {
+              console.log('✅ Appointments tablosu başarılı:', appointmentData?.length || 0, 'kayıt')
+            }
           }
         } catch (err) {
           console.log('Appointments tablosu bağlantı hatası (normal):', err)
@@ -73,7 +81,9 @@ export const useSupabase = () => {
             console.error('Financials tablosu hatası:', financialError)
           } else {
             setFinancials(financialData || [])
-            console.log('✅ Financials tablosu başarılı:', financialData?.length || 0, 'kayıt')
+            if (import.meta.env.DEV) {
+              console.log('✅ Financials tablosu başarılı:', financialData?.length || 0, 'kayıt')
+            }
           }
         } catch (err) {
           console.error('Financials tablosu bağlantı hatası:', err)

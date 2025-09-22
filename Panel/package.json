@@ -1,17 +1,18 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "avukat-bilgi-sistemi",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "AI-Powered Legal Management System",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "backend": "python panel_backend.py",
-    "start": "python panel_backend.py & npm run dev",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest",
-    "check:aichat": "node scripts/check-ai-chat-integrity.mjs"
+    "check:aichat": "node scripts/check-ai-chat-integrity.mjs",
+    "build:production": "vite build --mode production",
+    "serve": "vite preview --port 3000"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

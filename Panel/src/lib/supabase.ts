@@ -7,19 +7,25 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(`Supabase environment variables eksik!\nVITE_SUPABASE_URL: ${supabaseUrl}\nVITE_SUPABASE_ANON_KEY: ${supabaseAnonKey}`);
 }
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key:', supabaseAnonKey);
+// Production için console logları azaltıldı
+if (import.meta.env.DEV) {
+  console.log('Supabase URL:', supabaseUrl);
+  console.log('Supabase Key:', supabaseAnonKey);
+}
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function testConnection() {
-  console.log('🔍 Supabase bağlantısı test ediliyor...');
+  // Production için console logları azaltıldı
+  if (import.meta.env.DEV) {
+    console.log('🔍 Supabase bağlantısı test ediliyor...');
+  }
   
   try {
     // Test clients table
     const { data: clientData, error: clientError } = await supabase.from('clients').select('*').limit(1);
     if (clientError) {
       console.error('❌ Clients tablosu hatası:', clientError);
-    } else {
+    } else if (import.meta.env.DEV) {
       console.log('✅ Clients tablosu başarılı:', clientData?.length || 0, 'kayıt');
     }
     
@@ -27,20 +33,22 @@ async function testConnection() {
     const { data: caseData, error: caseError } = await supabase.from('cases').select('*').limit(1);
     if (caseError) {
       console.error('❌ Cases tablosu hatası:', caseError);
-    } else {
+    } else if (import.meta.env.DEV) {
       console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt');
     }
     
     // Test cases table columns specifically (opsiyonel)
     try {
       const { data: caseColumns, error: columnError } = await supabase.rpc('get_table_columns', { table_name: 'cases' });
-      if (columnError) {
+      if (columnError && import.meta.env.DEV) {
         console.log('ℹ️ Column bilgisi alınamadı (normal):', columnError.message);
-      } else {
+      } else if (import.meta.env.DEV) {
         console.log('✅ Cases tablosu kolonları:', caseColumns?.length || 0, 'kolon');
       }
     } catch (err) {
-      console.log('ℹ️ RPC fonksiyonu mevcut değil (normal)');
+      if (import.meta.env.DEV) {
+        console.log('ℹ️ RPC fonksiyonu mevcut değil (normal)');
+      }
     }
   } catch (err) {
     console.error('❌ Supabase test hatası:', err);
