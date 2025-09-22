@@ -574,7 +574,7 @@ Durumunuzu detaylandırın, size özel çözüm önerelim! 💪`;
 };
 
 export default function LegalAssistantChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([{ id: 'welcome', role: 'assistant', content: '👋 **Merhaba! Hukuk Asistanınız burada.**\n\nHukuki sorunlarınızda size pratik ve detaylı bilgiler verebilirim. Sadece sorunuzu yazın:\n\n💡 **Örnek sorular:**\n• "Boşanma davası nasıl açılır, ne kadar sürer?"\n• "Trafik kazasında 50.000 TL tazminat alabilir miyim?"\n• "İşten haksız çıkarıldım, ne kadar hakım var?"\n\nSorunuzu ne kadar detaylı yazarsanız, size o kadar spesifik bilgi verebilirim.', timestamp: new Date().toISOString(), model: 'auto' }]);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ id: 'welcome', role: 'assistant', content: '👋 **Merhaba! Ben hukuk asistanınızım.**\n\nNormal sohbet edebiliriz, ama hukuki konularda sorular sorduğunuzda size detaylı analiz yapabilirim! 😊\n\n💡 **Hukuki soru örnekleri:**\n• "Boşanma davası nasıl açılır, ne kadar sürer?"\n• "Trafik kazasında 50.000 TL tazminat alabilir miyim?"\n• "İşten haksız çıkarıldım, ne kadar hakım var?"\n\nHukuki olmayan sorular için normal sohbet ederiz, hukuki sorular için AI\'lar yarışır! 🏆', timestamp: new Date().toISOString(), model: 'auto' }]);
   const [input, setInput] = useState('');
   const [model, setModel] = useState<Model>('auto');
   const [loading, setLoading] = useState(false);
@@ -632,7 +632,7 @@ export default function LegalAssistantChat() {
     interimResults: true
   });
 
-  const clearChat = () => setMessages([{ id: 'welcome', role: 'assistant', content: '🔄 **Sohbet temizlendi!**\n\nYeni bir hukuki soru sorabilirsiniz. Size en detaylı şekilde yardımcı olmaya çalışacağım.', timestamp: new Date().toISOString(), model: 'auto' }]);
+  const clearChat = () => setMessages([{ id: 'welcome', role: 'assistant', content: '🔄 **Sohbet temizlendi!**\n\nMerhaba! Ben hukuk asistanınızım. Normal sohbet edebiliriz, hukuki konularda ise detaylı analiz yapabilirim! 😊', timestamp: new Date().toISOString(), model: 'auto' }]);
 
   const send = async () => {
     if (!input.trim() || loading) return; 
@@ -642,99 +642,125 @@ export default function LegalAssistantChat() {
     setMessages(m => [...m, userMsg]); 
     setLoading(true);
     const tid = 't-' + Date.now(); 
-    setMessages(m => [...m, { id: tid, role: 'assistant', content: '🤔 Sorunuzu analiz ediyorum ve size en faydalı bilgiyi hazırlıyorum...', timestamp: new Date().toISOString(), model: 'auto' }]);
+    setMessages(m => [...m, { id: tid, role: 'assistant', content: '🤔 Düşünüyorum...', timestamp: new Date().toISOString(), model: 'auto' }]);
     
     try {
-      // Gerçek AI servislerini kullan
+      // Önce sorunun hukuki olup olmadığını kontrol et
       const analysis = analyze(q);
+      const isLegalQuestion = analysis.category !== 'general' || 
+        q.toLowerCase().includes('hukuk') || 
+        q.toLowerCase().includes('avukat') || 
+        q.toLowerCase().includes('dava') || 
+        q.toLowerCase().includes('mahkeme') ||
+        q.toLowerCase().includes('tazminat') ||
+        q.toLowerCase().includes('sözleşme') ||
+        q.toLowerCase().includes('boşanma') ||
+        q.toLowerCase().includes('miras') ||
+        q.toLowerCase().includes('iş hukuku') ||
+        q.toLowerCase().includes('ceza') ||
+        q.toLowerCase().includes('trafik') ||
+        q.toLowerCase().includes('kira') ||
+        q.toLowerCase().includes('borç') ||
+        q.toLowerCase().includes('alacak');
+      
       let response: AIResponse;
       
-      if (model === 'auto') {
-        // Otomatik seçim: Gemini ve OpenAI'yi karşılaştır
-        const promises = [];
+      if (!isLegalQuestion) {
+        // Hukuki olmayan sorular için normal sohbet
+        const casualResponses = [
+          "Merhaba! 😊 Ben hukuk asistanınızım. Hukuki konularda size yardımcı olabilirim. Ne tür bir hukuki sorununuz var?",
+          "Selam! 👋 Ben burada hukuki sorularınızı yanıtlamak için hazırım. Hangi konuda yardıma ihtiyacınız var?",
+          "Merhaba! Ben avukat asistanınızım. Hukuki konularda size rehberlik edebilirim. Sorunuz nedir?",
+          "Selamlar! 😄 Hukuki danışmanlık için buradayım. Size nasıl yardımcı olabilirim?",
+          "Merhaba! Ben hukuk alanında uzman bir AI asistanıyım. Hangi hukuki konuda bilgi almak istiyorsunuz?"
+        ];
         
-        if (geminiService.isInitialized()) {
-          promises.push(
-            geminiService.analyzeText('Hukuki soru', q)
-              .then(result => ({ type: 'gemini', result, confidence: 0.9 }))
-              .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}`, confidence: 0.1 }))
-          );
-        }
+        const randomResponse = casualResponses[Math.floor(Math.random() * casualResponses.length)];
+        response = { content: randomResponse, model: 'gemini', confidence: 0.9 };
         
-        if (openaiService.isInitialized()) {
-          promises.push(
-            openaiService.generateContract({
+      } else {
+        // Hukuki sorular için AI yarışması
+        if (model === 'auto') {
+          const promises = [];
+          
+          if (geminiService.isInitialized()) {
+            promises.push(
+              geminiService.analyzeText('Hukuki soru', q)
+                .then(result => ({ type: 'gemini', result, confidence: 0.9 }))
+                .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}`, confidence: 0.1 }))
+            );
+          }
+          
+          if (openaiService.isInitialized()) {
+            promises.push(
+              openaiService.generateContract({
+                contractType: 'Hukuki Danışmanlık',
+                description: q,
+                requirements: ['Hukuki analiz'],
+                parties: ['Danışan'],
+                additionalInfo: 'Bu bir hukuki soru. Detaylı analiz ve öneriler sun.'
+              })
+              .then(result => ({ type: 'openai', result, confidence: 0.9 }))
+              .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}`, confidence: 0.1 }))
+            );
+          }
+          
+          if (promises.length === 0) {
+            await new Promise(r => setTimeout(r, 340));
+            response = chooseBest(q, analysis);
+          } else {
+            const results = await Promise.all(promises);
+            
+            let bestResult = '';
+            let bestModel: 'gpt-4' | 'gemini' = 'gpt-4';
+            let bestConfidence = 0;
+            let bestLength = 0;
+            
+            results.forEach(result => {
+              const lengthScore = result.result.length;
+              const qualityScore = result.confidence;
+              const totalScore = lengthScore * 0.3 + qualityScore * 0.7;
+              
+              if (totalScore > bestConfidence || (totalScore === bestConfidence && lengthScore > bestLength)) {
+                bestResult = result.result;
+                bestModel = result.type === 'gemini' ? 'gemini' : 'gpt-4';
+                bestConfidence = totalScore;
+                bestLength = lengthScore;
+              }
+            });
+            
+            const sources = [
+              `📚 **Kaynak:** ${bestModel === 'gemini' ? 'Google Gemini AI' : 'OpenAI GPT-4'}`,
+              `🎯 **Güven Skoru:** ${Math.round(bestConfidence * 100)}%`,
+              `📊 **Yanıt Uzunluğu:** ${bestLength} karakter`,
+              `⚖️ **Hukuki Kategori:** ${analysis.category}`,
+              `🔍 **Analiz:** ${analysis.isUrgent ? 'Acil' : 'Normal'} - ${analysis.complexity === 3 ? 'Karmaşık' : analysis.complexity === 2 ? 'Orta' : 'Basit'}`
+            ];
+            
+            response = { 
+              content: `${bestResult}\n\n---\n\n**🏆 Yarışma Sonucu:**\n${sources.join('\n')}`, 
+              model: bestModel, 
+              confidence: bestConfidence 
+            };
+          }
+        } else {
+          // Belirli model seçimi
+          if (model === 'gemini' && geminiService.isInitialized()) {
+            const result = await geminiService.analyzeText('Hukuki soru', q);
+            response = { content: result, model: 'gemini', confidence: 0.9 };
+          } else if (model === 'gpt-4' && openaiService.isInitialized()) {
+            const result = await openaiService.generateContract({
               contractType: 'Hukuki Danışmanlık',
               description: q,
               requirements: ['Hukuki analiz'],
               parties: ['Danışan'],
               additionalInfo: 'Bu bir hukuki soru. Detaylı analiz ve öneriler sun.'
-            })
-            .then(result => ({ type: 'openai', result, confidence: 0.9 }))
-            .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}`, confidence: 0.1 }))
-          );
-        }
-        
-        if (promises.length === 0) {
-          // AI servisleri aktif değilse demo moda geç
-          await new Promise(r => setTimeout(r, 340));
-          response = chooseBest(q, analysis);
-        } else {
-          const results = await Promise.all(promises);
-          
-          // Yarışma sistemi: En iyi sonucu seç
-          let bestResult = '';
-          let bestModel: 'gpt-4' | 'gemini' = 'gpt-4';
-          let bestConfidence = 0;
-          let bestLength = 0;
-          
-          results.forEach(result => {
-            // Uzunluk ve kalite puanlaması
-            const lengthScore = result.result.length;
-            const qualityScore = result.confidence;
-            const totalScore = lengthScore * 0.3 + qualityScore * 0.7;
-            
-            if (totalScore > bestConfidence || (totalScore === bestConfidence && lengthScore > bestLength)) {
-              bestResult = result.result;
-              bestModel = result.type === 'gemini' ? 'gemini' : 'gpt-4';
-              bestConfidence = totalScore;
-              bestLength = lengthScore;
-            }
-          });
-          
-          // Kaynak bilgilerini ekle
-          const sources = [
-            `📚 **Kaynak:** ${bestModel === 'gemini' ? 'Google Gemini AI' : 'OpenAI GPT-4'}`,
-            `🎯 **Güven Skoru:** ${Math.round(bestConfidence * 100)}%`,
-            `📊 **Yanıt Uzunluğu:** ${bestLength} karakter`,
-            `⚖️ **Hukuki Kategori:** ${analysis.category}`,
-            `🔍 **Analiz:** ${analysis.isUrgent ? 'Acil' : 'Normal'} - ${analysis.complexity === 3 ? 'Karmaşık' : analysis.complexity === 2 ? 'Orta' : 'Basit'}`
-          ];
-          
-          response = { 
-            content: `${bestResult}\n\n---\n\n**🏆 Yarışma Sonucu:**\n${sources.join('\n')}`, 
-            model: bestModel, 
-            confidence: bestConfidence 
-          };
-        }
-      } else {
-        // Belirli model seçimi
-        if (model === 'gemini' && geminiService.isInitialized()) {
-          const result = await geminiService.analyzeText('Hukuki soru', q);
-          response = { content: result, model: 'gemini', confidence: 0.9 };
-        } else if (model === 'gpt-4' && openaiService.isInitialized()) {
-          const result = await openaiService.generateContract({
-            contractType: 'Hukuki Danışmanlık',
-            description: q,
-            requirements: ['Hukuki analiz'],
-            parties: ['Danışan'],
-            additionalInfo: 'Bu bir hukuki soru. Detaylı analiz ve öneriler sun.'
-          });
-          response = { content: result, model: 'gpt-4', confidence: 0.9 };
-        } else {
-          // Seçilen model aktif değilse demo moda geç
-          await new Promise(r => setTimeout(r, 340));
-          response = { content: buildAnswer(q, model, analysis), model: model === 'auto' ? 'gpt-4' : model, confidence: 0.9 };
+            });
+            response = { content: result, model: 'gpt-4', confidence: 0.9 };
+          } else {
+            await new Promise(r => setTimeout(r, 340));
+            response = { content: buildAnswer(q, model, analysis), model: model === 'auto' ? 'gpt-4' : model, confidence: 0.9 };
+          }
         }
       }
       
