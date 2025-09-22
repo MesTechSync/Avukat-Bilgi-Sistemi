@@ -643,32 +643,32 @@ Bu bilgilere göre profesyonel bir hukuki sözleşme hazırla. Türk hukuk siste
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-3 md:p-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="text-center mb-4 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex-1"></div>
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg">
-              <FileText className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-xl md:rounded-2xl shadow-lg">
+              <FileText className="w-6 h-6 md:w-8 md:h-8 text-white" />
           </div>
-            <div className="flex-1 flex justify-end gap-2">
+            <div className="flex-1 flex justify-end gap-1 md:gap-2">
               <button
                 onClick={testAIServices}
-                className="p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
+                className="p-2 md:p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
                 title="AI Servislerini Test Et"
               >
-                <Bot className="w-5 h-5" />
+                <Bot className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               <button
                 onClick={() => setShowAISettings(!showAISettings)}
-                className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
+                className="p-2 md:p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
                 title="AI Ayarları"
               >
-                <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             AI Destekli Sözleşme Oluşturucu
           </h1>
             <p className="text-gray-600 dark:text-gray-400">
