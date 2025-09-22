@@ -399,58 +399,58 @@ Saygılarımla,
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-3 md:p-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="text-center mb-4 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex-1"></div>
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg">
-              <FileText className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl md:rounded-2xl shadow-lg">
+              <FileText className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <div className="flex-1 flex justify-end gap-2">
+            <div className="flex-1 flex justify-end gap-1 md:gap-2">
               <button
                 onClick={() => setShowExamples(!showExamples)}
-                className="p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
+                className="p-2 md:p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
                 title="Dilekçe Örnekleri"
               >
-                <BookOpen className="w-5 h-5" />
+                <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             AI Destekli Dilekçe Yazım Sistemi
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
             Gemini ve OpenAI ile profesyonel mahkeme dilekçelerinizi oluşturun
           </p>
           
           {/* AI Status */}
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
-              <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Gemini</span>
+          <div className="mt-3 md:mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
+              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Gemini</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
-              <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI</span>
+            <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
+              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI</span>
             </div>
           </div>
         </div>
 
         {/* Dilekçe Örnekleri Seçimi */}
         {!selectedExample && (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-4 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
+              <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">
                 Dilekçe Türü Seçin
               </h3>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
+                  <label className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
                   <select
                     value={aiModel}
                     onChange={(e) => setAIModel(e.target.value as AIModel)}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
+                    className="px-2 md:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs md:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
                   >
                     <option value="auto">🤖 Otomatik</option>
                     <option value="gemini">✨ Gemini</option>
@@ -459,7 +459,7 @@ Saygılarımla,
                 </div>
                 <button
                   onClick={() => setUseAI(!useAI)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300 ${
                     useAI 
                       ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' 
                       : 'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
