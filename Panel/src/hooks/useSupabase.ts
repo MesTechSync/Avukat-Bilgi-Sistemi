@@ -24,7 +24,9 @@ export const useSupabase = () => {
         try {
           const { data: caseData, error: caseError } = await supabase.from('cases').select('*')
           if (caseError) {
-            console.error('Cases tablosu hatası:', caseError)
+            if (import.meta.env.DEV) {
+              console.error('Cases tablosu hatası:', caseError)
+            }
           } else {
             setCases(caseData || [])
             if (import.meta.env.DEV) {
@@ -32,14 +34,18 @@ export const useSupabase = () => {
             }
           }
         } catch (err) {
-          console.error('Cases tablosu bağlantı hatası:', err)
+          if (import.meta.env.DEV) {
+            console.error('Cases tablosu bağlantı hatası:', err)
+          }
         }
 
         // Clients tablosu
         try {
           const { data: clientData, error: clientError } = await supabase.from('clients').select('*')
           if (clientError) {
-            console.error('Clients tablosu hatası:', clientError)
+            if (import.meta.env.DEV) {
+              console.error('Clients tablosu hatası:', clientError)
+            }
           } else {
             setClients(clientData || [])
             if (import.meta.env.DEV) {
@@ -47,7 +53,9 @@ export const useSupabase = () => {
             }
           }
         } catch (err) {
-          console.error('Clients tablosu bağlantı hatası:', err)
+          if (import.meta.env.DEV) {
+            console.error('Clients tablosu bağlantı hatası:', err)
+          }
         }
 
         // Appointments tablosu (opsiyonel - tablo mevcut değilse sessizce geç)
@@ -62,7 +70,9 @@ export const useSupabase = () => {
                 console.log('Appointments tablosu mevcut değil (normal):', appointmentError.message)
               }
             } else {
-              console.error('Appointments tablosu hatası:', appointmentError)
+              if (import.meta.env.DEV) {
+                console.error('Appointments tablosu hatası:', appointmentError)
+              }
             }
           } else {
             setAppointments(appointmentData || [])
@@ -71,14 +81,18 @@ export const useSupabase = () => {
             }
           }
         } catch (err) {
-          console.log('Appointments tablosu bağlantı hatası (normal):', err)
+          if (import.meta.env.DEV) {
+            console.log('Appointments tablosu bağlantı hatası (normal):', err)
+          }
         }
 
         // Financials tablosu
         try {
           const { data: financialData, error: financialError } = await supabase.from('financials').select('*')
           if (financialError) {
-            console.error('Financials tablosu hatası:', financialError)
+            if (import.meta.env.DEV) {
+              console.error('Financials tablosu hatası:', financialError)
+            }
           } else {
             setFinancials(financialData || [])
             if (import.meta.env.DEV) {
@@ -86,12 +100,16 @@ export const useSupabase = () => {
             }
           }
         } catch (err) {
-          console.error('Financials tablosu bağlantı hatası:', err)
+          if (import.meta.env.DEV) {
+            console.error('Financials tablosu bağlantı hatası:', err)
+          }
         }
 
         setError(null)
       } catch (err) {
-        console.error('Genel Supabase hatası:', err)
+        if (import.meta.env.DEV) {
+          console.error('Genel Supabase hatası:', err)
+        }
         setError('Supabase veri çekme hatası')
       }
       setLoading(false)

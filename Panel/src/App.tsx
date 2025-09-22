@@ -108,7 +108,9 @@ function App() {
         if (ct.includes('application/json')) {
           const data = await res.json();
           setBackendInfo({ ...data, endpoint });
-          console.log(`✅ Backend bağlantısı başarılı: ${endpoint}`, data);
+          if (import.meta.env.DEV) {
+            console.log(`✅ Backend bağlantısı başarılı: ${endpoint}`, data);
+          }
         } else {
           const text = await res.text();
           // HTML yanıt kontrolü - eğer HTML döndürüyorsa frontend servisi

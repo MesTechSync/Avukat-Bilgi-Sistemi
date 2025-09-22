@@ -24,7 +24,9 @@ async function testConnection() {
     // Test clients table
     const { data: clientData, error: clientError } = await supabase.from('clients').select('*').limit(1);
     if (clientError) {
-      console.error('❌ Clients tablosu hatası:', clientError);
+      if (import.meta.env.DEV) {
+        console.error('❌ Clients tablosu hatası:', clientError);
+      }
     } else if (import.meta.env.DEV) {
       console.log('✅ Clients tablosu başarılı:', clientData?.length || 0, 'kayıt');
     }
@@ -32,7 +34,9 @@ async function testConnection() {
     // Test cases table structure
     const { data: caseData, error: caseError } = await supabase.from('cases').select('*').limit(1);
     if (caseError) {
-      console.error('❌ Cases tablosu hatası:', caseError);
+      if (import.meta.env.DEV) {
+        console.error('❌ Cases tablosu hatası:', caseError);
+      }
     } else if (import.meta.env.DEV) {
       console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt');
     }
@@ -51,7 +55,9 @@ async function testConnection() {
       }
     }
   } catch (err) {
-    console.error('❌ Supabase test hatası:', err);
+    if (import.meta.env.DEV) {
+      console.error('❌ Supabase test hatası:', err);
+    }
   }
 }
 
