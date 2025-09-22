@@ -256,17 +256,17 @@ Yanıt:`;
           
           {/* Quick Actions */}
           <div className="mt-2 md:mt-3 flex flex-wrap gap-1 md:gap-2">
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
-              <Phone className="w-3 h-3 inline mr-1" />
-              Telefon Desteği
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors flex items-center">
+              <Phone className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">Telefon Desteği</span>
             </button>
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
-              <Mail className="w-3 h-3 inline mr-1" />
-              E-posta Gönder
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors flex items-center">
+              <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">E-posta Gönder</span>
             </button>
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
-              <Clock className="w-3 h-3 inline mr-1" />
-              Geri Arama Talep Et
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors flex items-center">
+              <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">Geri Arama Talep Et</span>
             </button>
           </div>
         </div>

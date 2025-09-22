@@ -765,8 +765,8 @@ export default function Settings() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:backdrop-blur-sm'
                     }`}
                   >
-                    <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-sm md:text-base font-medium">{tab.label}</span>
+                    <IconComponent className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                    <span className="text-sm md:text-base font-medium text-left">{tab.label}</span>
                   </button>
                 );
               })}
@@ -780,14 +780,14 @@ export default function Settings() {
             {renderTabContent()}
             
             {/* Save Button */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex justify-end gap-3">
-                <button className="px-6 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+                <button className="px-4 md:px-6 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors order-2 sm:order-1">
                   İptal
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-1 sm:order-2"
                 >
                   <Save className="w-4 h-4" />
                   Kaydet

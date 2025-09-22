@@ -554,18 +554,18 @@ function App() {
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
                 title={item.label}
-                className={`w-full flex items-center justify-start gap-2 px-2 py-2 md:py-3 rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center justify-start gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-3 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-blue-50/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/50'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:backdrop-blur-sm'
                 }`}
               >
-                <IconComponent className={`shrink-0 w-5 h-5 md:w-6 md:h-6 ${isActive ? item.color : ''}`} />
+                <IconComponent className={`shrink-0 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${isActive ? item.color : ''}`} />
                 {sidebarOpen && (
                   <>
                     <span className="flex-1 min-w-0 truncate font-medium text-xs md:text-[13px] leading-4 md:leading-5 text-left">{item.label}</span>
                     {item.badge && (
-                      <span className={`ml-auto px-1.5 md:px-2 py-0.5 text-xs font-medium rounded-full ${
+                      <span className={`ml-auto px-1.5 md:px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                         item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
                         item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
                         item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
@@ -662,21 +662,21 @@ function App() {
                 onClick={() => handleTabChange('settings')}
                 title="Ayarlar"
                 aria-label="Ayarlar"
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm flex-shrink-0"
               >
                 <SettingsIcon className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => handleTabChange('profile')}
-                className="flex items-center gap-3 pl-4 border-l border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg p-2 transition-all duration-200"
+                className="flex items-center gap-2 md:gap-3 pl-2 md:pl-4 border-l border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg p-2 transition-all duration-200 flex-shrink-0"
                 aria-label="Profil"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
-                  <span className="text-white text-sm font-medium">MZA</span>
+                <div className="w-6 h-6 md:w-8 md:h-8 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm flex-shrink-0">
+                  <span className="text-white text-xs md:text-sm font-medium">MZA</span>
                 </div>
-                <div className="hidden md:block text-sm">
-                  <p className="font-medium text-gray-900 dark:text-white">Av. Mehmet Zeki Alagöz</p>
-                  <p className="text-gray-500 dark:text-gray-400">Premium Üye</p>
+                <div className="hidden md:block text-sm min-w-0">
+                  <p className="font-medium text-gray-900 dark:text-white truncate">Av. Mehmet Zeki Alagöz</p>
+                  <p className="text-gray-500 dark:text-gray-400 truncate">Premium Üye</p>
                 </div>
               </button>
             </>
