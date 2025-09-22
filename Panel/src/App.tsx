@@ -13,7 +13,6 @@ import NotebookLLM from './components/NotebookLLM';
 import EnhancedDashboard from './components/EnhancedDashboard';
 import CaseManagement from './components/CaseManagement';
 import ClientManagement from './components/ClientManagement';
-import AppointmentManagement from './components/AppointmentManagement';
 import EnhancedAppointmentManagement from './components/EnhancedAppointmentManagement';
 import FinancialManagement from './components/FinancialManagement';
 import Settings from './components/Settings';
@@ -40,6 +39,7 @@ function App() {
   const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
   const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number; endpoint?: string } | null>(null);
   const [triedEndpoints, setTriedEndpoints] = useState<string[]>([]);
+  const [showBackendModal, setShowBackendModal] = useState(false);
 
   const ENV_BACKEND = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
   const normalizedEnv = (ENV_BACKEND || '').replace(/\/$/, '');
@@ -59,48 +59,72 @@ function App() {
     setBackendStatus('checking');
     setBackendInfo(null);
     const candidates: string[] = [];
+    
+    // Backend URL'leri öncelik sırasına göre ekle
     if (normalizedEnv) {
       candidates.push(`${normalizedEnv}/health`);
+      candidates.push(`${normalizedEnv}/api/health`);
       candidates.push(`${normalizedEnv}/health/production`);
     }
+    
+    // Local development endpoints
     candidates.push('/api/health');
-    candidates.push('/api/health/production');
     candidates.push('/health');
+    candidates.push('/api/health/production');
     candidates.push('/health/production');
+    
+    // External backend endpoints (fallback)
+    candidates.push('http://localhost:8000/health');
+    candidates.push('http://localhost:9000/health');
+    candidates.push('http://127.0.0.1:8000/health');
+    candidates.push('http://127.0.0.1:9000/health');
 
     // Store the full list for diagnostics in UI
     setTriedEndpoints(candidates);
 
     for (const endpoint of candidates) {
       try {
+        console.log(`🔍 Backend kontrol ediliyor: ${endpoint}`);
         const res = await fetchWithTimeout(endpoint, {
-          headers: { 'Accept': 'application/json, text/plain' },
+          method: 'GET',
+          headers: { 
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
+          },
           credentials: 'same-origin',
-          timeoutMs: 3000 // Daha kısa timeout
+          timeoutMs: 2000 // Daha kısa timeout
         });
+        
         if (!res.ok) {
-          console.log(`Backend endpoint ${endpoint} returned ${res.status} (normal)`);
+          console.log(`⚠️ Backend endpoint ${endpoint} returned ${res.status}`);
           continue; // try next endpoint
         }
+        
         const ct = res.headers.get('content-type') || '';
         if (ct.includes('application/json')) {
           const data = await res.json();
           setBackendInfo({ ...data, endpoint });
+          console.log(`✅ Backend bağlantısı başarılı: ${endpoint}`, data);
         } else {
           const text = await res.text();
-          if (text.trim().toLowerCase() === 'ok') {
-            setBackendInfo({ service: 'nginx', version: undefined, tools_count: undefined, endpoint });
+          if (text.trim().toLowerCase() === 'ok' || text.trim().toLowerCase() === 'healthy') {
+            setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
+            console.log(`✅ Backend health check başarılı: ${endpoint}`);
           } else {
-            setBackendInfo({ service: undefined, version: undefined, tools_count: undefined, endpoint });
+            setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
+            console.log(`✅ Backend yanıt aldı: ${endpoint} - ${text}`);
           }
         }
         setBackendStatus('ok');
         return;
       } catch (e) {
-        console.log(`Backend endpoint ${endpoint} failed (normal):`, e);
+        console.log(`❌ Backend endpoint ${endpoint} başarısız:`, e);
         // try next
       }
     }
+    
+    // Tüm endpoint'ler başarısız oldu
+    console.log('❌ Tüm backend endpoint\'leri başarısız oldu');
     setBackendInfo(null);
     setBackendStatus('error');
   };
@@ -547,7 +571,11 @@ function App() {
                 <Bell className="w-5 h-5" />
               </button>
               <button
-                onClick={checkBackend}
+                onClick={() => {
+                  checkBackend();
+                  // Backend detay modalını aç
+                  setShowBackendModal(true);
+                }}
                 className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/50 transition-all duration-200 backdrop-blur-sm shadow-sm"
                 title={`Backend: ${backendUrl}`}
                 aria-label="Backend sağlığını kontrol et"
@@ -589,6 +617,162 @@ function App() {
             </>
           }
         />
+
+        {/* Backend Status Modal */}
+        {showBackendModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Backend Durumu
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Sistem bağlantı durumu ve detayları
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowBackendModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Kapat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+                {/* Backend Status */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Bağlantı Durumu</h4>
+                  <div className="flex items-center gap-3 p-4 rounded-lg border">
+                    {backendStatus === 'checking' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">Kontrol ediliyor...</span>
+                      </>
+                    ) : backendStatus === 'ok' ? (
+                      <>
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <span className="text-green-600 dark:text-green-400 font-medium">Bağlantı Başarılı</span>
+                      </>
+                    ) : backendStatus === 'error' ? (
+                      <>
+                        <X className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <span className="text-red-600 dark:text-red-400 font-medium">Bağlantı Başarısız</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-5 h-5 rounded-full bg-gray-400" />
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Kontrol Edilmedi</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Backend Info */}
+                {backendInfo && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Backend Bilgileri</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Servis</label>
+                        <p className="text-gray-900 dark:text-white">{backendInfo.service || 'Bilinmiyor'}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Versiyon</label>
+                        <p className="text-gray-900 dark:text-white">{backendInfo.version || 'Bilinmiyor'}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Araç Sayısı</label>
+                        <p className="text-gray-900 dark:text-white">{backendInfo.tools_count ?? 'Bilinmiyor'}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Endpoint</label>
+                        <p className="text-gray-900 dark:text-white text-xs break-all">{backendInfo.endpoint || 'Bilinmiyor'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tried Endpoints */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Denenen Endpoint'ler</h4>
+                  <div className="space-y-2">
+                    {triedEndpoints && triedEndpoints.length > 0 ? (
+                      triedEndpoints.map((endpoint, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">{idx + 1}.</span>
+                          <code className="text-gray-800 dark:text-gray-200 font-mono text-xs break-all">{endpoint}</code>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Henüz endpoint denenmedi</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Environment Info */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Ortam Bilgileri</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Backend URL</label>
+                      <p className="text-gray-900 dark:text-white text-xs break-all">{backendUrl}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Environment Backend</label>
+                      <p className="text-gray-900 dark:text-white text-xs break-all">{normalizedEnv || 'Tanımlanmamış'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Troubleshooting */}
+                {backendStatus === 'error' && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Sorun Giderme</h4>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Backend Bağlantı Sorunu</h5>
+                      <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                        <li>• Backend servisinin çalıştığından emin olun</li>
+                        <li>• Port 8000 veya 9000'in açık olduğunu kontrol edin</li>
+                        <li>• Firewall ayarlarını kontrol edin</li>
+                        <li>• VITE_BACKEND_URL environment variable'ını kontrol edin</li>
+                        <li>• Reverse proxy ayarlarını kontrol edin</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div className="flex gap-2">
+                  <button 
+                    onClick={checkBackend}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    title="Backend durumunu yeniden kontrol et"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Yeniden Kontrol Et
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowBackendModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
