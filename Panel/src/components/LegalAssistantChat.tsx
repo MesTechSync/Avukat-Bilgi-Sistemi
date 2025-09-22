@@ -581,6 +581,36 @@ export default function LegalAssistantChat() {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
+  // AI Services initialization
+  useEffect(() => {
+    // Gemini'yi başlat - hardcoded API key
+    const geminiApiKey = 'AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk';
+    if (geminiApiKey) {
+      try {
+        geminiService.initialize(geminiApiKey);
+        console.log('✅ Gemini servisi başlatıldı:', geminiApiKey.substring(0, 10) + '...');
+      } catch (error) {
+        console.error('❌ Gemini başlatma hatası:', error);
+      }
+    }
+    
+    // OpenAI'yi başlat - environment variable'dan otomatik al
+    const envOpenaiKey = (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
+    if (envOpenaiKey) {
+      try {
+        openaiService.initialize(envOpenaiKey);
+        console.log('✅ OpenAI servisi başlatıldı:', envOpenaiKey.substring(0, 10) + '...');
+      } catch (error) {
+        console.error('❌ OpenAI başlatma hatası:', error);
+      }
+    }
+    
+    // Servis durumlarını kontrol et
+    console.log('🔍 AI Servis Durumları:');
+    console.log('  - Gemini:', geminiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
+    console.log('  - OpenAI:', openaiService.isInitialized() ? '✅ Aktif' : '❌ Pasif');
+  }, []);
+
   // Dikte hook'u
   const {
     isListening: isDictating,
@@ -739,69 +769,89 @@ export default function LegalAssistantChat() {
 
   return (
     <div className="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-lg">
-      {/* Modern Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">🏆 AI Yarışma Sistemi</h3>
-              <p className="text-blue-100 text-sm">Gemini vs OpenAI - En iyi cevap kazanır!</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <select 
-              aria-label="Model seçimi" 
-              value={model} 
-              onChange={e => setModel(e.target.value as Model)} 
-              className="text-sm border border-white/30 rounded-lg px-3 py-2 bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
-            >
-              <option value="auto" className="text-gray-900">🤖 Otomatik Yarışma</option>
-              <option value="gpt-4" className="text-gray-900">⚡ Sadece GPT-4</option>
-              <option value="gemini" className="text-gray-900">✨ Sadece Gemini</option>
-            </select>
-            <button 
-              onClick={clearChat} 
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors" 
-              title="Sohbeti Temizle"
-            >
-              <Trash2 className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        </div>
+      {/* Ultra Modern Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-6 py-5 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
         
-        {/* AI Status */}
-        <div className="mt-3 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-400' : 'bg-red-400'}`}></div>
-            <span className="text-sm text-white">Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                <Bot className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  🏆 AI Yarışma Arenası
+                  <span className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold animate-pulse">
+                    CANLI
+                  </span>
+                </h3>
+                <p className="text-purple-100 text-sm font-medium">Gemini vs OpenAI - En iyi cevap kazanır!</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <select 
+                aria-label="Model seçimi" 
+                value={model} 
+                onChange={e => setModel(e.target.value as Model)} 
+                className="text-sm border border-white/30 rounded-xl px-4 py-2 bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm font-medium"
+              >
+                <option value="auto" className="text-gray-900">🤖 Otomatik Yarışma</option>
+                <option value="gpt-4" className="text-gray-900">⚡ Sadece GPT-4</option>
+                <option value="gemini" className="text-gray-900">✨ Sadece Gemini</option>
+              </select>
+              <button 
+                onClick={clearChat} 
+                className="p-3 hover:bg-white/20 rounded-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/30" 
+                title="Sohbeti Temizle"
+              >
+                <Trash2 className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-400' : 'bg-red-400'}`}></div>
-            <span className="text-sm text-white">OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+          
+          {/* AI Status Cards */}
+          <div className="mt-4 flex items-center gap-4">
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm border ${geminiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
+              <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+              <span className="text-sm text-white font-medium">
+                ✨ Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}
+              </span>
+            </div>
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm border ${openaiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
+              <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+              <span className="text-sm text-white font-medium">
+                ⚡ OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-400/50 rounded-xl backdrop-blur-sm">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-white font-medium">🏆 Yarışma Aktif</span>
+            </div>
           </div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-4xl rounded-xl px-6 py-4 text-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-md'}`}>
+            <div className={`max-w-4xl rounded-2xl px-6 py-5 text-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-lg backdrop-blur-sm'}`}>
               {msg.role === 'assistant' && (msg.actualModel || msg.model) && !msg.isError && (
-                <div className="mb-3 flex items-center gap-3 text-xs">
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30">
-                    <div className={`w-2 h-2 rounded-full ${(msg.actualModel || msg.model) === 'gpt-4' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                <div className="mb-4 flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 border border-green-200 dark:border-green-700">
+                    <div className={`w-3 h-3 rounded-full ${(msg.actualModel || msg.model) === 'gpt-4' ? 'bg-blue-500 animate-pulse' : 'bg-green-500 animate-pulse'}`}></div>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">
                       {(msg.actualModel || msg.model) === 'gpt-4' ? '⚡ OpenAI GPT-4' : (msg.actualModel || msg.model) === 'gemini' ? '✨ Google Gemini' : '🤖 AI'}
                     </span>
                     {msg.model === 'auto' && msg.actualModel && (
-                      <span className="px-2 py-1 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                      <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 rounded-full text-xs font-bold animate-pulse">
                         🏆 KAZANDI
                       </span>
                     )}
                     {msg.confidence && (
-                      <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
+                      <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
                         {Math.round(msg.confidence * 100)}% Güven
                       </span>
                     )}
@@ -843,26 +893,26 @@ export default function LegalAssistantChat() {
           </div>
         ))}
         {loading && (
-          <div className="flex items-center justify-center gap-3 text-sm text-gray-500 py-4">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-500 py-6">
+            <div className="flex gap-2">
+              <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-3 h-3 bg-gradient-to-r from-pink-500 to-red-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
-            <span>AI'lar yarışıyor... En iyi cevabı hazırlıyorlar</span>
+            <span className="font-medium">🏆 AI'lar yarışıyor... En iyi cevabı hazırlıyorlar</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
         <div className="flex gap-4">
           <textarea 
             value={input + (dictationInterimText ? ' ' + dictationInterimText : '')} 
             onChange={e => setInput(e.target.value)} 
             onKeyDown={onKeyDown} 
             rows={3} 
-            placeholder="Hukuki sorunuzu detaylı yazın... AI'lar yarışacak ve en iyi cevabı verecek! 🏆" 
-            className="flex-1 text-sm p-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-300" 
+            placeholder="🏆 Hukuki sorunuzu detaylı yazın... AI'lar yarışacak ve en iyi cevabı verecek!" 
+            className="flex-1 text-sm p-4 border-2 border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-300 shadow-lg" 
             disabled={loading} 
           />
           <div className="flex flex-col gap-3">
@@ -877,23 +927,23 @@ export default function LegalAssistantChat() {
             <button 
               onClick={send} 
               disabled={loading || !input.trim()} 
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-3 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105"
             >
               {loading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Yarışıyor...</span>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>🏆 Yarışıyor...</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                   <span>Gönder</span>
                 </>
               )}
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">🏆 AI'lar yarışıyor! En iyi cevap otomatik seçiliyor • ⚖️ Bu yanıtlar bilgilendirme amaçlıdır, bağlayıcı hukuki görüş değildir</p>
+        <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center font-medium">🏆 AI'lar yarışıyor! En iyi cevap otomatik seçiliyor • ⚖️ Bu yanıtlar bilgilendirme amaçlıdır, bağlayıcı hukuki görüş değildir</p>
       </div>
     </div>
   );
