@@ -834,9 +834,9 @@ export default function LegalAssistantChat() {
   const feedback = (id: string, f: 'positive' | 'negative') => setMessages(ms => ms.map(m => m.id === id ? { ...m, feedback: f } : m));
 
   return (
-    <div className="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-lg">
+    <div className="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg md:rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-lg">
       {/* Ultra Modern Header */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-6 py-5 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-3 md:px-6 py-3 md:py-5 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
@@ -880,30 +880,30 @@ export default function LegalAssistantChat() {
           </div>
           
           {/* AI Status Cards */}
-          <div className="mt-4 flex items-center gap-4">
-            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm border ${geminiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
-              <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-              <span className="text-sm text-white font-medium">
+          <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-2 md:gap-4">
+            <div className={`flex items-center gap-2 md:gap-3 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl backdrop-blur-sm border ${geminiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
+              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+              <span className="text-xs md:text-sm text-white font-medium">
                 ✨ Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}
               </span>
             </div>
-            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm border ${openaiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
-              <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-              <span className="text-sm text-white font-medium">
+            <div className={`flex items-center gap-2 md:gap-3 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl backdrop-blur-sm border ${openaiService.isInitialized() ? 'bg-green-500/20 border-green-400/50' : 'bg-red-500/20 border-red-400/50'}`}>
+              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+              <span className="text-xs md:text-sm text-white font-medium">
                 ⚡ OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}
               </span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-400/50 rounded-xl backdrop-blur-sm">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="text-sm text-white font-medium">🏆 Yarışma Aktif</span>
+            <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-yellow-500/20 border border-yellow-400/50 rounded-lg md:rounded-xl backdrop-blur-sm">
+              <div className="w-2 h-2 md:w-3 md:h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+              <span className="text-xs md:text-sm text-white font-medium">🏆 Yarışma Aktif</span>
             </div>
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-6">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-4xl rounded-2xl px-6 py-5 text-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-lg backdrop-blur-sm'}`}>
+            <div className={`max-w-full md:max-w-4xl rounded-xl md:rounded-2xl px-3 md:px-6 py-3 md:py-5 text-xs md:text-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-lg backdrop-blur-sm'}`}>
               {msg.role === 'assistant' && (msg.actualModel || msg.model) && !msg.isError && (
                 <div className="mb-4 flex items-center gap-3 text-xs">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 border border-green-200 dark:border-green-700">
@@ -970,30 +970,30 @@ export default function LegalAssistantChat() {
         )}
         <div ref={endRef} />
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
-        <div className="flex gap-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-3 md:p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
           <textarea 
             value={input + (dictationInterimText ? ' ' + dictationInterimText : '')} 
             onChange={e => setInput(e.target.value)} 
             onKeyDown={onKeyDown} 
-            rows={3} 
+            rows={2} 
             placeholder="🏆 Hukuki sorunuzu detaylı yazın... AI'lar yarışacak ve en iyi cevabı verecek!" 
-            className="flex-1 text-sm p-4 border-2 border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-300 shadow-lg" 
+            className="flex-1 text-xs md:text-sm p-3 md:p-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl md:rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-300 shadow-lg" 
             disabled={loading} 
           />
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-row sm:flex-col gap-2 md:gap-3">
             <DictationButton
               isListening={isDictating}
               isSupported={isDictationSupported}
               onStart={startDictation}
               onStop={stopDictation}
-              size="lg"
+              size="md"
               title="Sesli yazım"
             />
             <button 
               onClick={send} 
               disabled={loading || !input.trim()} 
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-3 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105"
+              className="px-4 md:px-8 py-2 md:py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl md:rounded-2xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 md:gap-3 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105"
             >
               {loading ? (
                 <>

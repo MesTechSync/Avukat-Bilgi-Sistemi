@@ -201,67 +201,70 @@ const AdvancedSearch: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 md:px-4 py-4 md:py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
-              <Search className="w-8 h-8 text-white" />
+        <div className="text-center mb-4 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 mb-3 md:mb-4">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg md:rounded-xl shadow-lg">
+              <Search className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               İçtihat & Mevzuat
             </h1>
-            <div className="flex items-center gap-2">
-              {backendStatus === 'ok' && <CheckCircle className="w-5 h-5 text-green-500" />}
-              {backendStatus === 'degraded' && <AlertCircle className="w-5 h-5 text-yellow-500" />}
-              {backendStatus === 'down' && <AlertCircle className="w-5 h-5 text-red-500" />}
-              {backendStatus === 'unknown' && <Clock className="w-5 h-5 text-gray-500" />}
+            <div className="flex items-center gap-1 md:gap-2">
+              {backendStatus === 'ok' && <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-500" />}
+              {backendStatus === 'degraded' && <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />}
+              {backendStatus === 'down' && <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500" />}
+              {backendStatus === 'unknown' && <Clock className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />}
             </div>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 text-lg">
+          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-lg">
             Hukuki araştırma ve içtihat arama sistemi
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8">
-          <div className="flex gap-4 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-xl p-3 md:p-6 mb-4 md:mb-8">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mb-3 md:mb-4">
             <div className="flex-1">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Arama terimi girin..."
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 dark:border-gray-600 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm md:text-base"
               />
             </div>
-            <button
-              onClick={isListening ? stopListening : startListening}
-              className={`px-4 py-3 rounded-xl font-medium transition-all ${
-                isListening 
-                  ? 'bg-red-500 hover:bg-red-600 text-white' 
-                  : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </button>
-            <label className="px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl cursor-pointer transition-all">
-              <FileUp className="w-5 h-5" />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.pdf,.docx"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-            <button
-              onClick={handleSearch}
-              disabled={isLoading || !query.trim()}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Aranıyor...' : 'Ara'}
-            </button>
+            <div className="flex gap-2 md:gap-4">
+              <button
+                onClick={isListening ? stopListening : startListening}
+                className={`px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl font-medium transition-all ${
+                  isListening 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4 md:w-5 md:h-5" /> : <Mic className="w-4 h-4 md:w-5 md:h-5" />}
+              </button>
+              <label className="px-3 md:px-4 py-2 md:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg md:rounded-xl cursor-pointer transition-all">
+                <FileUp className="w-4 h-4 md:w-5 md:h-5" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.pdf,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={handleSearch}
+                disabled={isLoading || !query.trim()}
+                className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg md:rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 md:gap-2"
+              >
+                <Search className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">{isLoading ? 'Aranıyor...' : 'Ara'}</span>
+              </button>
+            </div>
           </div>
 
           {/* File Upload Info */}
