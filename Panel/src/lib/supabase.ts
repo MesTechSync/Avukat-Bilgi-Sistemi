@@ -12,30 +12,38 @@ console.log('Supabase Key:', supabaseAnonKey);
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function testConnection() {
-  console.log('Supabase bağlantısı test ediliyor...');
+  console.log('🔍 Supabase bağlantısı test ediliyor...');
   
-  // Test clients table
-  const { data: clientData, error: clientError } = await supabase.from('clients').select('*').limit(1);
-  if (clientError) {
-    console.error('Clients tablosu hatası:', clientError);
-  } else {
-    console.log('Clients tablosu başarılı:', clientData);
-  }
-  
-  // Test cases table structure
-  const { data: caseData, error: caseError } = await supabase.from('cases').select('*').limit(1);
-  if (caseError) {
-    console.error('Cases tablosu hatası:', caseError);
-  } else {
-    console.log('Cases tablosu başarılı:', caseData);
-  }
-  
-  // Test cases table columns specifically
-  const { data: caseColumns, error: columnError } = await supabase.rpc('get_table_columns', { table_name: 'cases' });
-  if (columnError) {
-    console.log('Column bilgisi alınamadı (normal):', columnError.message);
-  } else {
-    console.log('Cases tablosu kolonları:', caseColumns);
+  try {
+    // Test clients table
+    const { data: clientData, error: clientError } = await supabase.from('clients').select('*').limit(1);
+    if (clientError) {
+      console.error('❌ Clients tablosu hatası:', clientError);
+    } else {
+      console.log('✅ Clients tablosu başarılı:', clientData?.length || 0, 'kayıt');
+    }
+    
+    // Test cases table structure
+    const { data: caseData, error: caseError } = await supabase.from('cases').select('*').limit(1);
+    if (caseError) {
+      console.error('❌ Cases tablosu hatası:', caseError);
+    } else {
+      console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt');
+    }
+    
+    // Test cases table columns specifically (opsiyonel)
+    try {
+      const { data: caseColumns, error: columnError } = await supabase.rpc('get_table_columns', { table_name: 'cases' });
+      if (columnError) {
+        console.log('ℹ️ Column bilgisi alınamadı (normal):', columnError.message);
+      } else {
+        console.log('✅ Cases tablosu kolonları:', caseColumns?.length || 0, 'kolon');
+      }
+    } catch (err) {
+      console.log('ℹ️ RPC fonksiyonu mevcut değil (normal)');
+    }
+  } catch (err) {
+    console.error('❌ Supabase test hatası:', err);
   }
 }
 

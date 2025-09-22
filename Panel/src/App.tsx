@@ -107,12 +107,16 @@ function App() {
           console.log(`✅ Backend bağlantısı başarılı: ${endpoint}`, data);
         } else {
           const text = await res.text();
-          if (text.trim().toLowerCase() === 'ok' || text.trim().toLowerCase() === 'healthy') {
+          // HTML yanıt kontrolü - eğer HTML döndürüyorsa frontend servisi
+          if (text.includes('<!doctype html>') || text.includes('<html')) {
+            console.log(`⚠️ Frontend servisi yanıt verdi (backend değil): ${endpoint}`);
+            continue; // Bu bir backend değil, sonraki endpoint'i dene
+          } else if (text.trim().toLowerCase() === 'ok' || text.trim().toLowerCase() === 'healthy') {
             setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
             console.log(`✅ Backend health check başarılı: ${endpoint}`);
           } else {
             setBackendInfo({ service: 'backend', version: '1.0', tools_count: 0, endpoint });
-            console.log(`✅ Backend yanıt aldı: ${endpoint} - ${text}`);
+            console.log(`✅ Backend yanıt aldı: ${endpoint} - ${text.substring(0, 100)}...`);
           }
         }
         setBackendStatus('ok');
