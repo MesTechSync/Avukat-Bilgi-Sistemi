@@ -781,11 +781,6 @@ function App() {
               </div>
             </div>
           )}
-          {backendStatus === 'ok' && backendInfo && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-100 border border-green-200/50 dark:border-green-800/50 text-sm">
-              <span className="font-medium">Backend Sağlıklı</span> · {backendInfo.service || 'Service'} v{backendInfo.version || ''} · Araçlar: {backendInfo.tools_count ?? '—'} · Endpoint: {backendInfo.endpoint || '—'}
-            </div>
-          )}
           {renderContent()}
           {/* Floating voice control (hidden to keep UI clean) */}
           {/* <VoiceControl /> */}
