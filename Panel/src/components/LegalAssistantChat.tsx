@@ -574,7 +574,7 @@ Durumunuzu detaylandırın, size özel çözüm önerelim! 💪`;
 };
 
 export default function LegalAssistantChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([{ id: 'welcome', role: 'assistant', content: '👋 **Merhaba! Ben hukuk asistanınızım.**\n\nNormal sohbet edebiliriz, ama hukuki konularda sorular sorduğunuzda size detaylı analiz yapabilirim! 😊\n\n💡 **Hukuki soru örnekleri:**\n• "Boşanma davası nasıl açılır, ne kadar sürer?"\n• "Trafik kazasında 50.000 TL tazminat alabilir miyim?"\n• "İşten haksız çıkarıldım, ne kadar hakım var?"\n\nHukuki olmayan sorular için normal sohbet ederiz, hukuki sorular için AI\'lar yarışır! 🏆', timestamp: new Date().toISOString(), model: 'auto' }]);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ id: 'welcome', role: 'assistant', content: '👋 **Merhaba! Ben hukuk asistanınızım.**\n\nNormal sohbet edebiliriz! 😊 Hukuki konularda sorular sorduğunuzda ise size detaylı analiz yapabilirim.\n\n💡 **Hukuki soru örnekleri:**\n• "Boşanma davası nasıl açılır?"\n• "Trafik kazasında tazminat alabilir miyim?"\n• "İşten haksız çıkarıldım, haklarım neler?"\n\nNasılsın? 😊', timestamp: new Date().toISOString(), model: 'auto' }]);
   const [input, setInput] = useState('');
   const [model, setModel] = useState<Model>('auto');
   const [loading, setLoading] = useState(false);
@@ -632,7 +632,7 @@ export default function LegalAssistantChat() {
     interimResults: true
   });
 
-  const clearChat = () => setMessages([{ id: 'welcome', role: 'assistant', content: '🔄 **Sohbet temizlendi!**\n\nMerhaba! Ben hukuk asistanınızım. Normal sohbet edebiliriz, hukuki konularda ise detaylı analiz yapabilirim! 😊', timestamp: new Date().toISOString(), model: 'auto' }]);
+  const clearChat = () => setMessages([{ id: 'welcome', role: 'assistant', content: '🔄 **Sohbet temizlendi!**\n\nMerhaba! Ben hukuk asistanınızım. Normal sohbet edebiliriz! 😊', timestamp: new Date().toISOString(), model: 'auto' }]);
 
   const send = async () => {
     if (!input.trim() || loading) return; 
@@ -666,17 +666,33 @@ export default function LegalAssistantChat() {
       let response: AIResponse;
       
       if (!isLegalQuestion) {
-        // Hukuki olmayan sorular için normal sohbet
-        const casualResponses = [
-          "Merhaba! 😊 Ben hukuk asistanınızım. Hukuki konularda size yardımcı olabilirim. Ne tür bir hukuki sorununuz var?",
-          "Selam! 👋 Ben burada hukuki sorularınızı yanıtlamak için hazırım. Hangi konuda yardıma ihtiyacınız var?",
-          "Merhaba! Ben avukat asistanınızım. Hukuki konularda size rehberlik edebilirim. Sorunuz nedir?",
-          "Selamlar! 😄 Hukuki danışmanlık için buradayım. Size nasıl yardımcı olabilirim?",
-          "Merhaba! Ben hukuk alanında uzman bir AI asistanıyım. Hangi hukuki konuda bilgi almak istiyorsunuz?"
-        ];
+        // Hukuki olmayan sorular için doğal sohbet
+        let casualResponse = '';
         
-        const randomResponse = casualResponses[Math.floor(Math.random() * casualResponses.length)];
-        response = { content: randomResponse, model: 'gemini', confidence: 0.9 };
+        // Soruya göre uygun yanıt seç
+        if (q.toLowerCase().includes('nasıl') && q.toLowerCase().includes('sın')) {
+          casualResponse = "İyiyim teşekkürler! 😊 Sen nasılsın?";
+        } else if (q.toLowerCase().includes('ne yapıyor') || q.toLowerCase().includes('ne yapıyorsun')) {
+          casualResponse = "Çalışıyorum biraz, hukuki konularda yardım ediyorum. Sen ne yapıyorsun? 😊";
+        } else if (q.toLowerCase().includes('hayat') || q.toLowerCase().includes('nasıl gidiyor')) {
+          casualResponse = "Hayat güzel gidiyor! 😄 Sen nasıl gidiyor?";
+        } else if (q.toLowerCase().includes('merhaba') || q.toLowerCase().includes('selam')) {
+          casualResponse = "Merhaba! 👋 İyiyim, sen nasılsın?";
+        } else if (q.toLowerCase().includes('iyi') || q.toLowerCase().includes('güzel')) {
+          casualResponse = "Teşekkürler! 😊 Sen de iyisin umarım!";
+        } else {
+          // Genel yanıtlar
+          const generalResponses = [
+            "İyiyim teşekkürler! 😊 Sen nasılsın?",
+            "Güzel gidiyor! 😄 Sen nasılsın?",
+            "İyiyim, sen nasılsın? 👋",
+            "Hayat normal gidiyor! 😊 Sen nasılsın?",
+            "İyiyim, teşekkürler! 😄 Sen nasılsın?"
+          ];
+          casualResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)];
+        }
+        
+        response = { content: casualResponse, model: 'gemini', confidence: 0.9 };
         
       } else {
         // Hukuki sorular için AI yarışması
