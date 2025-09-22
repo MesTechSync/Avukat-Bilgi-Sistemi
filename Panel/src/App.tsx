@@ -27,7 +27,13 @@ function App() {
     const savedTab = localStorage.getItem('activeTab');
     return savedTab || 'dashboard';
   });
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    // Mobilde başlangıçta kapalı, masaüstünde açık
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return true;
+  });
   const [darkMode, setDarkMode] = useState(() => {
     // Check localStorage first, then system preference
     const saved = localStorage.getItem('darkMode');
@@ -38,10 +44,14 @@ function App() {
   });
   const { loading, error } = useSupabase();
 
-  // Tab değiştiğinde localStorage'a kaydet
+  // Tab değiştiğinde localStorage'a kaydet ve mobilde sidebar'ı kapat
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     localStorage.setItem('activeTab', tab);
+    // Mobilde sidebar'ı kapat
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
   };
 
   // Backend health check state
@@ -235,6 +245,20 @@ function App() {
   // Run initial backend health check once on mount
   React.useEffect(() => {
     checkBackend();
+  }, []);
+
+  // Handle window resize for sidebar
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Voice commands handler (enhanced with all navigation options)
@@ -482,9 +506,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
-  <div className={`${sidebarOpen ? 'w-full md:w-[16.5rem]' : 'w-16'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-xl border-r border-white/20 dark:border-gray-700/50 transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed md:relative z-50 h-full' : 'relative'}`}>
+      <div className={`${sidebarOpen ? 'w-[16.5rem]' : 'w-16'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-xl border-r border-white/20 dark:border-gray-700/50 transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed md:relative z-50 h-full md:h-auto' : 'relative'}`}>
         {/* Header */}
         <div className="p-3 md:p-4 border-b border-white/20 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm">
           <div className="flex items-center gap-2 md:gap-3">
@@ -571,7 +603,7 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-0">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar - unified header */}
         <Header
           title={menuItems.find(item => item.id === activeTab)?.label || 'Ana Sayfa'}

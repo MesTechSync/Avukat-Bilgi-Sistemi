@@ -33,9 +33,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, sidebarOpen = true, on
             <button
               onClick={onToggleSidebar}
               title={sidebarOpen ? 'Menüyü daralt' : 'Menüyü genişlet'}
-              className={`p-2 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm ${
-                sidebarOpen ? 'hidden lg:block' : 'block'
-              }`}
+              className="p-2 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm md:hidden"
               aria-label={sidebarOpen ? 'Menüyü daralt' : 'Menüyü genişlet'}
             >
               <MenuIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
