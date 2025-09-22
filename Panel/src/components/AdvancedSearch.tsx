@@ -301,60 +301,48 @@ const AdvancedSearch: React.FC = () => {
           
           console.log('✅ Sistem İçtihat API başarılı:', searchResults.length, 'sonuç');
         } catch (apiError) {
-          console.log('⚠️ Sistem İçtihat API hatası, mock data kullanılıyor:', apiError);
+          console.log('⚠️ Sistem İçtihat API hatası:', apiError);
           
-          // Mock data ile devam et
-          searchResults = mockResults.filter(result => 
-            result.courtType !== 'mevzuat' && (
-              result.subject.toLowerCase().includes(query.toLowerCase()) ||
-              result.content.toLowerCase().includes(query.toLowerCase()) ||
-              result.caseNumber.toLowerCase().includes(query.toLowerCase())
-            )
-          );
+          // API hatası durumunda boş sonuç döndür
+          searchResults = [];
         }
       } else {
         try {
           // Sistemin kendi Mevzuat API'sini kullan
-          const mevzuatFilters: MevzuatFilters = {
+        const mevzuatFilters: MevzuatFilters = {
             category: selectedArea || undefined,
             institution: selectedCourt || undefined,
             dateRange: dateRange ? {
               from: `${dateRange}-01-01`,
               to: `${dateRange}-12-31`
             } : undefined,
-            page: 1,
-            per_page: 20
-          };
+          page: 1,
+          per_page: 20
+        };
 
-          const mevzuatResults = await searchMevzuat(query, mevzuatFilters);
-          
+        const mevzuatResults = await searchMevzuat(query, mevzuatFilters);
+        
           // Mevzuat sonuçlarını SearchResult formatına çevir
           searchResults = mevzuatResults.map(result => ({
             id: result.id,
             caseNumber: result.title || '',
             courtName: result.institution || '',
-            courtType: 'mevzuat',
+          courtType: 'mevzuat',
             decisionDate: result.publishDate || '',
             subject: result.title || '',
             content: result.content || '',
             relevanceScore: result.relevanceScore || 0,
             legalAreas: result.category ? [result.category] : [],
-            keywords: [],
+          keywords: [],
             highlight: result.highlight || ''
           }));
           
           console.log('✅ Sistem Mevzuat API başarılı:', searchResults.length, 'sonuç');
         } catch (apiError) {
-          console.log('⚠️ Sistem Mevzuat API hatası, mock data kullanılıyor:', apiError);
+          console.log('⚠️ Sistem Mevzuat API hatası:', apiError);
           
-          // Mock data ile devam et
-          searchResults = mockResults.filter(result => 
-            result.courtType === 'mevzuat' && (
-              result.subject.toLowerCase().includes(query.toLowerCase()) ||
-              result.content.toLowerCase().includes(query.toLowerCase()) ||
-              result.caseNumber.toLowerCase().includes(query.toLowerCase())
-            )
-          );
+          // API hatası durumunda boş sonuç döndür
+          searchResults = [];
         }
       }
 
@@ -404,7 +392,7 @@ const AdvancedSearch: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 mb-3 md:mb-4">
             <div className="p-2 md:p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg md:rounded-xl shadow-lg">
               <Search className="w-6 h-6 md:w-8 md:h-8 text-white" />
-            </div>
+        </div>
             <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               İçtihat & Mevzuat
             </h1>
@@ -413,12 +401,12 @@ const AdvancedSearch: React.FC = () => {
               {backendStatus === 'degraded' && <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />}
               {backendStatus === 'down' && <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500" />}
               {backendStatus === 'unknown' && <Clock className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />}
-            </div>
-          </div>
+              </div>
+                      </div>
           <p className="text-gray-600 dark:text-gray-300 text-sm md:text-lg">
             Hukuki araştırma ve içtihat arama sistemi
           </p>
-        </div>
+                  </div>
 
         {/* Search Bar */}
         <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-xl p-3 md:p-6 mb-4 md:mb-8">
@@ -433,7 +421,7 @@ const AdvancedSearch: React.FC = () => {
               />
             </div>
             <div className="flex gap-2 md:gap-4">
-              <button
+                          <button
                 onClick={isListening ? stopListening : startListening}
                 className={`px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl font-medium transition-all ${
                   isListening 
@@ -442,7 +430,7 @@ const AdvancedSearch: React.FC = () => {
                 }`}
               >
                 {isListening ? <MicOff className="w-4 h-4 md:w-5 md:h-5" /> : <Mic className="w-4 h-4 md:w-5 md:h-5" />}
-              </button>
+                          </button>
               <label className="px-3 md:px-4 py-2 md:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg md:rounded-xl cursor-pointer transition-all">
                 <FileUp className="w-4 h-4 md:w-5 md:h-5" />
                 <input
@@ -453,16 +441,16 @@ const AdvancedSearch: React.FC = () => {
                   className="hidden"
                 />
               </label>
-              <button
+                          <button
                 onClick={handleSearch}
                 disabled={isLoading || !query.trim()}
                 className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg md:rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 md:gap-2"
               >
                 <Search className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">{isLoading ? 'Aranıyor...' : 'Ara'}</span>
-              </button>
-            </div>
-          </div>
+                          </button>
+                      </div>
+                    </div>
 
           {/* File Upload Info */}
           {uploadedFileName && (
@@ -470,18 +458,18 @@ const AdvancedSearch: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <div>
+                    <div>
                     <p className="font-medium text-blue-800 dark:text-blue-200">{uploadedFileName}</p>
                     {isProcessingFile && <p className="text-sm text-blue-600 dark:text-blue-400">İşleniyor...</p>}
                   </div>
                 </div>
-                <button
+                          <button
                   onClick={clearUploadedFile}
                   className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </button>
-              </div>
+                          </button>
+                      </div>
               {uploadedFileContent && (
                 <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border">
                   <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -489,15 +477,15 @@ const AdvancedSearch: React.FC = () => {
                   </p>
                 </div>
               )}
-            </div>
-          )}
+          </div>
+        )}
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Arama Türü
-              </label>
+            </label>
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value as 'ictihat' | 'mevzuat')}
@@ -506,41 +494,41 @@ const AdvancedSearch: React.FC = () => {
                 <option value="ictihat">İçtihat</option>
                 <option value="mevzuat">Mevzuat</option>
               </select>
-            </div>
-            <div>
+          </div>
+          <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Mahkeme
-              </label>
-              <select
+            </label>
+            <select
                 value={selectedCourt}
                 onChange={(e) => setSelectedCourt(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Tümü</option>
-                {courtTypes.map(court => (
+            >
+              <option value="">Tümü</option>
+              {courtTypes.map(court => (
                   <option key={court.value} value={court.value}>{court.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
+              ))}
+            </select>
+          </div>
+          <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Hukuk Alanı
-              </label>
-              <select
+              Hukuk Alanı
+            </label>
+            <select
                 value={selectedArea}
                 onChange={(e) => setSelectedArea(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Tümü</option>
-                {legalAreas.map(area => (
+            >
+              <option value="">Tümü</option>
+              {legalAreas.map(area => (
                   <option key={area} value={area}>{area}</option>
-                ))}
-              </select>
-            </div>
-            <div>
+              ))}
+            </select>
+          </div>
+          <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Tarih Aralığı
-              </label>
+            </label>
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
@@ -550,9 +538,9 @@ const AdvancedSearch: React.FC = () => {
                   <option key={range.value} value={range.value}>{range.label}</option>
                 ))}
               </select>
-            </div>
-          </div>
-        </div>
+                      </div>
+                        </div>
+                      </div>
 
         {/* Results */}
         {searchResults.length > 0 && (
@@ -570,17 +558,17 @@ const AdvancedSearch: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     {result.subject}
                   </h3>
-                  <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                     <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">
                       {result.relevanceScore}%
                     </span>
-                  </div>
-                </div>
+                      </div>
+                    </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   <p><strong>Mahkeme:</strong> {result.courtName}</p>
                   <p><strong>Karar No:</strong> {result.caseNumber}</p>
                   <p><strong>Tarih:</strong> {result.decisionDate}</p>
-                </div>
+                  </div>
                 <p className="text-gray-700 dark:text-gray-300 line-clamp-3">
                   {result.content.substring(0, 200)}...
                 </p>
@@ -589,12 +577,12 @@ const AdvancedSearch: React.FC = () => {
                     <span key={area} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs">
                       {area}
                     </span>
-                  ))}
-                </div>
-              </div>
+              ))}
+            </div>
+            </div>
             ))}
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Result Detail Modal */}
         {showResultDetail && selectedResult && (
@@ -602,24 +590,24 @@ const AdvancedSearch: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-start">
-                  <div>
+              <div>
                     <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                       {selectedResult.subject}
-                    </h3>
+                </h3>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       <p><strong>Mahkeme:</strong> {selectedResult.courtName}</p>
                       <p><strong>Karar No:</strong> {selectedResult.caseNumber}</p>
                       <p><strong>Tarih:</strong> {selectedResult.decisionDate}</p>
-                    </div>
-                  </div>
+              </div>
+              </div>
                   <button
                     onClick={closeResultDetail}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-              </div>
+                      </button>
+                    </div>
+                  </div>
               <div className="p-6 overflow-y-auto max-h-[60vh]">
                 <div className="prose dark:prose-invert max-w-none">
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -631,10 +619,10 @@ const AdvancedSearch: React.FC = () => {
                   <div className="flex flex-wrap gap-2">
                     {selectedResult.legalAreas.map(area => (
                       <span key={area} className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">
-                        {area}
-                      </span>
-                    ))}
-                  </div>
+                          {area}
+                        </span>
+                      ))}
+                    </div>
                 </div>
                 <div className="mt-6">
                   <h4 className="font-semibold text-gray-800 dark:text-white mb-3">Anahtar Kelimeler</h4>
@@ -642,11 +630,11 @@ const AdvancedSearch: React.FC = () => {
                     {selectedResult.keywords.map(keyword => (
                       <span key={keyword} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm">
                         {keyword}
-                      </span>
-                    ))}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
               <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
                 <button
                   onClick={() => copyToClipboard(selectedResult.content)}
@@ -662,10 +650,10 @@ const AdvancedSearch: React.FC = () => {
                   <Download className="w-4 h-4" />
                   İndir
                 </button>
-              </div>
-            </div>
           </div>
-        )}
+            </div>
+        </div>
+      )}
       </div>
     </div>
   );

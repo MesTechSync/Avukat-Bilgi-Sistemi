@@ -369,22 +369,22 @@ Saygılarımla,
       
       // Temel alanlarda yoksa ekle
       if (!basicFields.some(f => f.id === fieldId)) {
-        fields.push({
-          id: fieldId,
-          label: variable.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-          type: fieldType,
+      fields.push({
+        id: fieldId,
+        label: variable.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+        type: fieldType,
           required: index < 3, // İlk 3 ek alan zorunlu
-          placeholder: placeholder || `${variable.replace(/_/g, ' ').toLowerCase()} bilgisini girin`,
-          ...(fieldType === 'select' && variable.includes('CİNSİYET') && {
-            options: ['Erkek', 'Kadın']
-          }),
-          ...(fieldType === 'select' && variable.includes('DURUM') && {
-            options: ['Evli', 'Bekar', 'Boşanmış', 'Dul']
+        placeholder: placeholder || `${variable.replace(/_/g, ' ').toLowerCase()} bilgisini girin`,
+        ...(fieldType === 'select' && variable.includes('CİNSİYET') && {
+          options: ['Erkek', 'Kadın']
+        }),
+        ...(fieldType === 'select' && variable.includes('DURUM') && {
+          options: ['Evli', 'Bekar', 'Boşanmış', 'Dul']
           }),
           ...(fieldType === 'select' && variable.includes('TİP') && {
             options: ['Bireysel', 'Kurumsal', 'Kamu']
-          })
-        });
+        })
+      });
       }
     });
     
@@ -415,8 +415,8 @@ Saygılarımla,
               >
                 <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
               </button>
-            </div>
           </div>
+        </div>
           <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             AI Destekli Dilekçe Yazım Sistemi
           </h1>
@@ -433,9 +433,9 @@ Saygılarımla,
             <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
               <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
               <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI</span>
-            </div>
           </div>
         </div>
+      </div>
 
         {/* Dilekçe Örnekleri Seçimi */}
         {!selectedExample && (
@@ -457,7 +457,7 @@ Saygılarımla,
                     <option value="gpt-4">⚡ GPT-4</option>
                   </select>
                 </div>
-                <button
+          <button
                   onClick={() => setUseAI(!useAI)}
                   className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300 ${
                     useAI 
@@ -466,10 +466,10 @@ Saygılarımla,
                   }`}
                 >
                   {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
-                </button>
+          </button>
               </div>
-            </div>
-            
+        </div>
+
             {/* Arama ve Filtre */}
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div className="relative">
@@ -494,7 +494,7 @@ Saygılarımla,
                 ))}
               </select>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {getFilteredExamples().map((example) => (
                 <div
@@ -535,14 +535,14 @@ Saygılarımla,
                         <span className="flex items-center gap-1">
                           <Wand2 className="w-3 h-3" />
                           AI destekli
-                        </span>
-                      </div>
-                      {realPetitions.some(r => r.id === example.id) && (
+                      </span>
+                  </div>
+                  {realPetitions.some(r => r.id === example.id) && (
                         <div className="flex items-center gap-1 text-orange-600 text-xs">
                           <Star className="w-3 h-3" />
                           <span>Gerçek örnek</span>
-                        </div>
-                      )}
+                    </div>
+                  )}
                     </div>
                   </div>
                   
@@ -572,8 +572,8 @@ Saygılarımla,
                       Lütfen aşağıdaki bilgileri eksiksiz doldurun
                     </p>
                   </div>
-                </div>
-                
+      </div>
+
                 {/* AI Ayarları */}
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -599,34 +599,34 @@ Saygılarımla,
                     {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
                   </button>
                 </div>
-              </div>
             </div>
+          </div>
 
             {/* Form Content */}
             <div className="p-6">
-              {/* Seçilen Dilekçe Bilgisi */}
+          {/* Seçilen Dilekçe Bilgisi */}
               <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-3">
-                  {realPetitions.some(r => r.id === selectedExample.id) ? (
-                    <Star className="h-5 w-5 text-orange-500 mt-1" />
-                  ) : (
-                    <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
-                  )}
-                  <div className="flex-1">
+            <div className="flex items-start gap-3">
+              {realPetitions.some(r => r.id === selectedExample.id) ? (
+                <Star className="h-5 w-5 text-orange-500 mt-1" />
+              ) : (
+                <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
+              )}
+              <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 dark:text-white">{selectedExample.title}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{selectedExample.category}</p>
-                    {selectedExample.subcategory && (
+                {selectedExample.subcategory && (
                       <p className="text-xs text-blue-600 dark:text-blue-400">{selectedExample.subcategory}</p>
-                    )}
-                    {realPetitions.some(r => r.id === selectedExample.id) && (
-                      <div className="mt-2 flex items-center gap-2 text-orange-600">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
-                      </div>
-                    )}
+                )}
+                {realPetitions.some(r => r.id === selectedExample.id) && (
+                  <div className="mt-2 flex items-center gap-2 text-orange-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
                   </div>
-                </div>
+                )}
               </div>
+            </div>
+          </div>
 
             {/* Form Alanları */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -637,51 +637,51 @@ Saygılarımla,
                   <div key={field.id}>
                     <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <IconComponent className="w-4 h-4 inline mr-2" />
-                      {field.label}
+                    {field.label}
                       {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {field.type === 'textarea' ? (
-                      <div className="relative">
-                        <textarea
+                  </label>
+                  
+                  {field.type === 'textarea' ? (
+                    <div className="relative">
+                      <textarea
                           id={inputId}
-                          value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
-                          onChange={(e) => handleFormChange(field.id, e.target.value)}
+                        value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
+                        onChange={(e) => handleFormChange(field.id, e.target.value)}
                           placeholder={field.placeholder}
-                          rows={3}
+                        rows={3}
                           className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white pr-12 transition-all duration-300`}
-                        />
+                      />
                         <div className="absolute right-3 top-3">
-                          <DictationButton
-                            isListening={isDictating}
-                            isSupported={isDictationSupported}
-                            onStart={startDictation}
-                            onStop={stopDictation}
-                            size="sm"
-                            title="Sesli yazım"
-                          />
-                        </div>
+                        <DictationButton
+                          isListening={isDictating}
+                          isSupported={isDictationSupported}
+                          onStart={startDictation}
+                          onStop={stopDictation}
+                          size="sm"
+                          title="Sesli yazım"
+                        />
                       </div>
-                    ) : field.type === 'select' ? (
-                      <select
+                    </div>
+                  ) : field.type === 'select' ? (
+                    <select
                         id={inputId}
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleFormChange(field.id, e.target.value)}
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFormChange(field.id, e.target.value)}
                         className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
-                      >
-                        <option value="">Seçiniz...</option>
-                        {field.options?.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type}
+                    >
+                      <option value="">Seçiniz...</option>
+                      {field.options?.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
                         id={inputId}
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleFormChange(field.id, e.target.value)}
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFormChange(field.id, e.target.value)}
                         placeholder={field.placeholder}
                         className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
                       />
@@ -690,65 +690,65 @@ Saygılarımla,
                     {fieldErrors[field.id] && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors[field.id]}</p>
                     )}
-                  </div>
+                </div>
                 );
               })}
             </div>
 
             {/* Generate Button */}
             <div className="mt-6">
-              <button
-                onClick={generateAIPetition}
-                disabled={isGenerating}
+            <button
+              onClick={generateAIPetition}
+              disabled={isGenerating}
                 className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                {isGenerating ? (
-                  <>
+            >
+              {isGenerating ? (
+                <>
                     <RefreshCw className="h-6 w-6 animate-spin" />
-                    <span>AI Dilekçe Oluşturuyor...</span>
+                  <span>AI Dilekçe Oluşturuyor...</span>
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                       <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                     </div>
-                  </>
-                ) : (
-                  <>
+                </>
+              ) : (
+                <>
                     <Sparkles className="h-6 w-6" />
-                    <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
+                  <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
                     <Zap className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-            </div>
-            </div>
+                </>
+              )}
+            </button>
           </div>
-        )}
+            </div>
+        </div>
+      )}
 
         {/* Oluşturulan Dilekçe */}
-        {generatedPetition && (
+      {generatedPetition && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-8">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
                     <FileText className="w-6 h-6" />
                   </div>
-                  <div>
+                <div>
                     <h3 className="text-white font-semibold text-lg">Oluşturulan Dilekçe</h3>
                     <p className="text-green-100 text-sm">AI tarafından oluşturuldu</p>
-                  </div>
                 </div>
+              </div>
                 <div className="flex items-center gap-2">
-                  <button
+              <button
                     onClick={() => navigator.clipboard.writeText(generatedPetition)}
                     className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
                     title="Kopyala"
-                  >
+              >
                     <Copy className="w-5 h-5" />
-                  </button>
-                  <button
+              </button>
+              <button
                     onClick={() => {
                       const blob = new Blob([generatedPetition], { type: 'text/plain' });
                       const url = URL.createObjectURL(blob);
@@ -762,21 +762,21 @@ Saygılarımla,
                     title="İndir"
                   >
                     <Download className="w-5 h-5" />
-                  </button>
+              </button>
                 </div>
-              </div>
             </div>
+          </div>
 
-            {/* Content */}
-            <div className="p-6">
+          {/* Content */}
+          <div className="p-6">
               <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedPetition}
                 </pre>
-              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );

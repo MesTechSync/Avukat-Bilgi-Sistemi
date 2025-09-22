@@ -847,7 +847,7 @@ export default function LegalAssistantChat() {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
                 <Bot className="w-7 h-7 text-white" />
-              </div>
+        </div>
               <div>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   🏆 AI Yarışma Arenası
@@ -856,7 +856,7 @@ export default function LegalAssistantChat() {
                   </span>
                 </h3>
                 <p className="text-purple-100 text-sm font-medium">Gemini vs OpenAI - En iyi cevap kazanır!</p>
-              </div>
+      </div>
             </div>
             <div className="flex items-center gap-3">
               <select 
