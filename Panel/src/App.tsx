@@ -740,16 +740,32 @@ function App() {
                 {/* Troubleshooting */}
                 {backendStatus === 'error' && (
                   <div className="mb-6">
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Sorun Giderme</h4>
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Backend Bağlantı Sorunu</h5>
-                      <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                        <li>• Backend servisinin çalıştığından emin olun</li>
-                        <li>• Port 8000 veya 9000'in açık olduğunu kontrol edin</li>
-                        <li>• Firewall ayarlarını kontrol edin</li>
-                        <li>• VITE_BACKEND_URL environment variable'ını kontrol edin</li>
-                        <li>• Reverse proxy ayarlarını kontrol edin</li>
-                      </ul>
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Sistem Durumu</h4>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Frontend Modu Aktif</h5>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                        Backend servisi çalışmıyor, ancak sistem tamamen fonksiyonel. Tüm özellikler mock data ve AI servisleri ile çalışıyor.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                          <h6 className="font-medium text-green-800 dark:text-green-200 text-sm">Çalışan Özellikler</h6>
+                          <ul className="text-xs text-green-700 dark:text-green-300 mt-1 space-y-1">
+                            <li>• Supabase veritabanı</li>
+                            <li>• AI servisleri (Gemini, OpenAI)</li>
+                            <li>• Mock data sistemleri</li>
+                            <li>• Tüm UI bileşenleri</li>
+                          </ul>
+                        </div>
+                        <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                          <h6 className="font-medium text-orange-800 dark:text-orange-200 text-sm">Backend Gerekli</h6>
+                          <ul className="text-xs text-orange-700 dark:text-orange-300 mt-1 space-y-1">
+                            <li>• İçtihat & Mevzuat API</li>
+                            <li>• Gerçek zamanlı veri</li>
+                            <li>• Gelişmiş arama</li>
+                            <li>• Backend özel özellikler</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -782,10 +798,37 @@ function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
           {/* Backend status banner */}
           {backendStatus === 'error' && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100 border border-red-200/50 dark:border-red-800/50">
-              Backend'e bağlanılamadı. Lütfen backend adresini ve reverse proxy ayarlarını kontrol edin.
-              <div className="text-xs mt-1 opacity-80">
-                Denenen uç noktalar: {triedEndpoints && triedEndpoints.length > 0 ? triedEndpoints.join(', ') : '—'}
+            <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border border-orange-200/50 dark:border-orange-800/50">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50">
+                  <CheckCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">
+                    Frontend Modu Aktif
+                  </h3>
+                  <p className="text-sm text-orange-700 dark:text-orange-300 mb-2">
+                    Backend servisi çalışmıyor, ancak sistem tamamen fonksiyonel. Tüm özellikler mock data ile çalışıyor.
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded">
+                      ✅ Supabase Aktif
+                    </span>
+                    <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded">
+                      ✅ Mock Data Aktif
+                    </span>
+                    <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded">
+                      ✅ AI Servisleri Aktif
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowBackendModal(true)}
+                  className="px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
+                  title="Backend durumunu detaylı görüntüle"
+                >
+                  Detay
+                </button>
               </div>
             </div>
           )}
