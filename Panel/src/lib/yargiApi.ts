@@ -24,12 +24,12 @@ export interface IctihatResultItem {
 
 // Prefer using Vite dev proxy when VITE_BACKEND_URL is defined (BASE_URL becomes empty, so paths like '/api/...')
 const ENV: any = (import.meta as any).env || {};
-export const BASE_URL = ENV.VITE_BACKEND_URL ? '' : (ENV.VITE_YARGI_API_URL || 'http://127.0.0.1:9000');
+export const BASE_URL = ENV.VITE_BACKEND_URL ? '' : (ENV.VITE_YARGI_API_URL || 'http://localhost:8000');
 const ENABLE_BEDDESTEN = String(ENV.VITE_ENABLE_BEDDESTEN || '').toLowerCase() === 'true';
 
 // Absolute backend base for diagnostics/pings, bypassing dev middleware
 export function getBackendBase(): string {
-  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || 'http://127.0.0.1:9000';
+  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || 'http://localhost:8000';
 }
 
 function convertDateToISO(date?: string): string | undefined {

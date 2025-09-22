@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
-import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
-import { searchSonkararIctihat, searchSonkararMevzuat } from '../lib/sonkararApi';
+import { searchIctihat, searchMevzuat, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
 
 interface SearchResult {
   id: string;
@@ -273,101 +272,89 @@ const AdvancedSearch: React.FC = () => {
       
       if (searchType === 'ictihat') {
         try {
-          // Önce Sonkarar API'yi dene
-          const sonkararResults = await searchSonkararIctihat({
-            query,
-            type: 'ictihat',
-            page: 1,
-            limit: 20,
-            courtType: selectedCourt,
-            dateFrom: dateRange ? `${dateRange}-01-01` : undefined,
-            dateTo: dateRange ? `${dateRange}-12-31` : undefined
-          });
+          // Sistemin kendi İçtihat API'sini kullan
+          const ictihatFilters: IctihatFilters = {
+            courtType: selectedCourt as any || 'yargitay',
+            dateRange: dateRange ? {
+              from: `${dateRange}-01-01`,
+              to: `${dateRange}-12-31`
+            } : undefined,
+            legalArea: selectedArea || undefined
+          };
+
+          const ictihatResults = await searchIctihat(query, ictihatFilters);
           
-          // Sonkarar sonuçlarını SearchResult formatına çevir
-          searchResults = sonkararResults.map(result => ({
+          // İçtihat sonuçlarını SearchResult formatına çevir
+          searchResults = ictihatResults.map(result => ({
             id: result.id,
-            caseNumber: result.caseNumber,
-            courtName: result.courtName,
-            courtType: result.courtType,
-            decisionDate: result.decisionDate,
-            subject: result.subject,
-            content: result.content,
-            relevanceScore: result.relevanceScore,
-            legalAreas: result.legalAreas,
-            keywords: result.keywords,
-            highlight: result.highlight
+            caseNumber: result.caseNumber || '',
+            courtName: result.courtName || '',
+            courtType: result.courtType || '',
+            decisionDate: result.decisionDate || '',
+            subject: result.subject || '',
+            content: result.content || '',
+            relevanceScore: result.relevanceScore || 0,
+            legalAreas: result.legalAreas || [],
+            keywords: result.keywords || [],
+            highlight: result.highlight || ''
           }));
           
-          console.log('✅ Sonkarar İçtihat API başarılı:', searchResults.length, 'sonuç');
-        } catch (sonkararError) {
-          console.log('⚠️ Sonkarar API hatası, yerel API deneniyor:', sonkararError);
+          console.log('✅ Sistem İçtihat API başarılı:', searchResults.length, 'sonuç');
+        } catch (apiError) {
+          console.log('⚠️ Sistem İçtihat API hatası, mock data kullanılıyor:', apiError);
           
-          try {
-            // Yerel API'yi dene
-            searchResults = await searchIctihat(query);
-            console.log('✅ Yerel İçtihat API başarılı:', searchResults.length, 'sonuç');
-          } catch (localError) {
-            console.log('⚠️ Yerel API hatası, mock data kullanılıyor:', localError);
-            
-            // Mock data ile devam et
-            searchResults = mockResults.filter(result => 
-              result.courtType !== 'mevzuat' && (
-                result.subject.toLowerCase().includes(query.toLowerCase()) ||
-                result.content.toLowerCase().includes(query.toLowerCase()) ||
-                result.caseNumber.toLowerCase().includes(query.toLowerCase())
-              )
-            );
-          }
+          // Mock data ile devam et
+          searchResults = mockResults.filter(result => 
+            result.courtType !== 'mevzuat' && (
+              result.subject.toLowerCase().includes(query.toLowerCase()) ||
+              result.content.toLowerCase().includes(query.toLowerCase()) ||
+              result.caseNumber.toLowerCase().includes(query.toLowerCase())
+            )
+          );
         }
       } else {
         try {
-          // Önce Sonkarar API'yi dene
-          const sonkararResults = await searchSonkararMevzuat({
-            query,
-            type: 'mevzuat',
+          // Sistemin kendi Mevzuat API'sini kullan
+          const mevzuatFilters: MevzuatFilters = {
+            category: selectedArea || undefined,
+            institution: selectedCourt || undefined,
+            dateRange: dateRange ? {
+              from: `${dateRange}-01-01`,
+              to: `${dateRange}-12-31`
+            } : undefined,
             page: 1,
-            limit: 20,
-            category: selectedArea,
-            dateFrom: dateRange ? `${dateRange}-01-01` : undefined,
-            dateTo: dateRange ? `${dateRange}-12-31` : undefined
-          });
+            per_page: 20
+          };
+
+          const mevzuatResults = await searchMevzuat(query, mevzuatFilters);
           
-          // Sonkarar sonuçlarını SearchResult formatına çevir
-          searchResults = sonkararResults.map(result => ({
+          // Mevzuat sonuçlarını SearchResult formatına çevir
+          searchResults = mevzuatResults.map(result => ({
             id: result.id,
-            caseNumber: result.title,
-            courtName: result.institution,
+            caseNumber: result.title || '',
+            courtName: result.institution || '',
             courtType: 'mevzuat',
-            decisionDate: result.publishDate,
-            subject: result.title,
-            content: result.content,
-            relevanceScore: result.relevanceScore,
-            legalAreas: [result.category],
+            decisionDate: result.publishDate || '',
+            subject: result.title || '',
+            content: result.content || '',
+            relevanceScore: result.relevanceScore || 0,
+            legalAreas: result.category ? [result.category] : [],
             keywords: [],
-            highlight: result.highlight
+            highlight: result.highlight || ''
           }));
           
-          console.log('✅ Sonkarar Mevzuat API başarılı:', searchResults.length, 'sonuç');
-        } catch (sonkararError) {
-          console.log('⚠️ Sonkarar API hatası, yerel API deneniyor:', sonkararError);
+          console.log('✅ Sistem Mevzuat API başarılı:', searchResults.length, 'sonuç');
+        } catch (apiError) {
+          console.log('⚠️ Sistem Mevzuat API hatası, mock data kullanılıyor:', apiError);
           
-          try {
-            // Yerel API'yi dene
-            searchResults = await searchMevzuat(query);
-            console.log('✅ Yerel Mevzuat API başarılı:', searchResults.length, 'sonuç');
-          } catch (localError) {
-            console.log('⚠️ Yerel API hatası, mock data kullanılıyor:', localError);
-            
-            // Mock data ile devam et
-            searchResults = mockResults.filter(result => 
-              result.courtType === 'mevzuat' && (
-                result.subject.toLowerCase().includes(query.toLowerCase()) ||
-                result.content.toLowerCase().includes(query.toLowerCase()) ||
-                result.caseNumber.toLowerCase().includes(query.toLowerCase())
-              )
-            );
-          }
+          // Mock data ile devam et
+          searchResults = mockResults.filter(result => 
+            result.courtType === 'mevzuat' && (
+              result.subject.toLowerCase().includes(query.toLowerCase()) ||
+              result.content.toLowerCase().includes(query.toLowerCase()) ||
+              result.caseNumber.toLowerCase().includes(query.toLowerCase())
+            )
+          );
         }
       }
 
