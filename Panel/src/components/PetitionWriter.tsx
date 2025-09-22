@@ -11,6 +11,8 @@ import {
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
 import { realPetitions, type RealPetition } from '../data/realPetitions';
+import { geminiService } from '../services/geminiService';
+import { openaiService } from '../services/openaiService';
 
 interface FormData {
   [key: string]: string;
@@ -25,6 +27,9 @@ interface PetitionField {
   placeholder?: string;
 }
 
+// AI Model seçenekleri
+type AIModel = 'gemini' | 'gpt-4' | 'auto';
+
 export default function PetitionWriter() {
   const [selectedExample, setSelectedExample] = useState<PetitionExample | null>(null);
   const [formData, setFormData] = useState<FormData>({});
@@ -33,6 +38,8 @@ export default function PetitionWriter() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showExamples, setShowExamples] = useState(false);
+  const [aiModel, setAIModel] = useState<AIModel>('auto');
+  const [useAI, setUseAI] = useState(true);
 
   // Dikte hook'u - form alanları için
   const {
@@ -66,7 +73,65 @@ export default function PetitionWriter() {
     interimResults: true
   });
 
-  // Gelişmiş AI Dilekçe Üretimi (Gerçek örneklerle - Contract Generator tarzı)
+  // AI Prompt sistemi - Türk Hukuku uzmanı
+  const buildAIPrompt = (petitionType: string, formData: FormData, realExample?: RealPetition): string => {
+    const currentDate = new Date().toLocaleDateString('tr-TR');
+    
+    const basePrompt = `Sen Türkiye'de uzman bir avukatsın ve mahkemeye sunulmaya uygun profesyonel dilekçeler yazıyorsun. 
+
+ÖNEMLI KURALLAR:
+1. Türk Hukuku terminolojisi kullan
+2. Mahkeme standartlarına uygun format
+3. Mevcut kanunları referans al (TMK, İK, TBK, HMK)
+4. Profesyonel dil kullan
+5. Ek belge listesi ekle
+6. Yasal dayanak göster
+
+DİLEKÇE TÜRÜ: ${petitionType}
+TARİH: ${currentDate}
+
+KULLANICI BİLGİLERİ:
+${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join('\n')}
+
+${realExample ? `
+REFERANS ÖRNEK:
+${realExample.template}
+
+Bu örneği referans alarak, kullanıcının verdiği bilgilerle mahkeme kalitesinde yeni bir dilekçe yaz.
+` : ''}
+
+Lütfen aşağıdaki formatta dilekçe yaz:
+
+T.C.
+[MAHKEME ADI]
+
+DİLEKÇE
+
+Davacı: [Ad Soyad ve kimlik bilgileri]
+Davalı: [Ad Soyad ve kimlik bilgileri]
+
+KONU: ${petitionType}
+
+Sayın Mahkeme,
+
+[Ana dilekçe metni - hukuki gerekçeler ve talepler]
+
+HUKUKİ DAYANAK:
+[İlgili kanun maddeleri]
+
+SONUÇ ve TALEP:
+[Somut talepler]
+
+EK BELGELER:
+[Gerekli belgeler listesi]
+
+Saygılarımla,
+[Tarih ve imza]`;
+
+    return basePrompt;
+  };
+
+  // Gelişmiş AI Dilekçe Üretimi (Gerçek AI entegrasyonu)
   const generateAIPetition = async () => {
     if (!selectedExample) {
       alert('Lütfen önce bir dilekçe örneği seçin.');
@@ -80,11 +145,80 @@ export default function PetitionWriter() {
     setIsGenerating(true);
     
     try {
-      // Contract Generator tarzında simülasyon
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      let generated = '';
       
-      // Gerçek AI yerine template-based generation
-      const generated = generateFromTemplate(selectedExample, formData);
+      if (useAI) {
+        // Gerçek AI servislerini kullan
+        const realExample = realPetitions.find(r => r.id === selectedExample.id);
+        const prompt = buildAIPrompt(selectedExample.title, formData, realExample);
+        
+        if (aiModel === 'auto') {
+          // Otomatik seçim: Gemini ve OpenAI'yi karşılaştır
+          const promises = [];
+          
+          if (geminiService.isInitialized()) {
+            promises.push(
+              geminiService.analyzeText('Dilekçe yazımı', prompt)
+                .then(result => ({ type: 'gemini', result }))
+                .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}` }))
+            );
+          }
+          
+          if (openaiService.isInitialized()) {
+            promises.push(
+              openaiService.generateContract({
+                contractType: selectedExample.title,
+                description: prompt,
+                requirements: ['Dilekçe yazımı'],
+                parties: ['Davacı', 'Davalı'],
+                additionalInfo: 'Bu bir mahkeme dilekçesi. Türk hukuk sistemine uygun profesyonel dilekçe yaz.'
+              })
+              .then(result => ({ type: 'openai', result }))
+              .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}` }))
+            );
+          }
+          
+          if (promises.length === 0) {
+            // AI servisleri aktif değilse template-based generation'a geç
+            generated = generateFromTemplate(selectedExample, formData);
+          } else {
+            const results = await Promise.all(promises);
+            
+            // En iyi sonucu seç (daha uzun ve detaylı olanı)
+            let bestResult = '';
+            let bestLength = 0;
+            
+            results.forEach(result => {
+              if (result.result.length > bestLength) {
+                bestResult = result.result;
+                bestLength = result.result.length;
+              }
+            });
+            
+            generated = bestResult || generateFromTemplate(selectedExample, formData);
+          }
+        } else {
+          // Belirli model seçimi
+          if (aiModel === 'gemini' && geminiService.isInitialized()) {
+            generated = await geminiService.analyzeText('Dilekçe yazımı', prompt);
+          } else if (aiModel === 'gpt-4' && openaiService.isInitialized()) {
+            generated = await openaiService.generateContract({
+              contractType: selectedExample.title,
+              description: prompt,
+              requirements: ['Dilekçe yazımı'],
+              parties: ['Davacı', 'Davalı'],
+              additionalInfo: 'Bu bir mahkeme dilekçesi. Türk hukuk sistemine uygun profesyonel dilekçe yaz.'
+            });
+          } else {
+            // Seçilen model aktif değilse template-based generation'a geç
+            generated = generateFromTemplate(selectedExample, formData);
+          }
+        }
+      } else {
+        // Template-based generation
+        generated = generateFromTemplate(selectedExample, formData);
+      }
+      
       setGeneratedPetition(generated);
       
     } catch (error) {
@@ -275,7 +409,7 @@ export default function PetitionWriter() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
           <div className="bg-white/20 rounded-lg p-3">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
@@ -303,6 +437,24 @@ export default function PetitionWriter() {
               <span>AI Destekli</span>
             </div>
             <div className="text-2xl font-bold">✓</div>
+          </div>
+          <div className="bg-white/20 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span>Gemini</span>
+            </div>
+            <div className={`text-lg font-bold ${geminiService.isInitialized() ? 'text-green-300' : 'text-red-300'}`}>
+              {geminiService.isInitialized() ? '✓' : '✗'}
+            </div>
+          </div>
+          <div className="bg-white/20 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              <span>OpenAI</span>
+            </div>
+            <div className={`text-lg font-bold ${openaiService.isInitialized() ? 'text-green-300' : 'text-red-300'}`}>
+              {openaiService.isInitialized() ? '✓' : '✗'}
+            </div>
           </div>
         </div>
       </div>
@@ -392,11 +544,43 @@ export default function PetitionWriter() {
       {/* Dinamik Form Bilgileri (Contract Generator Tarzı) */}
       {selectedExample && (
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">📝 Dilekçe Bilgileri</h2>
-              <p className="text-sm text-gray-600">Lütfen aşağıdaki bilgileri eksiksiz doldurun</p>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <FileText className="h-6 w-6 text-blue-600" />
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">📝 Dilekçe Bilgileri</h2>
+                <p className="text-sm text-gray-600">Lütfen aşağıdaki bilgileri eksiksiz doldurun</p>
+              </div>
+            </div>
+            
+            {/* AI Ayarları */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">AI Model:</label>
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAIModel(e.target.value as AIModel)}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="auto">🤖 Otomatik</option>
+                  <option value="gemini">✨ Gemini</option>
+                  <option value="gpt-4">⚡ GPT-4</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">AI:</label>
+                <button
+                  onClick={() => setUseAI(!useAI)}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    useAI 
+                      ? 'bg-green-100 text-green-800 border border-green-300' 
+                      : 'bg-gray-100 text-gray-800 border border-gray-300'
+                  }`}
+                >
+                  {useAI ? '✓ Aktif' : '✗ Pasif'}
+                </button>
+              </div>
             </div>
           </div>
 
