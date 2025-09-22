@@ -522,10 +522,10 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Canlı Destek
+          AI Destek
         </h3>
         <p className="text-gray-600 dark:text-gray-400">
-          Teknik destek ekibimizle anında iletişime geçin. Sorularınızı yanıtlamak için buradayız.
+          Yapay zeka destek asistanımızla anında iletişime geçin. Sorularınızı yanıtlamak için buradayız.
         </p>
       </div>
 
@@ -533,17 +533,17 @@ export default function Settings() {
       <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <h4 className="font-semibold text-green-800 dark:text-green-200">Destek Ekibi Çevrimiçi</h4>
+          <h4 className="font-semibold text-green-800 dark:text-green-200">AI Destek Asistanı Aktif</h4>
         </div>
         <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-          Ortalama yanıt süresi: 2 dakika • Çalışma saatleri: 09:00 - 18:00
+          Ortalama yanıt süresi: Anında • 7/24 hizmet
         </p>
         <button
           onClick={() => setShowLiveSupport(true)}
           className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
         >
           <MessageCircle className="w-5 h-5" />
-          Canlı Sohbet Başlat
+          AI Destek Başlat
         </button>
       </div>
 
@@ -554,16 +554,16 @@ export default function Settings() {
             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
               <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h4 className="font-medium text-gray-900 dark:text-white">Canlı Sohbet</h4>
+            <h4 className="font-medium text-gray-900 dark:text-white">AI Destek</h4>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            Anında yanıt alın, sorunlarınızı çözün
+            Yapay zeka ile anında yanıt alın
           </p>
           <button
             onClick={() => setShowLiveSupport(true)}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
           >
-            Sohbet Başlat
+            AI Destek Başlat
           </button>
         </div>
 

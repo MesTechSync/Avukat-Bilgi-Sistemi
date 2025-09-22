@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Phone, Mail, Clock, User, Bot, CheckCircle, AlertCircle } from 'lucide-react';
+import { geminiService } from '../services/geminiService';
 
 interface Message {
   id: string;
@@ -18,7 +19,7 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Merhaba! Avukat Bilgi Sistemi canlı destek hizmetine hoş geldiniz. Size nasıl yardımcı olabilirim?',
+      text: 'Merhaba! Avukat Bilgi Sistemi AI destek hizmetine hoş geldiniz. Size nasıl yardımcı olabilirim?',
       sender: 'support',
       timestamp: new Date(),
       type: 'system'
@@ -27,7 +28,26 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'online' | 'away' | 'offline'>('online');
+  const [aiInitialized, setAiInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Gemini AI'yı başlat
+  useEffect(() => {
+    const initializeAI = async () => {
+      try {
+        await geminiService.initialize('AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk');
+        setAiInitialized(true);
+        console.log('AI destek servisi başlatıldı');
+      } catch (error) {
+        console.error('AI başlatma hatası:', error);
+        setSupportStatus('offline');
+      }
+    };
+
+    if (isOpen) {
+      initializeAI();
+    }
+  }, [isOpen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,34 +57,31 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
-  const sendToWebhook = async (message: string) => {
+  const getAISupportResponse = async (userMessage: string): Promise<string> => {
     try {
-      const webhookUrl = 'https://n8n.srv959585.hstgr.cloud/webhook-test/ec592cb3-b6cc-4b48-a832-7ba645c3e1b8';
-      
-      const payload = {
-        message: message,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        sessionId: Date.now().toString()
-      };
+      const supportPrompt = `Sen Avukat Bilgi Sistemi'nin AI destek asistanısın. Kullanıcıların teknik sorunlarına, sistem kullanımına ve genel sorularına yardımcı oluyorsun.
 
-      await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+Kullanıcı mesajı: "${userMessage}"
 
-      console.log('Mesaj webhook\'a gönderildi:', message);
+Lütfen:
+1. Kısa ve net yanıt ver
+2. Türkçe konuş
+3. Teknik konularda pratik çözümler öner
+4. Sistem özelliklerini açıkla
+5. Samimi ve yardımcı ol
+
+Yanıt:`;
+
+      const response = await geminiService.analyzeText(supportPrompt);
+      return response || 'Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin.';
     } catch (error) {
-      console.error('Webhook gönderim hatası:', error);
+      console.error('AI yanıt hatası:', error);
+      return 'Teknik bir sorun yaşıyorum. Lütfen sorunuzu tekrar sorun veya sistem yöneticisiyle iletişime geçin.';
     }
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !aiInitialized) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -74,40 +91,35 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Mesajı webhook'a gönder
-    await sendToWebhook(newMessage);
-    
     setNewMessage('');
     setIsTyping(true);
 
-    // Simulate support response
-    setTimeout(() => {
-      const supportResponses = [
-        'Anlıyorum, bu konuda size yardımcı olabilirim. Daha detaylı bilgi verebilir misiniz?',
-        'Bu sorunla ilgili size en iyi çözümü sunabilmek için sisteminizdeki durumu kontrol etmem gerekiyor.',
-        'Bu özellik için teknik destek ekibimizle iletişime geçmenizi öneriyorum.',
-        'Sorununuzu çözmek için adım adım ilerleyelim. Önce şu bilgileri paylaşabilir misiniz?',
-        'Bu durumda size en uygun çözümü bulmak için birkaç seçenek var. Hangisini tercih edersiniz?',
-        'Anladım, bu konuda size yardımcı olmak için gerekli bilgileri topluyorum.',
-        'Bu sorunu çözmek için sisteminizi yeniden başlatmanızı öneriyorum.',
-        'Bu özellik şu anda geliştirme aşamasında. Yakında kullanıma sunulacak.',
-        'Size daha iyi yardımcı olabilmek için ekran görüntüsü paylaşabilir misiniz?',
-        'Bu konuda uzman ekibimizle görüşmenizi sağlayacağım.'
-      ];
-
-      const randomResponse = supportResponses[Math.floor(Math.random() * supportResponses.length)];
+    try {
+      // AI'dan yanıt al
+      const aiResponse = await getAISupportResponse(newMessage);
       
       const supportMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: randomResponse,
+        text: aiResponse,
         sender: 'support',
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, supportMessage]);
+    } catch (error) {
+      console.error('Mesaj işleme hatası:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Üzgünüm, şu anda bir teknik sorun yaşıyorum. Lütfen daha sonra tekrar deneyin.',
+        sender: 'support',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500 + Math.random() * 2000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -148,9 +160,9 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
               <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${supportStatus === 'online' ? 'bg-green-400' : supportStatus === 'away' ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Canlı Destek</h3>
+              <h3 className="font-semibold text-lg">AI Destek</h3>
               <p className="text-sm opacity-90">
-                <span className={getStatusColor()}>{getStatusText()}</span> • Ortalama yanıt süresi: 2 dakika
+                <span className={getStatusColor()}>{getStatusText()}</span> • {aiInitialized ? 'AI Aktif' : 'AI Başlatılıyor...'}
               </p>
             </div>
           </div>
@@ -231,12 +243,12 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
                 placeholder="Mesajınızı yazın..."
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 rows={2}
-                disabled={supportStatus === 'offline'}
+                disabled={!aiInitialized || supportStatus === 'offline'}
               />
             </div>
             <button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim() || supportStatus === 'offline'}
+              disabled={!newMessage.trim() || !aiInitialized || supportStatus === 'offline'}
               className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-colors"
             >
               <Send className="w-5 h-5" />
