@@ -20,17 +20,61 @@ export const useSupabase = () => {
     const fetchAll = async () => {
       setLoading(true)
       try {
-        const { data: caseData } = await supabase.from('cases').select('*')
-        setCases(caseData || [])
-        const { data: clientData } = await supabase.from('clients').select('*')
-        setClients(clientData || [])
-        const { data: appointmentData } = await supabase.from('appointments').select('*')
-        setAppointments(appointmentData || [])
-        const { data: financialData } = await supabase.from('financials').select('*')
-        setFinancials(financialData || [])
-        // Add other tables as needed
+        // Cases tablosu
+        try {
+          const { data: caseData, error: caseError } = await supabase.from('cases').select('*')
+          if (caseError) {
+            console.error('Cases tablosu hatası:', caseError)
+          } else {
+            setCases(caseData || [])
+            console.log('Cases tablosu başarılı:', caseData)
+          }
+        } catch (err) {
+          console.error('Cases tablosu bağlantı hatası:', err)
+        }
+
+        // Clients tablosu
+        try {
+          const { data: clientData, error: clientError } = await supabase.from('clients').select('*')
+          if (clientError) {
+            console.error('Clients tablosu hatası:', clientError)
+          } else {
+            setClients(clientData || [])
+            console.log('Clients tablosu başarılı:', clientData)
+          }
+        } catch (err) {
+          console.error('Clients tablosu bağlantı hatası:', err)
+        }
+
+        // Appointments tablosu (opsiyonel)
+        try {
+          const { data: appointmentData, error: appointmentError } = await supabase.from('appointments').select('*')
+          if (appointmentError) {
+            console.log('Appointments tablosu mevcut değil (normal):', appointmentError.message)
+          } else {
+            setAppointments(appointmentData || [])
+            console.log('Appointments tablosu başarılı:', appointmentData)
+          }
+        } catch (err) {
+          console.log('Appointments tablosu bağlantı hatası (normal):', err)
+        }
+
+        // Financials tablosu
+        try {
+          const { data: financialData, error: financialError } = await supabase.from('financials').select('*')
+          if (financialError) {
+            console.error('Financials tablosu hatası:', financialError)
+          } else {
+            setFinancials(financialData || [])
+            console.log('Financials tablosu başarılı:', financialData)
+          }
+        } catch (err) {
+          console.error('Financials tablosu bağlantı hatası:', err)
+        }
+
         setError(null)
       } catch (err) {
+        console.error('Genel Supabase hatası:', err)
         setError('Supabase veri çekme hatası')
       }
       setLoading(false)

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Wand2, Download, Copy, Save, RefreshCw, Search, BookOpen, Lightbulb, Star, Building, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare } from 'lucide-react';
+import { FileText, Wand2, Download, Copy, Save, RefreshCw, Search, BookOpen, Lightbulb, Star, Building, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare, Zap } from 'lucide-react';
 import { 
   combinedPetitionDatabase,
   searchCombinedByCategory,

@@ -76,9 +76,12 @@ function App() {
         const res = await fetchWithTimeout(endpoint, {
           headers: { 'Accept': 'application/json, text/plain' },
           credentials: 'same-origin',
-          timeoutMs: 6000
+          timeoutMs: 3000 // Daha kısa timeout
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          console.log(`Backend endpoint ${endpoint} returned ${res.status} (normal)`);
+          continue; // try next endpoint
+        }
         const ct = res.headers.get('content-type') || '';
         if (ct.includes('application/json')) {
           const data = await res.json();
@@ -94,6 +97,7 @@ function App() {
         setBackendStatus('ok');
         return;
       } catch (e) {
+        console.log(`Backend endpoint ${endpoint} failed (normal):`, e);
         // try next
       }
     }
