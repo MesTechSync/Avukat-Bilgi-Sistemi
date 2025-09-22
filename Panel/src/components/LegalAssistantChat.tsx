@@ -651,20 +651,41 @@ export default function LegalAssistantChat() {
           response = chooseBest(q, analysis);
         } else {
           const results = await Promise.all(promises);
-          // En iyi sonucu seç
+          
+          // Yarışma sistemi: En iyi sonucu seç
           let bestResult = '';
           let bestModel: 'gpt-4' | 'gemini' = 'gpt-4';
           let bestConfidence = 0;
+          let bestLength = 0;
           
           results.forEach(result => {
-            if (result.confidence > bestConfidence) {
+            // Uzunluk ve kalite puanlaması
+            const lengthScore = result.result.length;
+            const qualityScore = result.confidence;
+            const totalScore = lengthScore * 0.3 + qualityScore * 0.7;
+            
+            if (totalScore > bestConfidence || (totalScore === bestConfidence && lengthScore > bestLength)) {
               bestResult = result.result;
               bestModel = result.type === 'gemini' ? 'gemini' : 'gpt-4';
-              bestConfidence = result.confidence;
+              bestConfidence = totalScore;
+              bestLength = lengthScore;
             }
           });
           
-          response = { content: bestResult, model: bestModel, confidence: bestConfidence };
+          // Kaynak bilgilerini ekle
+          const sources = [
+            `📚 **Kaynak:** ${bestModel === 'gemini' ? 'Google Gemini AI' : 'OpenAI GPT-4'}`,
+            `🎯 **Güven Skoru:** ${Math.round(bestConfidence * 100)}%`,
+            `📊 **Yanıt Uzunluğu:** ${bestLength} karakter`,
+            `⚖️ **Hukuki Kategori:** ${analysis.category}`,
+            `🔍 **Analiz:** ${analysis.isUrgent ? 'Acil' : 'Normal'} - ${analysis.complexity === 3 ? 'Karmaşık' : analysis.complexity === 2 ? 'Orta' : 'Basit'}`
+          ];
+          
+          response = { 
+            content: `${bestResult}\n\n---\n\n**🏆 Yarışma Sonucu:**\n${sources.join('\n')}`, 
+            model: bestModel, 
+            confidence: bestConfidence 
+          };
         }
       } else {
         // Belirli model seçimi
@@ -717,63 +738,162 @@ export default function LegalAssistantChat() {
   const feedback = (id: string, f: 'positive' | 'negative') => setMessages(ms => ms.map(m => m.id === id ? { ...m, feedback: f } : m));
 
   return (
-    <div className="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center gap-3"><Bot className="w-6 h-6 text-blue-600" /><div><h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hukuk Asistanı</h3><p className="text-xs text-gray-500 dark:text-gray-400">Genel ön bilgi sağlar</p></div></div>
-        <div className="flex items-center gap-2">
-          <select aria-label="Model seçimi" value={model} onChange={e => setModel(e.target.value as Model)} className="text-xs border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"><option value="auto">🤖 Otomatik</option><option value="gpt-4">⚡ GPT-4</option><option value="gemini">✨ Gemini</option></select>
-          <button onClick={clearChat} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md" title="Temizle"><Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-300" /></button>
+    <div className="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-lg">
+      {/* Modern Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">🏆 AI Yarışma Sistemi</h3>
+              <p className="text-blue-100 text-sm">Gemini vs OpenAI - En iyi cevap kazanır!</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <select 
+              aria-label="Model seçimi" 
+              value={model} 
+              onChange={e => setModel(e.target.value as Model)} 
+              className="text-sm border border-white/30 rounded-lg px-3 py-2 bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+              <option value="auto" className="text-gray-900">🤖 Otomatik Yarışma</option>
+              <option value="gpt-4" className="text-gray-900">⚡ Sadece GPT-4</option>
+              <option value="gemini" className="text-gray-900">✨ Sadece Gemini</option>
+            </select>
+            <button 
+              onClick={clearChat} 
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors" 
+              title="Sohbeti Temizle"
+            >
+              <Trash2 className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+        
+        {/* AI Status */}
+        <div className="mt-3 flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-400' : 'bg-red-400'}`}></div>
+            <span className="text-sm text-white">Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-400' : 'bg-red-400'}`}></div>
+            <span className="text-sm text-white">OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+          </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-3xl rounded-lg px-4 py-3 text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-blue-600 text-white' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700'}`}>
+            <div className={`max-w-4xl rounded-xl px-6 py-4 text-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : msg.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-md'}`}>
               {msg.role === 'assistant' && (msg.actualModel || msg.model) && !msg.isError && (
-                <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-wide opacity-70">
-                  {(msg.actualModel || msg.model) === 'gpt-4' ? 'GPT-4' : (msg.actualModel || msg.model) === 'gemini' ? 'GEMINI' : 'AI'}
-                  {msg.model === 'auto' && msg.actualModel && <span className="px-1 bg-blue-200 text-blue-800 rounded">Auto</span>}
-                  {msg.confidence && <span>{Math.round(msg.confidence * 100)}%</span>}
+                <div className="mb-3 flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30">
+                    <div className={`w-2 h-2 rounded-full ${(msg.actualModel || msg.model) === 'gpt-4' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">
+                      {(msg.actualModel || msg.model) === 'gpt-4' ? '⚡ OpenAI GPT-4' : (msg.actualModel || msg.model) === 'gemini' ? '✨ Google Gemini' : '🤖 AI'}
+                    </span>
+                    {msg.model === 'auto' && msg.actualModel && (
+                      <span className="px-2 py-1 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                        🏆 KAZANDI
+                      </span>
+                    )}
+                    {msg.confidence && (
+                      <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
+                        {Math.round(msg.confidence * 100)}% Güven
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
-              <ReactMarkdown>{msg.content}</ReactMarkdown>
+              <ReactMarkdown className="prose prose-sm max-w-none dark:prose-invert">
+                {msg.content}
+              </ReactMarkdown>
               {msg.role === 'assistant' && !msg.isError && (
-                <div className="mt-2 flex items-center gap-2 text-xs">
-                  <button onClick={() => copyText(msg.content)} className="p-1 hover:bg-white/40 rounded" title="Kopyala"><Copy className="w-3 h-3" /></button>
-                  <button onClick={() => feedback(msg.id, 'positive')} className={`p-1 rounded ${msg.feedback === 'positive' ? 'bg-green-200 text-green-800' : 'hover:bg-white/40'}`} title="Beğen"><ThumbsUp className="w-3 h-3" /></button>
-                  <button onClick={() => feedback(msg.id, 'negative')} className={`p-1 rounded ${msg.feedback === 'negative' ? 'bg-red-200 text-red-800' : 'hover:bg-white/40'}`} title="Beğenme"><ThumbsDown className="w-3 h-3" /></button>
+                <div className="mt-4 flex items-center gap-3 text-xs">
+                  <button 
+                    onClick={() => copyText(msg.content)} 
+                    className="flex items-center gap-1 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" 
+                    title="Kopyala"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>Kopyala</span>
+                  </button>
+                  <button 
+                    onClick={() => feedback(msg.id, 'positive')} 
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${msg.feedback === 'positive' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`} 
+                    title="Beğen"
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                    <span>Beğen</span>
+                  </button>
+                  <button 
+                    onClick={() => feedback(msg.id, 'negative')} 
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${msg.feedback === 'negative' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`} 
+                    title="Beğenme"
+                  >
+                    <ThumbsDown className="w-3 h-3" />
+                    <span>Beğenme</span>
+                  </button>
                 </div>
               )}
             </div>
           </div>
         ))}
-        {loading && <div className="flex items-center gap-2 text-xs text-gray-500"><Zap className="w-4 h-4 animate-pulse text-blue-500" /><span>Hazırlanıyor...</span></div>}
+        {loading && (
+          <div className="flex items-center justify-center gap-3 text-sm text-gray-500 py-4">
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+            <span>AI'lar yarışıyor... En iyi cevabı hazırlıyorlar</span>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
-        <div className="flex gap-3">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800">
+        <div className="flex gap-4">
           <textarea 
             value={input + (dictationInterimText ? ' ' + dictationInterimText : '')} 
             onChange={e => setInput(e.target.value)} 
             onKeyDown={onKeyDown} 
             rows={3} 
-            placeholder="Hukuki sorunuzu detaylı yazın... Örn: 'Boşanma davası açmak istiyorum, eşimle anlaşamıyoruz, çocuk var, ne yapmalıyım?'" 
-            className="flex-1 text-sm p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" 
+            placeholder="Hukuki sorunuzu detaylı yazın... AI'lar yarışacak ve en iyi cevabı verecek! 🏆" 
+            className="flex-1 text-sm p-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-300" 
             disabled={loading} 
           />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <DictationButton
               isListening={isDictating}
               isSupported={isDictationSupported}
               onStart={startDictation}
               onStop={stopDictation}
-              size="md"
-              title="Sesli mesaj"
+              size="lg"
+              title="Sesli yazım"
             />
-            <button onClick={send} disabled={!input.trim() || loading} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm font-medium"><Send className="w-4 h-4" /> Gönder</button>
+            <button 
+              onClick={send} 
+              disabled={loading || !input.trim()} 
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Yarışıyor...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Gönder</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
-        <p className="mt-2 text-[10px] text-gray-500 dark:text-gray-400">⚖️ Bu yanıtlar bilgilendirme amaçlıdır, bağlayıcı hukuki görüş değildir. Kesin bilgi için avukata başvurun.</p>
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">🏆 AI'lar yarışıyor! En iyi cevap otomatik seçiliyor • ⚖️ Bu yanıtlar bilgilendirme amaçlıdır, bağlayıcı hukuki görüş değildir</p>
       </div>
     </div>
   );
