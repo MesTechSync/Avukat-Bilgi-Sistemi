@@ -440,51 +440,51 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 p-2 md:p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6 mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-xl md:rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-3 md:p-6 mb-4 md:mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
                 📅 Gelişmiş Randevu Yönetimi
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className="text-gray-600 dark:text-gray-400 mt-1 md:mt-2 text-sm md:text-base">
                 Müvekkil randevularınızı planlayın ve takip edin - Gelişmiş özelliklerle! ✨
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3">
               <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('calendar')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-2 md:px-3 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors ${
                     viewMode === 'calendar' 
                       ? 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm' 
                       : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Takvim
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4 inline mr-1" />
+                  <span className="hidden sm:inline">Takvim</span>
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-2 md:px-3 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors ${
                     viewMode === 'list' 
                       ? 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm' 
                       : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
-                  <User className="w-4 h-4 inline mr-1" />
-                  Liste
+                  <User className="w-3 h-3 md:w-4 md:h-4 inline mr-1" />
+                  <span className="hidden sm:inline">Liste</span>
                 </button>
               </div>
               <button
                 ref={newAppointmentButtonRef}
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-1"
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-1 md:gap-2 transform hover:-translate-y-1"
               >
-                <Plus className="w-5 h-5" />
-                Yeni Randevu
+                <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="text-sm md:text-base font-medium">Yeni Randevu</span>
               </button>
               <button 
                 title="Bildirimler"
@@ -855,7 +855,7 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
         {/* Enhanced Modal */}
         {isModalOpen && (
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="appointment-modal-title"
@@ -865,25 +865,25 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
               }
             }}
           >
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/50">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <h2 id="appointment-modal-title" className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/50">
+              <div className="p-3 md:p-6">
+                <div className="flex items-start justify-between mb-4 md:mb-6">
+                  <h2 id="appointment-modal-title" className="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     {editingAppointment ? 'Randevu Düzenle' : 'Yeni Randevu'}
                   </h2>
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
+                    className="p-1.5 md:p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
                     aria-label="Kapat"
                     title="Kapat"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                       <label htmlFor="apt-title" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Randevu Başlığı *
@@ -895,7 +895,7 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                         ref={firstInputRef}
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-4 py-3 bg-white/70 dark:bg-gray-700/70 border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 md:px-4 py-2 md:py-3 bg-white/70 dark:bg-gray-700/70 border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
                         placeholder="Örn: Müvekkil görüşmesi"
                       />
                     </div>
