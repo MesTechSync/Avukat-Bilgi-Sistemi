@@ -100,104 +100,107 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-2 md:p-4">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 p-8 mb-8 relative overflow-hidden">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 p-4 md:p-8 mb-4 md:mb-8 relative overflow-hidden">
           {/* Arka plan deseni */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-2xl"></div>
           <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
           
-          <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-xl">
-                <Scale className="w-8 h-8 text-white" />
+          <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2 md:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl md:rounded-2xl shadow-xl">
+                <Scale className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
                   Hukuk Bürosu Paneli
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-                  Hukuki süreçlerinizi yönetin ve takip edin • {currentTime.toLocaleDateString('tr-TR')} {currentTime.toLocaleTimeString('tr-TR')}
+                <p className="text-gray-600 dark:text-gray-400 mt-1 md:mt-2 text-sm md:text-lg">
+                  Hukuki süreçlerinizi yönetin ve takip edin
                 </p>
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sistem Operasyonel</span>
+                <p className="text-gray-500 dark:text-gray-500 text-xs md:text-sm">
+                  {currentTime.toLocaleDateString('tr-TR')} {currentTime.toLocaleTimeString('tr-TR')}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2 md:mt-3">
+                  <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs md:text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sistem Operasyonel</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                    <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Premium Hesap</span>
+                  <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <Star className="w-3 h-3 md:w-4 md:h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs md:text-sm font-semibold text-blue-700 dark:text-blue-300">Premium Hesap</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex flex-col items-end gap-3">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end gap-2 md:gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <button 
                   onClick={() => onNavigate?.('settings')}
                   title="Ayarlar ve Bildirimler"
-                  className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
+                  className="p-2 md:p-3 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
                 >
-                  <Bell className="w-5 h-5 group-hover:animate-pulse" />
+                  <Bell className="w-4 h-4 md:w-5 md:h-5 group-hover:animate-pulse" />
                 </button>
                 <button 
                   onClick={() => onNavigate?.('appointments')}
                   title="Hızlı Randevu Ekle"
-                  className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
+                  className="p-2 md:p-3 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-lg group"
                 >
-                  <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                  <Plus className="w-4 h-4 md:w-5 md:h-5 group-hover:rotate-90 transition-transform" />
                 </button>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-mono font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <div className="text-lg md:text-3xl font-mono font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   {currentTime.toLocaleTimeString('tr-TR')}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Canlı Saat</p>
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Canlı Saat</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className={`bg-gradient-to-br ${stat.color} text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
+              <div key={index} className={`bg-gradient-to-br ${stat.color} text-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/80 text-sm font-medium">{stat.title}</p>
-                    <p className="text-4xl font-bold mt-2">{stat.value}</p>
-                    <p className="text-white/70 text-xs mt-1">{stat.change}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-xs md:text-sm font-medium truncate">{stat.title}</p>
+                    <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{stat.value}</p>
+                    <p className="text-white/70 text-xs mt-1 truncate">{stat.change}</p>
                   </div>
-                  <Icon className="w-12 h-12 text-white/70" />
+                  <Icon className="w-8 h-8 md:w-12 md:h-12 text-white/70 flex-shrink-0" />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Yaklaşan Randevular - Enhanced */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 p-8 relative overflow-hidden">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 p-4 md:p-8 relative overflow-hidden">
             {/* Arka plan deseni */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-blue-500/5 to-cyan-500/5"></div>
             <div className="absolute -top-10 -left-10 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-xl"></div>
             
             <div className="relative">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl">
-                    <Clock className="w-6 h-6 text-white" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-8 gap-3">
+                <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg md:rounded-xl">
+                    <Clock className="w-4 h-4 md:w-6 md:h-6 text-white" />
                   </div>
-                  Yaklaşan Randevular
+                  <span className="truncate">Yaklaşan Randevular</span>
                 </h2>
-                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full border border-indigo-200 dark:border-indigo-700">
-                  <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
+                <div className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full border border-indigo-200 dark:border-indigo-700">
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs md:text-sm font-bold text-indigo-700 dark:text-indigo-300">
                     {upcomingAppointments.length} randevu
                   </span>
                 </div>
@@ -206,35 +209,35 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {upcomingAppointments.length > 0 ? (
                   upcomingAppointments.map((appointment, index) => (
-                    <div key={appointment.id} className="group p-6 bg-gradient-to-r from-white via-blue-50/50 to-indigo-50 dark:from-gray-700 dark:via-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-100 dark:border-blue-800/30 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white font-bold text-lg shadow-lg">
+                    <div key={appointment.id} className="group p-3 md:p-6 bg-gradient-to-r from-white via-blue-50/50 to-indigo-50 dark:from-gray-700 dark:via-blue-900/20 dark:to-indigo-900/20 rounded-xl md:rounded-2xl border-2 border-blue-100 dark:border-blue-800/30 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+                          <div className="p-2 md:p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg md:rounded-xl text-white font-bold text-sm md:text-lg shadow-lg flex-shrink-0">
                             {index + 1}
                           </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm md:text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                               {appointment.client_name || appointment.clientName || appointment.name || appointment.title}
                             </h3>
-                            <p className="text-gray-600 dark:text-gray-400 font-medium">{appointment.type}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+                            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium truncate">{appointment.type}</p>
+                            <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-1 md:mt-2">
+                              <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400 font-semibold bg-blue-100 dark:bg-blue-900/30 px-2 md:px-3 py-1 rounded-full">
                                 📅 {new Date(appointment.date).toLocaleDateString('tr-TR')}
                               </p>
-                              <p className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                              <p className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-100 dark:bg-indigo-900/30 px-2 md:px-3 py-1 rounded-full">
                                 🕐 {appointment.time}
                               </p>
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-lg"></div>
-                            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{appointment.status || 'Onaylandı'}</span>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 md:gap-2">
+                            <div className="w-2 h-2 md:w-3 md:h-3 bg-emerald-500 rounded-full shadow-lg"></div>
+                            <span className="text-xs md:text-sm font-semibold text-emerald-600 dark:text-emerald-400">{appointment.status || 'Onaylandı'}</span>
                           </div>
                           <button 
                             onClick={() => onNavigate?.('appointments')}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                            className="px-2 md:px-4 py-1 md:py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs md:text-sm font-semibold rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
                           >
                             Detaylar
                           </button>
