@@ -193,3 +193,4 @@
             result.subject.toLowerCase().includes(query.toLowerCase()) ||
             result.content.toLowerCase().includes(query.toLowerCase()) ||
             result.caseNumber.toLowerCase().includes(query.toLowerCase())
+          );
