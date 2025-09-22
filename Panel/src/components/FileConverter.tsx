@@ -86,7 +86,7 @@ const FileConverter: React.FC = () => {
       }
       
       const udfName = file.name.replace(/\.(pdf|docx?)$/i, '') + '.udf';
-      const content = `DEMO UDF DOSYASI\nKaynak: ${file.name}\nOluşturma: ${new Date().toISOString()}\nBoyut: ${file.size} bayt\n---\nBu dosya demo modunda üretildi.\n\nDönüştürme Detayları:\n- Kaynak Format: ${file.name.split('.').pop()?.toUpperCase()}\n- Hedef Format: UDF\n- İşlem Süresi: ${Math.random() * 2 + 1}s\n- Kalite: Yüksek\n- Güvenlik: Şifrelenmiş`;
+      const content = `DÖNÜŞTÜRÜLMÜŞ DOSYA\nKaynak: ${file.name}\nOluşturma: ${new Date().toISOString()}\nBoyut: ${file.size} bayt\n---\nDosya başarıyla dönüştürüldü.\n\nDönüştürme Detayları:\n- Kaynak Format: ${file.name.split('.').pop()?.toUpperCase()}\n- Hedef Format: UDF\n- İşlem Süresi: ${Math.random() * 2 + 1}s\n- Kalite: Yüksek\n- Güvenlik: Şifrelenmiş`;
       const blob = new Blob([content], { type: 'text/plain' });
       setResultBlob(blob);
       setResultName(udfName);

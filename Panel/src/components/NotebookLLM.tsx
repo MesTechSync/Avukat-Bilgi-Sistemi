@@ -156,84 +156,8 @@ export default function NotebookLLM() {
           `🔗 AI Model: Gemini 1.5 Flash`;
 
       } else {
-        // Demo modu (eski simülasyon)
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 saniye bekle
-        
-        let simulatedResult = '';
-        
-        if (files.length > 0) {
-          simulatedResult = `📄 Dosya Analizi Sonucu:\n\n`;
-          simulatedResult += `Talimat: ${instruction}\n\n`;
-          simulatedResult += `İşlenen Dosyalar:\n`;
-          files.forEach((file, index) => {
-            simulatedResult += `${index + 1}. ${file.name} (${formatBytes(file.size)})\n`;
-          });
-          simulatedResult += `\n---\n\n`;
-          
-          if (instruction.includes('özet') || instruction.includes('Özet')) {
-            simulatedResult += `📋 ÖZET:\n\n`;
-            simulatedResult += `• Bu dosyalar hukuki belgeler içermektedir\n`;
-            simulatedResult += `• Toplam ${files.length} dosya analiz edilmiştir\n`;
-            simulatedResult += `• Belgelerin ana konuları: Sözleşme, Dava, Hukuki Süreç\n`;
-            simulatedResult += `• Önemli tarihler ve taraflar tespit edilmiştir\n`;
-            simulatedResult += `• Hukuki sonuçlar ve öneriler hazırlanmıştır\n\n`;
-          } else if (instruction.includes('makale') || instruction.includes('Makale')) {
-            simulatedResult += `📝 MAKALE:\n\n`;
-            simulatedResult += `Hukuki Belgelerin Analizi ve Değerlendirmesi\n\n`;
-            simulatedResult += `Giriş:\n`;
-            simulatedResult += `Bu makale, yüklenen hukuki belgelerin kapsamlı analizini sunmaktadır. Belgeler incelendiğinde, modern hukuk sisteminin karmaşık yapısı ve uygulamaları hakkında önemli bulgular elde edilmiştir.\n\n`;
-            simulatedResult += `Ana Bölümler:\n`;
-            simulatedResult += `1. Hukuki Süreç Analizi\n`;
-            simulatedResult += `2. Tarafların Hak ve Yükümlülükleri\n`;
-            simulatedResult += `3. Mevzuat Uygulamaları\n`;
-            simulatedResult += `4. Sonuç ve Öneriler\n\n`;
-          } else if (instruction.includes('düzelt') || instruction.includes('Düzelt')) {
-            simulatedResult += `✏️ DÜZELTME ÖNERİLERİ:\n\n`;
-            simulatedResult += `Tespit edilen yazım hataları ve düzeltme önerileri:\n\n`;
-            simulatedResult += `1. "Hukuki" → "Hukukî" (Türkçe imla kuralları)\n`;
-            simulatedResult += `2. "Sözleşme" → "Sözleşme" (Doğru yazım)\n`;
-            simulatedResult += `3. "Mahkeme" → "Mahkeme" (Standart yazım)\n\n`;
-            simulatedResult += `Genel Öneriler:\n`;
-            simulatedResult += `• Resmi yazışmalarda Türkçe karakterlerin doğru kullanılması\n`;
-            simulatedResult += `• Hukuki terimlerin tutarlı kullanımı\n`;
-            simulatedResult += `• Noktalama işaretlerinin düzgün yerleştirilmesi\n\n`;
-          } else {
-            simulatedResult += `🤖 AI ANALİZ SONUCU:\n\n`;
-            simulatedResult += `Talimatınıza göre analiz tamamlanmıştır:\n\n`;
-            simulatedResult += `"${instruction}"\n\n`;
-            simulatedResult += `Sonuç:\n`;
-            simulatedResult += `• ${files.length} dosya başarıyla işlenmiştir\n`;
-            simulatedResult += `• Metin analizi tamamlanmıştır\n`;
-            simulatedResult += `• Hukuki içerik tespit edilmiştir\n`;
-            simulatedResult += `• Öneriler ve sonuçlar hazırlanmıştır\n\n`;
-          }
-        }
-        
-        if (textInput.trim()) {
-          if (simulatedResult) simulatedResult += `\n---\n\n`;
-          simulatedResult += `📝 METİN ANALİZİ:\n\n`;
-          simulatedResult += `Girilen Metin: "${textInput.trim()}"\n\n`;
-          
-          if (instruction.includes('özet') || instruction.includes('Özet')) {
-            simulatedResult += `Özet:\n`;
-            simulatedResult += `• Metin ${textInput.trim().length} karakter içermektedir\n`;
-            simulatedResult += `• Ana konu: Hukuki süreç ve uygulamalar\n`;
-            simulatedResult += `• Önemli noktalar: Sözleşme, hak, yükümlülük\n`;
-            simulatedResult += `• Sonuç: Hukuki değerlendirme gerekli\n\n`;
-          } else {
-            simulatedResult += `Analiz Sonucu:\n`;
-            simulatedResult += `• Metin başarıyla işlenmiştir\n`;
-            simulatedResult += `• Talimatınıza uygun sonuç hazırlanmıştır\n`;
-            simulatedResult += `• Hukuki içerik tespit edilmiştir\n\n`;
-          }
-        }
-        
-        simulatedResult += `\n---\n\n`;
-        simulatedResult += `ℹ️ Bu sonuç demo modunda üretilmiştir. Gerçek AI entegrasyonu için Gemini API key girin.\n`;
-        simulatedResult += `🕒 İşlem Süresi: 2 saniye\n`;
-        simulatedResult += `📊 İşlenen Veri: ${files.length} dosya, ${textInput.trim().length} karakter metin\n`;
-        
-        analysisResult = simulatedResult;
+        // Demo modu kaldırıldı - production için temizlendi
+        analysisResult = 'AI servisi aktif değil. Lütfen API anahtarını kontrol edin.';
       }
       
       setResult(analysisResult);

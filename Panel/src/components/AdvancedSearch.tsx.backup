@@ -1,6 +1,56 @@
   const mockResults: SearchResult[] = [];
-
-  const courtTypes = [
+    {
+      id: '1',
+      caseNumber: '2023/1234',
+      courtName: 'Yargıtay 4. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-06-15',
+      subject: 'İşten Çıkarma Tazminatı',
+      content: 'İşveren tarafından haksız yere işten çıkarılan işçiye ödenecek tazminat miktarı, işçinin son aldığı brüt ücretin 30 katından az olamaz. İşçinin kıdem süresi, yaşı ve işyerindeki pozisyonu dikkate alınarak hesaplanır. Kıdem tazminatı ve ihbar tazminatı ayrı ayrı hesaplanır.',
+      relevanceScore: 95,
+      legalAreas: ['İş Hukuku', 'Tazminat'],
+      keywords: ['işten çıkarma', 'tazminat', 'kıdem tazminatı', 'ihbar tazminatı', 'işçi hakları'],
+      highlight: 'İşten çıkarma tazminatı hesaplama yöntemi ve miktarı'
+    },
+    {
+      id: '2',
+      caseNumber: '2023/5678',
+      courtName: 'Danıştay 5. Dairesi',
+      courtType: 'danistay',
+      decisionDate: '2023-08-22',
+      subject: 'İdari İşlem İptali',
+      content: 'İdari makam tarafından alınan kararın hukuka aykırılığı nedeniyle iptali. İdari işlemlerin yetki, şekil, sebep, konu ve maksat unsurları açısından hukuka uygun olması gerekir. İptal davası açma süresi ve şartları.',
+      relevanceScore: 88,
+      legalAreas: ['İdari Hukuk'],
+      keywords: ['idari işlem', 'iptal', 'hukuka aykırılık', 'yetki', 'şekil'],
+      highlight: 'İdari işlem iptal şartları ve unsurları'
+    },
+    {
+      id: '3',
+      caseNumber: '2023/9012',
+      courtName: 'İstanbul BAM 15. Hukuk Dairesi',
+      courtType: 'bam',
+      decisionDate: '2023-09-03',
+      subject: 'Trafik Kazası Tazminatı',
+      content: 'Trafik kazası sonucu oluşan maddi ve manevi zararların tazmini. Kazaya sebep olan tarafın kusur oranına göre tazminat miktarı belirlenir. Manevi tazminat için somut olayın özellikleri dikkate alınır. Sigorta şirketinin sorumluluğu.',
+      relevanceScore: 92,
+      legalAreas: ['Trafik Hukuku', 'Tazminat'],
+      keywords: ['trafik kazası', 'tazminat', 'zarar', 'kusur', 'sigorta'],
+      highlight: 'Trafik kazası tazminat hesaplama ve kusur oranı'
+    },
+    {
+      id: '4',
+      caseNumber: '2023/3456',
+      courtName: 'Yargıtay 2. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-07-10',
+      subject: 'Boşanma Nafaka',
+      content: 'Boşanma davasında eşlerden birinin diğerine ödeyeceği nafaka miktarı. Nafaka, eşlerin ekonomik durumu, yaşam standardı ve ihtiyaçları dikkate alınarak belirlenir. Geçici nafaka ve sürekli nafaka ayrımı.',
+      relevanceScore: 89,
+      legalAreas: ['Aile Hukuku'],
+      keywords: ['boşanma', 'nafaka', 'eş', 'aile', 'geçici nafaka'],
+      highlight: 'Boşanma nafaka hesaplama kriterleri'
+    },
     {
       id: '5',
       caseNumber: '2023/7890',

@@ -13,11 +13,8 @@ export interface RealPetition {
   template: string;
 }
 
-export const realPetitions: RealPetition[] = [
-  // AİLE HUKUKU (15 dilekçe)
-  {
-    id: 'aile-001',
-    title: 'Anlaşmalı Boşanma Dilekçesi',
+// Demo veriler kaldırıldı - production için temizlendi
+export const realPetitions: RealPetition[] = [];
     category: 'Aile Hukuku',
     subcategory: 'Boşanma',
     keywords: ['anlaşmalı boşanma', 'mal rejimi', 'velayet', 'nafaka'],
@@ -640,15 +637,6 @@ Açıklanan nedenlerle;
 1. Müvekkilimizin davalıdan olan {ALACAK_MIKTARI} TL'lik alacağın taksit tarihlerinden itibaren hesaplanacak yasal faiz ile birlikte davalıdan tahsiline,
 2. Müvekkilimizin sonradan mağdur olmaması açısından, davalıya devrettiği {PLAKA_NO} plaka sayılı aracın plakasına üçüncü şahıslara devrinin önlenmesi bakımından sözleşme gereği müvekkilimizden teminat istenmeden tedbir konmasına,
 3. Yargılama giderlerinin davalıya yükletilmesine,
-4. 1136 Sayılı Avukatlık Kanunu'nun 4667 Sayılı Kanunla değişik 164/son fıkrası uyarınca karşı taraf vekâlet ücretinin Avukat olarak adımıza hükmedilmesine,
-
-Karar verilmesini talep ederiz.
-
-DAVACI VEKİLİ
-{DAVACI_VEKIL}
-
-Tarih: {DATE}`
-  }
 ];
 
 // Kategori bazlı arama fonksiyonu

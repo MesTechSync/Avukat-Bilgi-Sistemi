@@ -22,84 +22,203 @@ export interface ContractExample {
   variables: string[];
 }
 
-// İş Hukuku Dilekçe Örnekleri
-export const workLawPetitions: PetitionExample[] = [
-  {
-    id: 'work-001',
-    title: 'İşten Çıkarma Tazminatı Davası',
-    category: 'İş Hukuku',
-    subcategory: 'Tazminat',
-    keywords: ['işten çıkarma', 'kıdem tazminatı', 'ihbar tazminatı', 'haksız fesih'],
-    variables: ['EMPLOYEE_NAME', 'COMPANY_NAME', 'WORK_START_DATE', 'TERMINATION_DATE', 'POSITION', 'SALARY', 'SEVERANCE_AMOUNT'],
-    content: `ANKARA 2. İŞ MAHKEMESİ BAŞKANLIĞI'NA
+// Demo veriler kaldırıldı - production için temizlendi
+export const workLawPetitions: PetitionExample[] = [];
+export const familyLawPetitions: PetitionExample[] = [];
+export const contractExamples: ContractExample[] = [];
+export const petitionExamples: PetitionExample[] = [];
 
-DAVACI: {EMPLOYEE_NAME}
-T.C. Kimlik No: {TC_NO}
-Adres: {EMPLOYEE_ADDRESS}
-Telefon: {PHONE}
+// Kategori istatistikleri
+export const getCategoryStats = () => {
+  const stats: Record<string, { template: number; real: number; total: number }> = {};
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
+// Demo veriler kaldırıldı - production için temizlendi
+export const workLawPetitions: PetitionExample[] = [];
+export const familyLawPetitions: PetitionExample[] = [];
+export const contractExamples: ContractExample[] = [];
+export const petitionExamples: PetitionExample[] = [];
 
-DAVALI: {COMPANY_NAME}
-Adres: {COMPANY_ADDRESS}
-Vergi No: {TAX_NO}
+// Kategori istatistikleri
+export const getCategoryStats = () => {
+  const stats: Record<string, { template: number; real: number; total: number }> = {};
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
+// Demo veriler kaldırıldı - production için temizlendi
+export const workLawPetitions: PetitionExample[] = [];
+export const familyLawPetitions: PetitionExample[] = [];
+export const contractExamples: ContractExample[] = [];
+export const petitionExamples: PetitionExample[] = [];
 
-DAVA KONUSU: İşten çıkarma tazminatı, kıdem tazminatı, ihbar tazminatı ve diğer işçilik alacaklarının tahsili
+// Kategori istatistikleri
+export const getCategoryStats = () => {
+  const stats: Record<string, { template: number; real: number; total: number }> = {};
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
-DAVA DEĞERİ: {TOTAL_AMOUNT} TL
+// Tüm dilekçe örneklerini birleştir
+export const allPetitionExamples = [...workLawPetitions, ...familyLawPetitions];
+export const allRealPetitions = realPetitions;
 
-Sayın Hakim,
+// Kategori bazlı arama
+export const searchPetitionsByCategory = (category: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => p.category === category);
+};
 
-Ben {EMPLOYEE_NAME}, {WORK_START_DATE} tarihinde davalı {COMPANY_NAME} şirketinde {POSITION} pozisyonunda işe başlamış, {TERMINATION_DATE} tarihine kadar toplam {WORK_YEARS} yıl {WORK_MONTHS} ay çalışmış bulunmaktayım.
+// Anahtar kelime bazlı arama
+export const searchPetitionsByKeyword = (keyword: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => 
+    p.keywords.some(k => k.toLowerCase().includes(keyword.toLowerCase()))
+  );
+};
 
-{TERMINATION_DATE} tarihinde herhangi bir haklı sebep gösterilmeksizin, İş Kanunu'nun 25. maddesine aykırı olarak işten çıkarılmış bulunmaktayım.
+// Karma istatistikler
+export const getCombinedCategoryStats = () => {
+  const stats: Record<string, { template: number, real: number, total: number }> = {};
+  
+  allPetitionExamples.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].template++;
+    stats[p.category].total++;
+  });
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
-Çalışma dönemim boyunca aylık {SALARY} TL brüt maaş almaktaydım.
+// Demo veriler kaldırıldı - production için temizlendi
+export const workLawPetitions: PetitionExample[] = [];
+export const familyLawPetitions: PetitionExample[] = [];
+export const contractExamples: ContractExample[] = [];
+export const petitionExamples: PetitionExample[] = [];
 
-Bu durumda aşağıdaki alacaklarımın tahsilini talep etmekteyim:
+// Kategori istatistikleri
+export const getCategoryStats = () => {
+  const stats: Record<string, { template: number; real: number; total: number }> = {};
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
-1. Kıdem Tazminatı: {SEVERANCE_AMOUNT} TL
-2. İhbar Tazminatı: {NOTICE_AMOUNT} TL  
-3. Yıllık İzin Ücreti: {VACATION_AMOUNT} TL
-4. Fazla Mesai Ücreti: {OVERTIME_AMOUNT} TL
-5. Haksız Fesih Tazminatı: {WRONGFUL_TERMINATION_AMOUNT} TL
+// Tüm dilekçe örneklerini birleştir
+export const allPetitionExamples = [...workLawPetitions, ...familyLawPetitions];
+export const allRealPetitions = realPetitions;
 
-TOPLAM TALEP: {TOTAL_AMOUNT} TL
+// Kategori bazlı arama
+export const searchPetitionsByCategory = (category: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => p.category === category);
+};
 
-Yukarıda belirtilen tutarların davalı şirketten tahsili ile birlikte yargılama giderlerinin de davalıdan alınmasına karar verilmesini saygılarımla arz ederim.
+// Anahtar kelime bazlı arama
+export const searchPetitionsByKeyword = (keyword: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => 
+    p.keywords.some(k => k.toLowerCase().includes(keyword.toLowerCase()))
+  );
+};
 
-{DATE}
+// Karma istatistikler
+export const getCombinedCategoryStats = () => {
+  const stats: Record<string, { template: number, real: number, total: number }> = {};
+  
+  allPetitionExamples.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].template++;
+    stats[p.category].total++;
+  });
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
-{EMPLOYEE_NAME}
-{SIGNATURE}`
-  }
-];
+// Demo veriler kaldırıldı - production için temizlendi
+export const workLawPetitions: PetitionExample[] = [];
+export const familyLawPetitions: PetitionExample[] = [];
+export const contractExamples: ContractExample[] = [];
+export const petitionExamples: PetitionExample[] = [];
 
-// Aile Hukuku Dilekçe Örnekleri
-export const familyLawPetitions: PetitionExample[] = [
-  {
-    id: 'family-001',
-    title: 'Boşanma Davası Dilekçesi',
-    category: 'Aile Hukuku',
-    subcategory: 'Boşanma',
-    keywords: ['boşanma', 'geçimsizlik', 'velayet', 'nafaka'],
-    variables: ['PLAINTIFF_NAME', 'DEFENDANT_NAME', 'MARRIAGE_DATE', 'CHILDREN_COUNT', 'MARRIAGE_ADDRESS'],
-    content: `ANKARA 1. AİLE MAHKEMESİ BAŞKANLIĞI'NA
+// Kategori istatistikleri
+export const getCategoryStats = () => {
+  const stats: Record<string, { template: number; real: number; total: number }> = {};
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
-DAVACI: {PLAINTIFF_NAME}
-T.C. Kimlik No: {PLAINTIFF_TC}
-Adres: {PLAINTIFF_ADDRESS}
+// Tüm dilekçe örneklerini birleştir
+export const allPetitionExamples = [...workLawPetitions, ...familyLawPetitions];
+export const allRealPetitions = realPetitions;
 
-DAVALI: {DEFENDANT_NAME}
-T.C. Kimlik No: {DEFENDANT_TC}
-Adres: {DEFENDANT_ADDRESS}
+// Kategori bazlı arama
+export const searchPetitionsByCategory = (category: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => p.category === category);
+};
 
-DAVA KONUSU: Geçimsizlik sebebiyle boşanma
+// Anahtar kelime bazlı arama
+export const searchPetitionsByKeyword = (keyword: string): PetitionExample[] => {
+  return allPetitionExamples.filter(p => 
+    p.keywords.some(k => k.toLowerCase().includes(keyword.toLowerCase()))
+  );
+};
 
-Sayın Hakim,
-
-Ben {PLAINTIFF_NAME}, davalı {DEFENDANT_NAME} ile {MARRIAGE_DATE} tarihinde {MARRIAGE_ADDRESS} adresinde evlendim.
-
-Evliliğimizden {CHILDREN_COUNT} çocuğumuz dünyaya gelmiştir:
-{CHILDREN_LIST}
+// Karma istatistikler
+export const getCombinedCategoryStats = () => {
+  const stats: Record<string, { template: number, real: number, total: number }> = {};
+  
+  allPetitionExamples.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].template++;
+    stats[p.category].total++;
+  });
+  
+  allRealPetitions.forEach(p => {
+    if (!stats[p.category]) stats[p.category] = { template: 0, real: 0, total: 0 };
+    stats[p.category].real++;
+    stats[p.category].total++;
+  });
+  
+  return stats;
+};
 
 Evliliğimizin başlangıcında her şey yolunda iken, zamanla aramızda anlaşmazlıklar çıkmaya başlamıştır. Bu anlaşmazlıklar giderek artmış ve evlilik birliğinin temel amaçlarına ulaşılması imkansız hale gelmiştir.
 
