@@ -55,6 +55,8 @@ export default function AdvancedSearch() {
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
+  const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
+  const [showResultDetail, setShowResultDetail] = useState(false);
 
   // Dikte hook'u
   const {
@@ -164,6 +166,66 @@ export default function AdvancedSearch() {
     setUploadedFileName(null);
     setUploadedFileContent('');
     setQuery('');
+  };
+
+  // Sonuç detayını görüntüleme fonksiyonu
+  const handleViewResult = (result: SearchResult) => {
+    setSelectedResult(result);
+    setShowResultDetail(true);
+    console.log('✅ Sonuç detayı açıldı:', result.subject);
+  };
+
+  const closeResultDetail = () => {
+    setShowResultDetail(false);
+    setSelectedResult(null);
+  };
+
+  // Kopyalama fonksiyonu
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('✅ Metin panoya kopyalandı');
+      // Toast mesajı gösterilebilir
+    } catch (error) {
+      console.error('❌ Kopyalama hatası:', error);
+    }
+  };
+
+  // İndirme fonksiyonu
+  const downloadResult = () => {
+    if (!selectedResult) return;
+    
+    const content = `
+KARAR DETAYI
+============
+
+Mahkeme: ${selectedResult.courtName}
+Dava Numarası: ${selectedResult.caseNumber}
+Karar Tarihi: ${new Date(selectedResult.decisionDate).toLocaleDateString('tr-TR')}
+Konu: ${selectedResult.subject}
+İlgililik Puanı: %${selectedResult.relevanceScore}
+
+Hukuk Alanı: ${selectedResult.legalAreas.join(', ')}
+Anahtar Kelimeler: ${selectedResult.keywords.join(', ')}
+
+KARAR İÇERİĞİ
+=============
+${selectedResult.content}
+
+${selectedResult.highlight ? `ÖNEMLİ BÖLÜM\n============\n${selectedResult.highlight}` : ''}
+    `;
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedResult.caseNumber}_${selectedResult.subject.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Karar detayı indirildi');
   };
 
   // Genişletilmiş Mock data - Gerçekçi içtihat örnekleri
@@ -1290,7 +1352,11 @@ export default function AdvancedSearch() {
                           %{result.relevanceScore}
                         </span>
                       </div>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Görüntüle">
+                      <button 
+                        onClick={() => handleViewResult(result)}
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors" 
+                        title="Detayları Görüntüle"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
@@ -1332,6 +1398,148 @@ export default function AdvancedSearch() {
               ))
             )}
           </div>
+
+          {/* Sonuç Detay Modal */}
+          {showResultDetail && selectedResult && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                      <Gavel className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {selectedResult.subject}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {selectedResult.courtName} • {selectedResult.caseNumber}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeResultDetail}
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    title="Kapat"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                  {/* Karar Bilgileri */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mahkeme</label>
+                        <p className="text-gray-900 dark:text-white">{selectedResult.courtName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dava Numarası</label>
+                        <p className="text-gray-900 dark:text-white">{selectedResult.caseNumber}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Karar Tarihi</label>
+                        <p className="text-gray-900 dark:text-white">
+                          {new Date(selectedResult.decisionDate).toLocaleDateString('tr-TR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hukuk Alanı</label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedResult.legalAreas.map((area, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                              {area}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İlgililik Puanı</label>
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4 text-yellow-500" />
+                          <span className="text-gray-900 dark:text-white font-medium">%{selectedResult.relevanceScore}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Anahtar Kelimeler */}
+                  {selectedResult.keywords && selectedResult.keywords.length > 0 && (
+                    <div className="mb-6">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Anahtar Kelimeler</label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedResult.keywords.map((keyword, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
+                            #{keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Karar İçeriği */}
+                  <div className="mb-6">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Karar İçeriği</label>
+                    <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border">
+                      <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                        {selectedResult.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Highlight */}
+                  {selectedResult.highlight && (
+                    <div className="mb-6">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Önemli Bölüm</label>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <p className="text-gray-800 dark:text-gray-200 font-medium">
+                          {selectedResult.highlight}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={downloadResult}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      title="Karar detayını TXT dosyası olarak indir"
+                    >
+                      <Download className="w-4 h-4" />
+                      İndir
+                    </button>
+                    <button 
+                      onClick={() => copyToClipboard(selectedResult.content)}
+                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      title="Karar içeriğini panoya kopyala"
+                    >
+                      <Copy className="w-4 h-4" />
+                      Kopyala
+                    </button>
+                  </div>
+                  <button
+                    onClick={closeResultDetail}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Kapat
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Pagination */}
           {!isSearching && results.length > pageSize && (
             <div className="flex items-center justify-center gap-3 p-3 border-t border-gray-200 dark:border-gray-700">
