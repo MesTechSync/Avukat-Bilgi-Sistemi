@@ -497,27 +497,27 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
         </div>
 
         {viewMode === 'calendar' ? (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
             {/* Calendar View */}
             <div className="xl:col-span-2">
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Calendar className="w-6 h-6 text-purple-600" />
-                    {monthName}
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-xl md:rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-3 md:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
+                  <h2 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Calendar className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+                    <span className="truncate">{monthName}</span>
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 md:gap-2">
                     <button
                       onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                      className="p-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+                      className="p-1.5 md:p-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
                       title="Önceki ay"
                       aria-label="Önceki ay"
                     >
-                      <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                     <button
                       onClick={() => setCurrentDate(new Date())}
-                      className="px-4 py-2 text-sm bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors font-medium"
+                      className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors font-medium"
                       title="Bugüne git"
                       aria-label="Bugüne git"
                     >
@@ -525,18 +525,18 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                     </button>
                     <button
                       onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                      className="p-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+                      className="p-1.5 md:p-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
                       title="Sonraki ay"
                       aria-label="Sonraki ay"
                     >
-                      <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-1 mb-4">
+                <div className="grid grid-cols-7 gap-1 mb-3 md:mb-4">
                   {['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'].map(day => (
-                    <div key={day} className="p-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div key={day} className="p-2 md:p-3 text-center text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                       {day}
                     </div>
                   ))}
@@ -544,7 +544,7 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
 
                 <div className="grid grid-cols-7 gap-1">
                   {Array.from({ length: firstDayOfMonth }, (_, i) => (
-                    <div key={`empty-${i}`} className="p-2 h-28"></div>
+                    <div key={`empty-${i}`} className="p-1 md:p-2 h-20 md:h-28"></div>
                   ))}
                   {Array.from({ length: daysInMonth }, (_, i) => {
                     const day = i + 1;
@@ -573,16 +573,16 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
                             setIsModalOpen(true);
                           }
                         }}
-                        className={`p-2 h-28 border-2 rounded-xl cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
+                        className={`p-1 md:p-2 h-20 md:h-28 border-2 rounded-lg md:rounded-xl cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
                           isToday 
                             ? 'bg-gradient-to-br from-purple-100 to-pink-100 border-purple-300 dark:from-purple-900/30 dark:to-pink-900/30 dark:border-purple-600' 
                             : 'bg-white/60 dark:bg-gray-700/60 border-gray-200 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                         }`}
                       >
-                        <div className={`text-sm font-bold ${isToday ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-white'}`}>
+                        <div className={`text-xs md:text-sm font-bold ${isToday ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-white'}`}>
                           {day}
                         </div>
-                        <div className="mt-1 space-y-1">
+                        <div className="mt-1 space-y-0.5 md:space-y-1">
                           {dayAppointments.slice(0, 2).map(apt => (
                             <div
                               key={apt.id}
@@ -622,10 +622,10 @@ const EnhancedAppointmentManagement: React.FC<EnhancedAppointmentManagementProps
 
             {/* Appointment List Sidebar */}
             <div className="xl:col-span-1">
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <User className="w-6 h-6 text-purple-600" />
-                  Randevu Listesi
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-xl md:rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-3 md:p-6">
+                <h2 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+                  <span className="truncate">Randevu Listesi</span>
                 </h2>
                 
                 <div className="space-y-3 mb-4">
