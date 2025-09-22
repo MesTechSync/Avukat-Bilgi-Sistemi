@@ -58,33 +58,8 @@ export const useSupabase = () => {
           }
         }
 
-        // Appointments tablosu (opsiyonel - tablo mevcut değilse sessizce geç)
-        try {
-          const { data: appointmentData, error: appointmentError } = await supabase.from('appointments').select('*')
-          if (appointmentError) {
-            // Tablo mevcut değilse sessizce geç, sadece debug için log
-            if (appointmentError.message.includes('Could not find the table') || 
-                appointmentError.message.includes('relation') ||
-                appointmentError.code === '42P01') {
-              if (import.meta.env.DEV) {
-                console.log('Appointments tablosu mevcut değil (normal):', appointmentError.message)
-              }
-            } else {
-              if (import.meta.env.DEV) {
-                console.error('Appointments tablosu hatası:', appointmentError)
-              }
-            }
-          } else {
-            setAppointments(appointmentData || [])
-            if (import.meta.env.DEV) {
-              console.log('✅ Appointments tablosu başarılı:', appointmentData?.length || 0, 'kayıt')
-            }
-          }
-        } catch (err) {
-          if (import.meta.env.DEV) {
-            console.log('Appointments tablosu bağlantı hatası (normal):', err)
-          }
-        }
+        // Appointments tablosu tamamen kaldırıldı - production'da hata vermemesi için
+        // Bu tablo mevcut değil ve gerekli değil
 
         // Financials tablosu
         try {

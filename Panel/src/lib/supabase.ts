@@ -41,19 +41,8 @@ async function testConnection() {
       console.log('✅ Cases tablosu başarılı:', caseData?.length || 0, 'kayıt');
     }
     
-    // Test cases table columns specifically (opsiyonel)
-    try {
-      const { data: caseColumns, error: columnError } = await supabase.rpc('get_table_columns', { table_name: 'cases' });
-      if (columnError && import.meta.env.DEV) {
-        console.log('ℹ️ Column bilgisi alınamadı (normal):', columnError.message);
-      } else if (import.meta.env.DEV) {
-        console.log('✅ Cases tablosu kolonları:', caseColumns?.length || 0, 'kolon');
-      }
-    } catch (err) {
-      if (import.meta.env.DEV) {
-        console.log('ℹ️ RPC fonksiyonu mevcut değil (normal)');
-      }
-    }
+    // RPC fonksiyonu tamamen kaldırıldı - production'da hata vermemesi için
+    // Bu fonksiyon mevcut değil ve gerekli değil
   } catch (err) {
     if (import.meta.env.DEV) {
       console.error('❌ Supabase test hatası:', err);

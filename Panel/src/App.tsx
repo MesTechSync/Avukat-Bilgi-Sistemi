@@ -56,6 +56,13 @@ function App() {
   };
 
   const checkBackend = async () => {
+    // Production'da backend kontrolü tamamen devre dışı
+    if (!import.meta.env.DEV) {
+      setBackendStatus('ok');
+      setBackendInfo({ service: 'frontend', version: '1.0.0', tools_count: 0, endpoint: 'frontend-only' });
+      return;
+    }
+    
     setBackendStatus('checking');
     setBackendInfo(null);
     const candidates: string[] = [];
