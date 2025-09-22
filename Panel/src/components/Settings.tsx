@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Save, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Save, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import LiveSupport from './LiveSupport';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
+  const [showLiveSupport, setShowLiveSupport] = useState(false);
   const [settings, setSettings] = useState({
     // Profile Settings
     name: 'Av. Mehmet Zeki Alagöz',
@@ -42,7 +44,8 @@ export default function Settings() {
     { id: 'notifications', label: 'Bildirimler', icon: Bell },
     { id: 'security', label: 'Güvenlik', icon: Shield },
     { id: 'appearance', label: 'Görünüm', icon: Palette },
-    { id: 'system', label: 'Sistem', icon: Database }
+    { id: 'system', label: 'Sistem', icon: Database },
+    { id: 'support', label: 'Canlı Destek', icon: MessageCircle }
   ];
 
   const handleSettingChange = (key: string, value: any) => {
@@ -515,6 +518,98 @@ export default function Settings() {
     </div>
   );
 
+  const renderSupportTab = () => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Canlı Destek
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400">
+          Teknik destek ekibimizle anında iletişime geçin. Sorularınızı yanıtlamak için buradayız.
+        </p>
+      </div>
+
+      {/* Support Status */}
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <h4 className="font-semibold text-green-800 dark:text-green-200">Destek Ekibi Çevrimiçi</h4>
+        </div>
+        <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+          Ortalama yanıt süresi: 2 dakika • Çalışma saatleri: 09:00 - 18:00
+        </p>
+        <button
+          onClick={() => setShowLiveSupport(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+        >
+          <MessageCircle className="w-5 h-5" />
+          Canlı Sohbet Başlat
+        </button>
+      </div>
+
+      {/* Contact Options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h4 className="font-medium text-gray-900 dark:text-white">Canlı Sohbet</h4>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Anında yanıt alın, sorunlarınızı çözün
+          </p>
+          <button
+            onClick={() => setShowLiveSupport(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+          >
+            Sohbet Başlat
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <h4 className="font-medium text-gray-900 dark:text-white">E-posta Desteği</h4>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Detaylı sorularınız için e-posta gönderin
+          </p>
+          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors">
+            E-posta Gönder
+          </button>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="bg-white dark:bg-gray-700 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Sık Sorulan Sorular</h4>
+        <div className="space-y-3">
+          <div className="border-l-4 border-blue-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">Sistem nasıl çalışır?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Avukat Bilgi Sistemi, hukuki süreçlerinizi dijitalleştiren kapsamlı bir platformdur.
+            </p>
+          </div>
+          <div className="border-l-4 border-green-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">Verilerim güvende mi?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Tüm verileriniz şifrelenerek saklanır ve güvenlik protokolleri ile korunur.
+            </p>
+          </div>
+          <div className="border-l-4 border-purple-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">Nasıl yedekleme yaparım?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Sistem otomatik yedekleme yapar, manuel yedekleme için Ayarlar > Sistem bölümünü kullanın.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -527,6 +622,8 @@ export default function Settings() {
         return renderAppearanceTab();
       case 'system':
         return renderSystemTab();
+      case 'support':
+        return renderSupportTab();
       default:
         return renderProfileTab();
     }
@@ -596,6 +693,12 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Live Support Modal */}
+      <LiveSupport 
+        isOpen={showLiveSupport} 
+        onClose={() => setShowLiveSupport(false)} 
+      />
     </div>
   );
 }
