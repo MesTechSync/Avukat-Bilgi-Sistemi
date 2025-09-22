@@ -25,6 +25,7 @@ export interface IctihatResultItem {
 // Prefer using Vite dev proxy when VITE_BACKEND_URL is defined (BASE_URL becomes empty, so paths like '/api/...')
 const ENV: any = (import.meta as any).env || {};
 export const BASE_URL = ENV.VITE_BACKEND_URL ? '' : (ENV.VITE_YARGI_API_URL || 'http://localhost:8000');
+const MEVZUAT_BASE_URL = ENV.VITE_MEVZUAT_URL || 'http://localhost:9001';
 const ENABLE_BEDDESTEN = String(ENV.VITE_ENABLE_BEDDESTEN || '').toLowerCase() === 'true';
 
 // Absolute backend base for diagnostics/pings, bypassing dev middleware
@@ -292,7 +293,20 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
     };
 
     console.log('🔍 Mevzuat araması başlatılıyor:', body);
-    const data = await post<any>('/api/mevzuat/search', body);
+    
+    // Mevzuat için ayrı backend kullan
+    const url = `${MEVZUAT_BASE_URL}/api/mevzuat/search`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    
+    if (!res.ok) {
+      throw new Error(`Mevzuat API failed: ${res.status}`);
+    }
+    
+    const data = await res.json();
     
     if (data?.success && data?.data) {
       const results = data.data.results || data.data.documents || data.data || [];
