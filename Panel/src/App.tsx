@@ -38,7 +38,6 @@ function App() {
   const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
   const [backendInfo, setBackendInfo] = useState<{ service?: string; version?: string; tools_count?: number; endpoint?: string } | null>(null);
-  const [triedEndpoints, setTriedEndpoints] = useState<string[]>([]);
   const [showBackendModal, setShowBackendModal] = useState(false);
 
   const ENV_BACKEND = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
@@ -87,7 +86,7 @@ function App() {
     candidates.push('http://127.0.0.1:9000/health');
 
     // Store the full list for diagnostics in UI
-    setTriedEndpoints(candidates);
+    // setTriedEndpoints(candidates); // Kaldırıldı - artık gerekli değil
 
     for (const endpoint of candidates) {
       try {
@@ -616,9 +615,6 @@ function App() {
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-gray-400" />
                 )}
-                <span className="hidden sm:inline text-sm text-gray-700 dark:text-gray-300">
-                  {backendStatus === 'ok' ? 'Backend: Sağlıklı' : backendStatus === 'error' ? 'Backend: Hata' : backendStatus === 'checking' ? 'Backend: Kontrol ediliyor' : 'Backend'}
-                </span>
               </button>
               <button 
                 onClick={() => setActiveTab('settings')}
@@ -703,95 +699,25 @@ function App() {
                   </div>
                 </div>
 
-                {/* Backend Info */}
+                {/* Backend Info - Sadece görsel durum */}
                 {backendInfo && (
                   <div className="mb-6">
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Backend Bilgileri</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Servis</label>
-                        <p className="text-gray-900 dark:text-white">{backendInfo.service || 'Bilinmiyor'}</p>
-                      </div>
-                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Versiyon</label>
-                        <p className="text-gray-900 dark:text-white">{backendInfo.version || 'Bilinmiyor'}</p>
-                      </div>
-                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Araç Sayısı</label>
-                        <p className="text-gray-900 dark:text-white">{backendInfo.tools_count ?? 'Bilinmiyor'}</p>
-                      </div>
-                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Endpoint</label>
-                        <p className="text-gray-900 dark:text-white text-xs break-all">{backendInfo.endpoint || 'Bilinmiyor'}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tried Endpoints */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Denenen Endpoint'ler</h4>
-                  <div className="space-y-2">
-                    {triedEndpoints && triedEndpoints.length > 0 ? (
-                      triedEndpoints.map((endpoint, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
-                          <span className="text-gray-500 dark:text-gray-400">{idx + 1}.</span>
-                          <code className="text-gray-800 dark:text-gray-200 font-mono text-xs break-all">{endpoint}</code>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">Henüz endpoint denenmedi</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Environment Info */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Ortam Bilgileri</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Backend URL</label>
-                      <p className="text-gray-900 dark:text-white text-xs break-all">{backendUrl}</p>
-                    </div>
-                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Environment Backend</label>
-                      <p className="text-gray-900 dark:text-white text-xs break-all">{normalizedEnv || 'Tanımlanmamış'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Troubleshooting */}
-                {backendStatus === 'error' && (
-                  <div className="mb-6">
                     <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Sistem Durumu</h4>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Frontend Modu Aktif</h5>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        Backend servisi çalışmıyor, ancak sistem tamamen fonksiyonel. Tüm özellikler mock data ve AI servisleri ile çalışıyor.
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                          <h6 className="font-medium text-green-800 dark:text-green-200 text-sm">Çalışan Özellikler</h6>
-                          <ul className="text-xs text-green-700 dark:text-green-300 mt-1 space-y-1">
-                            <li>• Supabase veritabanı</li>
-                            <li>• AI servisleri (Gemini, OpenAI)</li>
-                            <li>• Mock data sistemleri</li>
-                            <li>• Tüm UI bileşenleri</li>
-                          </ul>
-                        </div>
-                        <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
-                          <h6 className="font-medium text-orange-800 dark:text-orange-200 text-sm">Backend Gerekli</h6>
-                          <ul className="text-xs text-orange-700 dark:text-orange-300 mt-1 space-y-1">
-                            <li>• İçtihat & Mevzuat API</li>
-                            <li>• Gerçek zamanlı veri</li>
-                            <li>• Gelişmiş arama</li>
-                            <li>• Backend özel özellikler</li>
-                          </ul>
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <div>
+                          <h5 className="font-medium text-green-800 dark:text-green-200">Sistem Aktif</h5>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            Tüm özellikler çalışıyor
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+
+
               </div>
 
               {/* Modal Footer */}
