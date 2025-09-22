@@ -78,6 +78,9 @@
       legalAreas: ['İdari Hukuk'],
       keywords: ['idari para cezası', 'yetki', 'itiraz', 'iptal', 'idari makam'],
       highlight: 'İdari para cezası ve itiraz süreci'
+    }
+  ];
+
   const courtTypes = [
     { value: 'yargitay', label: 'Yargıtay' },
     { value: 'danistay', label: 'Danıştay' },
