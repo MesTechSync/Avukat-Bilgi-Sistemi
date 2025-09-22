@@ -51,6 +51,8 @@ export default function AdvancedSearch() {
   const [mode, setMode] = useState<'ictihat' | 'mevzuat'>('ictihat');
   const [showFilters, setShowFilters] = useState(true);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedFileContent, setUploadedFileContent] = useState<string>('');
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
 
@@ -104,7 +106,67 @@ export default function AdvancedSearch() {
     return () => clearInterval(interval);
   }, []);
 
-  // Mock data for demonstration
+  // Dosya işleme fonksiyonları
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingFile(true);
+    setErrorMsg(null);
+    setUploadedFileName(file.name);
+    setUploadedFileContent('');
+
+    try {
+      const content = await extractTextFromFile(file);
+      setUploadedFileContent(content);
+      
+      // Dosya içeriğini otomatik olarak arama terimi olarak kullan
+      const searchQuery = content.substring(0, 200) + '...';
+      setQuery(searchQuery);
+      
+      console.log('✅ Dosya başarıyla işlendi:', file.name, 'İçerik uzunluğu:', content.length);
+    } catch (error) {
+      console.error('❌ Dosya işleme hatası:', error);
+      setErrorMsg('Dosya işlenirken hata oluştu: ' + (error as Error).message);
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  const extractTextFromFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        resolve(content);
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Dosya okunamadı'));
+      };
+      
+      if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+        reader.readAsText(file, 'UTF-8');
+      } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        // PDF için basit metin çıkarma (gerçek uygulamada PDF.js kullanılabilir)
+        reader.readAsText(file, 'UTF-8');
+      } else if (file.type.includes('word') || file.name.endsWith('.docx')) {
+        // DOCX için basit metin çıkarma
+        reader.readAsText(file, 'UTF-8');
+      } else {
+        reject(new Error('Desteklenmeyen dosya formatı'));
+      }
+    });
+  };
+
+  const clearUploadedFile = () => {
+    setUploadedFileName(null);
+    setUploadedFileContent('');
+    setQuery('');
+  };
+
+  // Genişletilmiş Mock data - Gerçekçi içtihat örnekleri
   const mockResults: SearchResult[] = [
     {
       id: '1',
@@ -112,12 +174,12 @@ export default function AdvancedSearch() {
       courtName: 'Yargıtay 4. Hukuk Dairesi',
       courtType: 'yargitay',
       decisionDate: '2023-06-15',
-      subject: 'İş Sözleşmesinin Feshi ve Tazminat',
-      content: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda...',
+      subject: 'İşten Çıkarma Tazminatı',
+      content: 'İşveren tarafından haksız yere işten çıkarılan işçiye ödenecek tazminat miktarı, işçinin son aldığı brüt ücretin 30 katından az olamaz. İşçinin kıdem süresi, yaşı ve işyerindeki pozisyonu dikkate alınarak hesaplanır. Kıdem tazminatı ve ihbar tazminatı ayrı ayrı hesaplanır.',
       relevanceScore: 95,
       legalAreas: ['İş Hukuku', 'Tazminat'],
-      keywords: ['işten çıkarma', 'tazminat', 'haklı sebep'],
-      highlight: 'İşçinin haklı sebep olmaksızın işten çıkarılması durumunda kıdem ve ihbar tazminatı...'
+      keywords: ['işten çıkarma', 'tazminat', 'kıdem tazminatı', 'ihbar tazminatı', 'işçi hakları'],
+      highlight: 'İşten çıkarma tazminatı hesaplama yöntemi ve miktarı'
     },
     {
       id: '2',
@@ -125,12 +187,12 @@ export default function AdvancedSearch() {
       courtName: 'Danıştay 5. Dairesi',
       courtType: 'danistay',
       decisionDate: '2023-08-22',
-      subject: 'İdari İşlemin İptali',
-      content: 'İdari işlemin hukuka aykırılığı nedeniyle iptali...',
-      relevanceScore: 87,
-      legalAreas: ['İdare Hukuku'],
-      keywords: ['idari işlem', 'iptal', 'hukuka aykırılık'],
-      highlight: 'İdari işlemin hukuka aykırılığı nedeniyle iptali talep edilmiş...'
+      subject: 'İdari İşlem İptali',
+      content: 'İdari makam tarafından alınan kararın hukuka aykırılığı nedeniyle iptali. İdari işlemlerin yetki, şekil, sebep, konu ve maksat unsurları açısından hukuka uygun olması gerekir. İptal davası açma süresi ve şartları.',
+      relevanceScore: 88,
+      legalAreas: ['İdari Hukuk'],
+      keywords: ['idari işlem', 'iptal', 'hukuka aykırılık', 'yetki', 'şekil'],
+      highlight: 'İdari işlem iptal şartları ve unsurları'
     },
     {
       id: '3',
@@ -138,12 +200,103 @@ export default function AdvancedSearch() {
       courtName: 'İstanbul BAM 15. Hukuk Dairesi',
       courtType: 'bam',
       decisionDate: '2023-09-03',
-      subject: 'Ticari Alacak Davası',
-      content: 'Ticari sözleşmeden doğan alacağın tahsili...',
-      relevanceScore: 82,
-      legalAreas: ['Ticaret Hukuku', 'Borçlar Hukuku'],
-      keywords: ['ticari alacak', 'sözleşme', 'tahsil'],
-      highlight: 'Ticari sözleşmeden doğan alacağın tahsili için açılan davada...'
+      subject: 'Trafik Kazası Tazminatı',
+      content: 'Trafik kazası sonucu oluşan maddi ve manevi zararların tazmini. Kazaya sebep olan tarafın kusur oranına göre tazminat miktarı belirlenir. Manevi tazminat için somut olayın özellikleri dikkate alınır. Sigorta şirketinin sorumluluğu.',
+      relevanceScore: 92,
+      legalAreas: ['Trafik Hukuku', 'Tazminat'],
+      keywords: ['trafik kazası', 'tazminat', 'zarar', 'kusur', 'sigorta'],
+      highlight: 'Trafik kazası tazminat hesaplama ve kusur oranı'
+    },
+    {
+      id: '4',
+      caseNumber: '2023/3456',
+      courtName: 'Yargıtay 2. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-07-10',
+      subject: 'Boşanma Nafaka',
+      content: 'Boşanma davasında eşlerden birinin diğerine ödeyeceği nafaka miktarı. Nafaka, eşlerin ekonomik durumu, yaşam standardı ve ihtiyaçları dikkate alınarak belirlenir. Geçici nafaka ve sürekli nafaka ayrımı.',
+      relevanceScore: 89,
+      legalAreas: ['Aile Hukuku'],
+      keywords: ['boşanma', 'nafaka', 'eş', 'aile', 'geçici nafaka'],
+      highlight: 'Boşanma nafaka hesaplama kriterleri'
+    },
+    {
+      id: '5',
+      caseNumber: '2023/7890',
+      courtName: 'Anayasa Mahkemesi',
+      courtType: 'aym',
+      decisionDate: '2023-05-20',
+      subject: 'Anayasal Hak İhlali',
+      content: 'Temel hak ve özgürlüklerin ihlali durumunda Anayasa Mahkemesi\'ne başvuru. Anayasal hakların korunması ve ihlal durumunda tazminat hakkı. Bireysel başvuru şartları ve süreci.',
+      relevanceScore: 94,
+      legalAreas: ['Anayasa Hukuku'],
+      keywords: ['anayasa', 'hak ihlali', 'temel haklar', 'özgürlük', 'bireysel başvuru'],
+      highlight: 'Anayasal hak ihlali ve tazminat hakkı'
+    },
+    {
+      id: '6',
+      caseNumber: '2023/2468',
+      courtName: 'Yargıtay 3. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-08-15',
+      subject: 'Kira Artış Oranı',
+      content: 'Kira sözleşmelerinde kira artış oranının belirlenmesi. TÜFE oranına göre kira artışı yapılabilir. Aşırı kira artışları hukuka aykırıdır. Kira artış sınırları ve hesaplama yöntemi.',
+      relevanceScore: 87,
+      legalAreas: ['Borçlar Hukuku'],
+      keywords: ['kira', 'artış', 'TÜFE', 'sözleşme', 'kira artış sınırı'],
+      highlight: 'Kira artış oranı ve TÜFE bağlantısı'
+    },
+    {
+      id: '7',
+      caseNumber: '2023/1357',
+      courtName: 'Sayıştay',
+      courtType: 'sayistay',
+      decisionDate: '2023-04-12',
+      subject: 'Kamu Harcaması Denetimi',
+      content: 'Kamu kurumlarının harcamalarının denetimi ve usulsüzlük tespiti. Sayıştay\'ın denetim yetkisi ve sonuçları. Usulsüzlük tespiti durumunda alınacak önlemler.',
+      relevanceScore: 91,
+      legalAreas: ['Mali Hukuk'],
+      keywords: ['kamu harcaması', 'denetim', 'usulsüzlük', 'sayıştay', 'kamu maliyesi'],
+      highlight: 'Kamu harcaması denetimi ve usulsüzlük tespiti'
+    },
+    {
+      id: '8',
+      caseNumber: '2023/9753',
+      courtName: 'Yargıtay 1. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-09-25',
+      subject: 'Miras Paylaşımı',
+      content: 'Miras bırakanın ölümü sonrası mirasçılar arasında miras paylaşımı. Yasal mirasçılar ve miras payları. Miras reddi ve mirasçılık sıfatı. Miras paylaşımında saklı paylar.',
+      relevanceScore: 93,
+      legalAreas: ['Miras Hukuku'],
+      keywords: ['miras', 'paylaşım', 'mirasçı', 'yasal mirasçı', 'saklı pay'],
+      highlight: 'Miras paylaşımı ve yasal mirasçılık'
+    },
+    {
+      id: '9',
+      caseNumber: '2023/4680',
+      courtName: 'Yargıtay 5. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2023-10-08',
+      subject: 'Sözleşme İhlali',
+      content: 'Sözleşme taraflarından birinin sözleşme yükümlülüklerini yerine getirmemesi durumunda diğer tarafın hakları. Sözleşme ihlali sonucu tazminat ve fesih hakkı. Sözleşme ihlali tespiti ve ispatı.',
+      relevanceScore: 86,
+      legalAreas: ['Borçlar Hukuku'],
+      keywords: ['sözleşme', 'ihlal', 'tazminat', 'fesih', 'yükümlülük'],
+      highlight: 'Sözleşme ihlali ve sonuçları'
+    },
+    {
+      id: '10',
+      caseNumber: '2023/8024',
+      courtName: 'Danıştay 3. Dairesi',
+      courtType: 'danistay',
+      decisionDate: '2023-11-12',
+      subject: 'İdari Para Cezası',
+      content: 'İdari makamlar tarafından verilen para cezalarının hukuka uygunluğu. Para cezası verme yetkisi ve sınırları. Para cezasına itiraz ve iptal davası açma süreci.',
+      relevanceScore: 84,
+      legalAreas: ['İdari Hukuk'],
+      keywords: ['idari para cezası', 'yetki', 'itiraz', 'iptal', 'idari makam'],
+      highlight: 'İdari para cezası ve itiraz süreci'
     }
   ];
 
@@ -730,22 +883,14 @@ export default function AdvancedSearch() {
 
             {/* File upload */}
             <label className="p-1 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 cursor-pointer shrink-0" title="Belge yükleyerek ara">
-              <input aria-label="Belge yükle" title="Belge yükle" type="file" className="hidden" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                setUploadedFileName(f.name);
-                if (f.type.startsWith('text/')) {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const txt = (reader.result as string) || '';
-                    setQuery(txt.slice(0, 200));
-                  };
-                  reader.readAsText(f, 'utf-8');
-                } else {
-                  // For non-text, just hint file name in query
-                  setQuery(prev => prev || `Belge: ${f.name}`);
-                }
-              }} />
+              <input 
+                aria-label="Belge yükle" 
+                title="Belge yükle" 
+                type="file" 
+                className="hidden" 
+                accept=".txt,.pdf,.docx"
+                onChange={handleFileUpload}
+              />
               <FileUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </label>
 
@@ -803,6 +948,41 @@ export default function AdvancedSearch() {
             <span className="ml-2 text-xs text-gray-600 dark:text-gray-300">Belge: {uploadedFileName}</span>
           )}
         </div>
+
+        {/* Uploaded file info */}
+        {uploadedFileName && (
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Yüklenen Dosya: {uploadedFileName}
+                </span>
+                {isProcessingFile && (
+                  <span className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+                    İşleniyor...
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={clearUploadedFile}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                title="Dosyayı kaldır"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {uploadedFileContent && (
+              <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+                <div className="font-medium mb-1">Dosya İçeriği:</div>
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border text-gray-800 dark:text-gray-200 max-h-20 overflow-y-auto">
+                  {uploadedFileContent.substring(0, 300)}
+                  {uploadedFileContent.length > 300 && '...'}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Advanced Filters (toggle) */}
         {showFilters && (
