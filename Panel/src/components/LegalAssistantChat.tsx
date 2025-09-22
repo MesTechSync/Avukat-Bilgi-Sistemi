@@ -669,8 +669,20 @@ export default function LegalAssistantChat() {
         // Hukuki olmayan sorular için doğal sohbet
         let casualResponse = '';
         
-        // Soruya göre uygun yanıt seç
-        if (q.toLowerCase().includes('nasıl') && q.toLowerCase().includes('sın')) {
+        // Son mesajları kontrol et (sohbet geçmişi)
+        const lastMessages = messages.slice(-3); // Son 3 mesajı al
+        const lastUserMessage = lastMessages.find(m => m.role === 'user')?.content.toLowerCase() || '';
+        
+        // Kullanıcının cevabına göre uygun yanıt seç
+        if (q.toLowerCase().includes('iyiyim') || q.toLowerCase().includes('iyi') || q.toLowerCase().includes('güzel')) {
+          if (lastUserMessage.includes('nasıl') || lastUserMessage.includes('nasılsın')) {
+            casualResponse = "Harika! 😊 Ben de iyiyim teşekkürler!";
+          } else {
+            casualResponse = "Güzel! 😄 Ben de iyiyim.";
+          }
+        } else if (q.toLowerCase().includes('allah') || q.toLowerCase().includes('şükür')) {
+          casualResponse = "Allah razı olsun! 😊 Ben de şükürler olsun iyiyim.";
+        } else if (q.toLowerCase().includes('nasıl') && q.toLowerCase().includes('sın')) {
           casualResponse = "İyiyim teşekkürler! 😊 Sen nasılsın?";
         } else if (q.toLowerCase().includes('ne yapıyor') || q.toLowerCase().includes('ne yapıyorsun')) {
           casualResponse = "Çalışıyorum biraz, hukuki konularda yardım ediyorum. Sen ne yapıyorsun? 😊";
@@ -678,16 +690,28 @@ export default function LegalAssistantChat() {
           casualResponse = "Hayat güzel gidiyor! 😄 Sen nasıl gidiyor?";
         } else if (q.toLowerCase().includes('merhaba') || q.toLowerCase().includes('selam')) {
           casualResponse = "Merhaba! 👋 İyiyim, sen nasılsın?";
-        } else if (q.toLowerCase().includes('iyi') || q.toLowerCase().includes('güzel')) {
-          casualResponse = "Teşekkürler! 😊 Sen de iyisin umarım!";
+        } else if (q.toLowerCase().includes('teşekkür') || q.toLowerCase().includes('sağol')) {
+          casualResponse = "Rica ederim! 😊 Başka bir şey var mı?";
+        } else if (q.toLowerCase().includes('evet') || q.toLowerCase().includes('hayır')) {
+          casualResponse = "Anladım! 😊 Başka sorun var mı?";
+        } else if (q.toLowerCase().includes('tamam') || q.toLowerCase().includes('ok')) {
+          casualResponse = "Tamam! 😊 Başka bir şey lazım mı?";
+        } else if (q.toLowerCase().includes('hukuk') || q.toLowerCase().includes('avukat') || q.toLowerCase().includes('dava')) {
+          // Hukuki konuya geçiş
+          casualResponse = "Ah hukuki bir konu mu? 😊 O zaman size detaylı analiz yapabilirim! Sorunuz nedir?";
         } else {
-          // Genel yanıtlar
+          // Genel yanıtlar - daha çeşitli ve kısa
           const generalResponses = [
-            "İyiyim teşekkürler! 😊 Sen nasılsın?",
-            "Güzel gidiyor! 😄 Sen nasılsın?",
-            "İyiyim, sen nasılsın? 👋",
-            "Hayat normal gidiyor! 😊 Sen nasılsın?",
-            "İyiyim, teşekkürler! 😄 Sen nasılsın?"
+            "Anladım! 😊",
+            "Güzel! 😄", 
+            "Harika! 👋",
+            "Tamam! 😊",
+            "İyi! 😄",
+            "Güzel gidiyor! 😊",
+            "Anladım, teşekkürler! 😊",
+            "Güzel, devam edelim! 😄",
+            "Tabii! 😊",
+            "Elbette! 😄"
           ];
           casualResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)];
         }
