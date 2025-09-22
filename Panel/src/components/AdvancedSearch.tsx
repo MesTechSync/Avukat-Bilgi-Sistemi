@@ -35,7 +35,140 @@ const AdvancedSearch: React.FC = () => {
   const { isListening, startListening, stopListening, transcript, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const mockResults: SearchResult[] = [];
+  const mockResults: SearchResult[] = [
+    // İçtihat Verileri
+    {
+      id: 'ictihat-001',
+      caseNumber: '2024/1234',
+      courtName: 'Yargıtay 2. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2024-01-15',
+      subject: 'İş Sözleşmesi Feshi ve Tazminat',
+      content: 'İşverenin haklı nedenle fesih hakkının kullanılması durumunda, işçinin kıdem tazminatına hak kazanamayacağına dair karar.',
+      relevanceScore: 95,
+      legalAreas: ['İş Hukuku'],
+      keywords: ['iş sözleşmesi', 'fesih', 'tazminat', 'haklı neden'],
+      highlight: 'İşverenin haklı nedenle fesih hakkının kullanılması durumunda, işçinin kıdem tazminatına hak kazanamayacağı'
+    },
+    {
+      id: 'ictihat-002',
+      caseNumber: '2024/5678',
+      courtName: 'Yargıtay 3. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2024-02-20',
+      subject: 'Ticari İşlerde Faiz Hesaplaması',
+      content: 'Ticari işlerde faiz oranının belirlenmesi ve hesaplanmasına dair usul ve esaslar.',
+      relevanceScore: 88,
+      legalAreas: ['Ticaret Hukuku'],
+      keywords: ['ticari iş', 'faiz', 'hesaplama', 'oran'],
+      highlight: 'Ticari işlerde faiz oranının belirlenmesi ve hesaplanmasına dair usul ve esaslar'
+    },
+    {
+      id: 'ictihat-003',
+      caseNumber: '2024/9012',
+      courtName: 'Danıştay 6. Daire',
+      courtType: 'danistay',
+      decisionDate: '2024-03-10',
+      subject: 'İdari İşlemlerde Yetki',
+      content: 'İdari makamların yetki sınırları ve işlemlerin hukuka uygunluğunun denetimi.',
+      relevanceScore: 92,
+      legalAreas: ['İdare Hukuku'],
+      keywords: ['idari işlem', 'yetki', 'denetim', 'hukuka uygunluk'],
+      highlight: 'İdari makamların yetki sınırları ve işlemlerin hukuka uygunluğunun denetimi'
+    },
+    {
+      id: 'ictihat-004',
+      caseNumber: '2024/3456',
+      courtName: 'Yargıtay 1. Ceza Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2024-04-05',
+      subject: 'Ceza Hukukunda Kusur',
+      content: 'Ceza hukukunda kusur unsuru ve sorumluluğun belirlenmesi kriterleri.',
+      relevanceScore: 90,
+      legalAreas: ['Ceza Hukuku'],
+      keywords: ['kusur', 'sorumluluk', 'ceza hukuku', 'kriter'],
+      highlight: 'Ceza hukukunda kusur unsuru ve sorumluluğun belirlenmesi kriterleri'
+    },
+    {
+      id: 'ictihat-005',
+      caseNumber: '2024/7890',
+      courtName: 'Yargıtay 4. Hukuk Dairesi',
+      courtType: 'yargitay',
+      decisionDate: '2024-05-12',
+      subject: 'Aile Hukukunda Velayet',
+      content: 'Boşanma sonrası çocukların velayetinin belirlenmesi ve velayet değişikliği şartları.',
+      relevanceScore: 87,
+      legalAreas: ['Aile Hukuku'],
+      keywords: ['velayet', 'boşanma', 'çocuk', 'velayet değişikliği'],
+      highlight: 'Boşanma sonrası çocukların velayetinin belirlenmesi ve velayet değişikliği şartları'
+    },
+    // Mevzuat Verileri
+    {
+      id: 'mevzuat-001',
+      caseNumber: 'TMK-609',
+      courtName: 'Türk Medeni Kanunu',
+      courtType: 'mevzuat',
+      decisionDate: '2001-11-22',
+      subject: 'Sözleşme Hukuku Genel Hükümler',
+      content: 'Sözleşmelerin kurulması, geçerliliği ve ifasına dair genel hükümler.',
+      relevanceScore: 98,
+      legalAreas: ['Medeni Hukuk', 'Borçlar Hukuku'],
+      keywords: ['sözleşme', 'kurulma', 'geçerlilik', 'ifa'],
+      highlight: 'Sözleşmelerin kurulması, geçerliliği ve ifasına dair genel hükümler'
+    },
+    {
+      id: 'mevzuat-002',
+      caseNumber: 'İK-17',
+      courtName: 'İş Kanunu',
+      courtType: 'mevzuat',
+      decisionDate: '2003-06-10',
+      subject: 'İş Sözleşmesi Türleri',
+      content: 'Belirsiz süreli, belirli süreli ve deneme süreli iş sözleşmelerinin özellikleri.',
+      relevanceScore: 94,
+      legalAreas: ['İş Hukuku'],
+      keywords: ['iş sözleşmesi', 'belirsiz süreli', 'belirli süreli', 'deneme süreli'],
+      highlight: 'Belirsiz süreli, belirli süreli ve deneme süreli iş sözleşmelerinin özellikleri'
+    },
+    {
+      id: 'mevzuat-003',
+      caseNumber: 'TCK-26',
+      courtName: 'Türk Ceza Kanunu',
+      courtType: 'mevzuat',
+      decisionDate: '2004-09-26',
+      subject: 'Ceza Hukukunda Kusur',
+      content: 'Ceza hukukunda kusur unsuru ve sorumluluğun belirlenmesi esasları.',
+      relevanceScore: 96,
+      legalAreas: ['Ceza Hukuku'],
+      keywords: ['kusur', 'sorumluluk', 'ceza hukuku', 'esaslar'],
+      highlight: 'Ceza hukukunda kusur unsuru ve sorumluluğun belirlenmesi esasları'
+    },
+    {
+      id: 'mevzuat-004',
+      caseNumber: 'TTK-125',
+      courtName: 'Türk Ticaret Kanunu',
+      courtType: 'mevzuat',
+      decisionDate: '2011-01-14',
+      subject: 'Ticari İşlerde Faiz',
+      content: 'Ticari işlerde faiz oranının belirlenmesi ve hesaplanması kuralları.',
+      relevanceScore: 91,
+      legalAreas: ['Ticaret Hukuku'],
+      keywords: ['ticari iş', 'faiz', 'oran', 'hesaplama'],
+      highlight: 'Ticari işlerde faiz oranının belirlenmesi ve hesaplanması kuralları'
+    },
+    {
+      id: 'mevzuat-005',
+      caseNumber: 'İİK-68',
+      courtName: 'İcra ve İflas Kanunu',
+      courtType: 'mevzuat',
+      decisionDate: '2004-06-09',
+      subject: 'İcra Takibi Usulleri',
+      content: 'İcra takibinin başlatılması, yürütülmesi ve sonuçlandırılması usulleri.',
+      relevanceScore: 89,
+      legalAreas: ['İcra İflas Hukuku'],
+      keywords: ['icra takibi', 'usul', 'başlatma', 'yürütme'],
+      highlight: 'İcra takibinin başlatılması, yürütülmesi ve sonuçlandırılması usulleri'
+    }
+  ];
 
   const courtTypes = [
     { value: 'yargitay', label: 'Yargıtay' },
@@ -146,9 +279,11 @@ const AdvancedSearch: React.FC = () => {
           
           // Mock data ile devam et
           searchResults = mockResults.filter(result => 
-            result.subject.toLowerCase().includes(query.toLowerCase()) ||
-            result.content.toLowerCase().includes(query.toLowerCase()) ||
-            result.caseNumber.toLowerCase().includes(query.toLowerCase())
+            result.courtType !== 'mevzuat' && (
+              result.subject.toLowerCase().includes(query.toLowerCase()) ||
+              result.content.toLowerCase().includes(query.toLowerCase()) ||
+              result.caseNumber.toLowerCase().includes(query.toLowerCase())
+            )
           );
         }
       } else {
@@ -157,7 +292,15 @@ const AdvancedSearch: React.FC = () => {
           console.log('✅ Mevzuat API başarılı:', searchResults.length, 'sonuç');
         } catch (apiError) {
           console.log('⚠️ Mevzuat API hatası, mock data kullanılıyor:', apiError);
-          searchResults = [];
+          
+          // Mock data ile devam et
+          searchResults = mockResults.filter(result => 
+            result.courtType === 'mevzuat' && (
+              result.subject.toLowerCase().includes(query.toLowerCase()) ||
+              result.content.toLowerCase().includes(query.toLowerCase()) ||
+              result.caseNumber.toLowerCase().includes(query.toLowerCase())
+            )
+          );
         }
       }
 
