@@ -602,7 +602,7 @@ export default function Settings() {
           <div className="border-l-4 border-purple-500 pl-4">
             <h5 className="font-medium text-gray-900 dark:text-white">Nasıl yedekleme yaparım?</h5>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Sistem otomatik yedekleme yapar, manuel yedekleme için Ayarlar > Sistem bölümünü kullanın.
+              Sistem otomatik yedekleme yapar, manuel yedekleme için Ayarlar &gt; Sistem bölümünü kullanın.
             </p>
           </div>
         </div>
