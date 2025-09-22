@@ -482,21 +482,21 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
       {/* Sidebar */}
-  <div className={`${sidebarOpen ? 'w-[16.5rem]' : 'w-16'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-xl border-r border-white/20 dark:border-gray-700/50 transition-all duration-300 flex flex-col`}>
+  <div className={`${sidebarOpen ? 'w-full md:w-[16.5rem]' : 'w-16'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-xl border-r border-white/20 dark:border-gray-700/50 transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed md:relative z-50 h-full' : 'relative'}`}>
         {/* Header */}
-        <div className="p-4 border-b border-white/20 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
+        <div className="p-3 md:p-4 border-b border-white/20 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="p-2 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-lg shadow-lg backdrop-blur-sm">
-              <Scale className="w-7 h-7 text-white" />
+              <Scale className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             {sidebarOpen && (
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Karar
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   AI Hukuki Platform
                 </p>
               </div>
@@ -504,7 +504,7 @@ function App() {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               title={sidebarOpen ? 'Menüyü daralt' : 'Menüyü genişlet'}
-              className="ml-auto p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
+              className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm flex-shrink-0"
             >
               <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
@@ -512,7 +512,7 @@ function App() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 md:p-4 space-y-1 md:space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = activeTab === item.id;
@@ -522,18 +522,18 @@ function App() {
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
                 title={item.label}
-                className={`w-full flex items-center justify-start gap-2 px-2 py-2 rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center justify-start gap-2 px-2 py-2 md:py-3 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-blue-50/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/50'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:backdrop-blur-sm'
                 }`}
               >
-                <IconComponent className={`shrink-0 w-6 h-6 ${isActive ? item.color : ''}`} />
+                <IconComponent className={`shrink-0 w-5 h-5 md:w-6 md:h-6 ${isActive ? item.color : ''}`} />
                 {sidebarOpen && (
                   <>
-                    <span className="flex-1 min-w-0 truncate font-medium text-[13px] leading-5 text-left">{item.label}</span>
+                    <span className="flex-1 min-w-0 truncate font-medium text-xs md:text-[13px] leading-4 md:leading-5 text-left">{item.label}</span>
                     {item.badge && (
-                      <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
+                      <span className={`ml-auto px-1.5 md:px-2 py-0.5 text-xs font-medium rounded-full ${
                         item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
                         item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
                         item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
@@ -551,7 +551,7 @@ function App() {
 
         {/* Footer */}
         {sidebarOpen && (
-          <div className="p-4 border-t border-white/20 dark:border-gray-700/50">
+          <div className="p-3 md:p-4 border-t border-white/20 dark:border-gray-700/50">
             <div className="bg-gradient-to-r from-blue-50/70 to-purple-50/70 dark:from-blue-900/30 dark:to-purple-900/30 p-3 rounded-lg backdrop-blur-sm border border-blue-200/30 dark:border-blue-800/30 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -571,7 +571,7 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden md:ml-0">
         {/* Top Bar - unified header */}
         <Header
           title={menuItems.find(item => item.id === activeTab)?.label || 'Ana Sayfa'}
@@ -754,22 +754,22 @@ function App() {
         )}
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
+        <main className="flex-1 overflow-y-auto p-3 md:p-6 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/50 dark:to-blue-900/20">
           {/* Backend status banner */}
           {backendStatus === 'error' && (
-            <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border border-orange-200/50 dark:border-orange-800/50">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50">
-                  <CheckCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            <div className="mb-3 md:mb-4 p-3 md:p-4 rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border border-orange-200/50 dark:border-orange-800/50">
+              <div className="flex items-start gap-2 md:gap-3">
+                <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-orange-600 dark:text-orange-400" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">
                     Frontend Modu Aktif
                   </h3>
-                  <p className="text-sm text-orange-700 dark:text-orange-300 mb-2">
+                  <p className="text-xs md:text-sm text-orange-700 dark:text-orange-300 mb-2">
                     Backend servisi çalışmıyor, ancak sistem tamamen fonksiyonel. Tüm özellikler mock data ile çalışıyor.
                   </p>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap gap-1 md:gap-2 text-xs">
                     <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded">
                       ✅ Supabase Aktif
                     </span>
@@ -783,7 +783,7 @@ function App() {
                 </div>
                 <button
                   onClick={() => setShowBackendModal(true)}
-                  className="px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
+                  className="px-2 md:px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors flex-shrink-0"
                   title="Backend durumunu detaylı görüntüle"
                 >
                   Detay

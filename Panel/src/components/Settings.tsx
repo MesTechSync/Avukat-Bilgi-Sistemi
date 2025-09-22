@@ -734,39 +734,39 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white p-8 rounded-xl backdrop-blur-xl shadow-2xl border border-white/20">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-            <SettingsIcon className="w-8 h-8" />
+      <div className="bg-gradient-to-r from-blue-600/90 to-purple-600/90 text-white p-4 md:p-8 rounded-xl backdrop-blur-xl shadow-2xl border border-white/20">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="p-2 md:p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+            <SettingsIcon className="w-6 h-6 md:w-8 md:h-8" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Ayarlar</h1>
-            <p className="text-blue-100">Hesap ve sistem ayarlarınızı yönetin</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-3xl font-bold truncate">Ayarlar</h1>
+            <p className="text-blue-100 text-sm md:text-base truncate">Hesap ve sistem ayarlarınızı yönetin</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-xl p-4">
-            <nav className="space-y-2">
+          <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-xl p-3 md:p-4">
+            <nav className="space-y-1 md:space-y-2">
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    className={`w-full flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-200 ${
                       activeTab === tab.id
                         ? 'bg-blue-50/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/50'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:backdrop-blur-sm'
                     }`}
                   >
-                    <IconComponent className="w-5 h-5" />
-                    <span className="font-medium">{tab.label}</span>
+                    <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="text-sm md:text-base font-medium">{tab.label}</span>
                   </button>
                 );
               })}
@@ -776,7 +776,7 @@ export default function Settings() {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-xl p-6">
+          <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-xl p-3 md:p-6">
             {renderTabContent()}
             
             {/* Save Button */}

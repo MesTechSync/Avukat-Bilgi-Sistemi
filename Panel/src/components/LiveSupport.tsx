@@ -149,32 +149,32 @@ Yanıt:`;
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl h-[600px] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md md:max-w-4xl h-[85vh] md:h-[600px] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-xl flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <MessageCircle className="w-6 h-6" />
-              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${supportStatus === 'online' ? 'bg-green-400' : supportStatus === 'away' ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 md:p-4 rounded-t-xl flex items-center justify-between">
+          <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+            <div className="relative flex-shrink-0">
+              <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
+              <div className={`absolute -top-1 -right-1 w-2 h-2 md:w-3 md:h-3 rounded-full ${supportStatus === 'online' ? 'bg-green-400' : supportStatus === 'away' ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">AI Destek</h3>
-              <p className="text-sm opacity-90">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base md:text-lg truncate">AI Destek</h3>
+              <p className="text-xs md:text-sm opacity-90 truncate">
                 <span className={getStatusColor()}>{getStatusText()}</span> • {aiInitialized ? 'AI Aktif' : 'AI Başlatılıyor...'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+            className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1 md:p-2 transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -232,15 +232,15 @@ Yanıt:`;
         </div>
 
         {/* Input */}
-        <div className="border-t dark:border-gray-700 p-4">
-          <div className="flex space-x-3">
+        <div className="border-t dark:border-gray-700 p-3 md:p-4">
+          <div className="flex space-x-2 md:space-x-3">
             <div className="flex-1">
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Mesajınızı yazın..."
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full p-2 md:p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm md:text-base"
                 rows={2}
                 disabled={!aiInitialized || supportStatus === 'offline'}
               />
@@ -248,23 +248,23 @@ Yanıt:`;
             <button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || !aiInitialized || supportStatus === 'offline'}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 md:p-3 rounded-lg transition-colors flex-shrink-0"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
           
           {/* Quick Actions */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1 rounded-full transition-colors">
+          <div className="mt-2 md:mt-3 flex flex-wrap gap-1 md:gap-2">
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
               <Phone className="w-3 h-3 inline mr-1" />
               Telefon Desteği
             </button>
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1 rounded-full transition-colors">
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
               <Mail className="w-3 h-3 inline mr-1" />
               E-posta Gönder
             </button>
-            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1 rounded-full transition-colors">
+            <button className="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 md:px-3 py-1 rounded-full transition-colors">
               <Clock className="w-3 h-3 inline mr-1" />
               Geri Arama Talep Et
             </button>
