@@ -39,7 +39,7 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
 
   const sendToWebhook = async (message: string) => {
     try {
-      const webhookUrl = 'https://n8n.srv959585.hstgr.cloud/webhook/ec592cb3-b6cc-4b48-a832-7ba645c3e1b8';
+      const webhookUrl = 'https://n8n.srv959585.hstgr.cloud/webhook-test/ec592cb3-b6cc-4b48-a832-7ba645c3e1b8';
       
       const payload = {
         message: message,
