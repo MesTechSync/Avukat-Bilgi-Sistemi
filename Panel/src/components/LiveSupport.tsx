@@ -37,6 +37,32 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
+  const sendToWebhook = async (message: string) => {
+    try {
+      const webhookUrl = 'https://n8n.srv959585.hstgr.cloud/webhook/ec592cb3-b6cc-4b48-a832-7ba645c3e1b8';
+      
+      const payload = {
+        message: message,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        sessionId: Date.now().toString()
+      };
+
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('Mesaj webhook\'a gönderildi:', message);
+    } catch (error) {
+      console.error('Webhook gönderim hatası:', error);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
@@ -48,6 +74,10 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Mesajı webhook'a gönder
+    await sendToWebhook(newMessage);
+    
     setNewMessage('');
     setIsTyping(true);
 
