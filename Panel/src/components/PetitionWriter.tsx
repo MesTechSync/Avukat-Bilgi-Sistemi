@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { FileText, Wand2, Download, Copy, Save, RefreshCw, Search, BookOpen, Lightbulb, Star, Building, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare, Zap } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { FileText, Wand2, Download, Copy, RefreshCw, Search, BookOpen, Star, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare, Zap } from 'lucide-react';
 import { 
   combinedPetitionDatabase,
   searchCombinedByCategory,
   searchCombinedByKeyword,
-  findBestPetitionMatch,
-  getCombinedCategoryStats,
   type PetitionExample
 } from '../data/petitionExamples';
 import { useDictation } from '../hooks/useDictation';
@@ -40,13 +38,13 @@ export default function PetitionWriter() {
   const [showExamples, setShowExamples] = useState(false);
   const [aiModel, setAIModel] = useState<AIModel>('auto');
   const [useAI, setUseAI] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Dikte hook'u - form alanları için
   const {
     isListening: isDictating,
     isSupported: isDictationSupported,
     interimText: dictationInterimText,
-    error: dictationError,
     startDictation,
     stopDictation,
     clearDictation
@@ -78,7 +76,7 @@ export default function PetitionWriter() {
     const currentDate = new Date().toLocaleDateString('tr-TR');
     
     const basePrompt = `Sen Türkiye'de uzman bir avukatsın ve mahkemeye sunulmaya uygun profesyonel dilekçeler yazıyorsun. 
-
+    
 ÖNEMLI KURALLAR:
 1. Türk Hukuku terminolojisi kullan
 2. Mahkeme standartlarına uygun format
@@ -127,11 +125,11 @@ EK BELGELER:
 
 Saygılarımla,
 [Tarih ve imza]`;
-
+    
     return basePrompt;
   };
 
-  // Gelişmiş AI Dilekçe Üretimi (Gerçek AI entegrasyonu)
+  // AI ile dilekçe oluşturma
   const generateAIPetition = async () => {
     if (!selectedExample) {
       alert('Lütfen önce bir dilekçe örneği seçin.');
@@ -229,95 +227,75 @@ Saygılarımla,
     }
   };
 
-  // Template-based generation with real examples (düzeltilmiş)
-  const generateFromTemplate = (example: PetitionExample, data: FormData): string => {
-    // Gerçek örneklerin template alanını kullan, yoksa content'i kullan
-    const realExample = realPetitions.find(r => r.id === example.id);
-    let result = realExample ? realExample.template : example.content;
+  // Template-based generation (fallback)
+  const generateFromTemplate = (example: PetitionExample, formData: FormData): string => {
+    let template = (example as any).template || (example as any).content || '';
     
-    // Form verilerini akıllı mapping ile yerleştir
-    const smartMapping: Record<string, string> = {
-      // Davacı bilgileri
-      'DAVACI_ADI': data.davaci_adi || data.ad_soyad || data.isim || data.davaci || '{DAVACI_ADI}',
-      'DAVACI_TC': data.davaci_tc || data.tc_no || data.tc_kimlik || data.tc || '{DAVACI_TC}',
-      'DAVACI_ADRES': data.davaci_adres || data.adres || data.ikametgah || '{DAVACI_ADRES}',
-      'DAVACI_TELEFON': data.davaci_telefon || data.telefon || data.gsm || '{DAVACI_TELEFON}',
-      'DAVACI_MESLEK': data.davaci_meslek || data.meslek || '{DAVACI_MESLEK}',
-      
-      // Davalı bilgileri
-      'DAVALI_ADI': data.davali_adi || data.karsi_taraf || data.davali || '{DAVALI_ADI}',
-      'DAVALI_TC': data.davali_tc || data.davali_kimlik || '{DAVALI_TC}',
-      'DAVALI_ADRES': data.davali_adres || data.davali_ikametgah || '{DAVALI_ADRES}',
-      
-      // Finansal bilgiler
-      'ALACAK_TUTARI': data.alacak_tutari || data.tutar || data.miktar || '{ALACAK_TUTARI}',
-      'HASAR_MİKTARI': data.hasar_miktari || data.zarar || data.tutar || '{HASAR_MİKTARI}',
-      'KIDEM_TUTARI': data.kidem_tutari || data.tutar || '{KIDEM_TUTARI}',
-      'İHBAR_TUTARI': data.ihbar_tutari || data.ihbar || '{İHBAR_TUTARI}',
-      'İZİN_TUTARI': data.izin_tutari || data.izin || '{İZİN_TUTARI}',
-      'SON_MAAŞ': data.son_maas || data.maas || data.ucret || '{SON_MAAŞ}',
-      'FAİZ_ORANI': data.faiz_orani || '20',
-      
-      // Tarih bilgileri
-      'EVLILIK_TARIHI': data.evlilik_tarihi || data.nikah_tarihi || '{EVLILIK_TARIHI}',
-      'KAZA_TARİHİ': data.kaza_tarihi || data.olay_tarihi || '{KAZA_TARİHİ}',
-      'İŞE_GİRİŞ_TARİHİ': data.ise_giris || data.baslangic || '{İŞE_GİRİŞ_TARİHİ}',
-      'İŞTEN_ÇIKIŞ_TARİHİ': data.isten_cikis || data.bitis || '{İŞTEN_ÇIKIŞ_TARİHİ}',
-      'SATIŞ_TARİHİ': data.satis_tarihi || data.tarih || '{SATIŞ_TARİHİ}',
-      
-      // Yer bilgileri
-      'KAZA_YERİ': data.kaza_yeri || data.yer || '{KAZA_YERİ}',
-      'MAHKEME_ADI': data.mahkeme || 'ANKARA 1. ASLİYE HUKUK',
-      'İLÇE_ADI': data.ilce || 'ÇANKAYA',
-      
-      // Diğer bilgiler
-      'ÇALIŞMA_SÜRESİ': data.calisma_suresi || data.sure || '{ÇALIŞMA_SÜRESİ}',
-      'PLAKA_NO': data.plaka || data.plaka_no || '{PLAKA_NO}',
-      'TAKIP_NO': data.takip_no || '{TAKIP_NO}',
-      'KUSUR_ORANI': data.kusur_orani || data.kusur || '50',
-      
-      // Avukat bilgileri
-      'AVUKAT_ADI': data.avukat || 'Av. [İsminiz]',
-      'BARO_NO': data.baro_no || '[Baro Sicil No]',
-      
-      // Otomatik tarih
-      'DATE': new Date().toLocaleDateString('tr-TR'),
-      'YEAR': new Date().getFullYear().toString()
-    };
-    
-    // Smart mapping ile placeholder'ları değiştir
-    Object.entries(smartMapping).forEach(([key, value]) => {
-      const placeholder = `{${key}}`;
-      result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+    // Form verilerini template'e yerleştir
+    Object.entries(formData).forEach(([key, value]) => {
+      const placeholder = `{${key.toUpperCase()}}`;
+      template = template.replace(new RegExp(placeholder, 'g'), value);
     });
     
-    // Kategori bazlı profesyonel notlar ekle
-    if (example.category === 'İş Hukuku') {
-      result += `\n\n--- HUKUKİ NOT ---\nİş Kanunu md. 17-25 hükümleri gereğince işveren somut delillerle haklı nedenini ispatlamalıdır.\nİş mahkemesinde arabuluculuk zorunludur.`;
-    } else if (example.category === 'Trafik Kazası') {
-      result += `\n\n--- HUKUKİ NOT ---\nKasko poliçesi ve trafik sigortası durumu değerlendirilmelidir.\nEkspertiz raporu ve kaza tutanağı eklenmelidir.\nZamanaşımı süresi 2 yıldır.`;
-    } else if (example.category === 'Aile Hukuku') {
-      result += `\n\n--- HUKUKİ NOT ---\nAile ve Sosyal Politikalar Bakanlığı koordinasyonunda çocuğun üstün yararı gözetilir.\nArabuluculuk süreci önerilir.`;
-    } else if (example.category === 'Borçlar Hukuku') {
-      result += `\n\n--- HUKUKİ NOT ---\nAlacak davalarında zamanaşımı süresi 10 yıldır.\nİcra takibi daha hızlı bir yöntemdir.\nFaiz oranı Türkiye Cumhuriyet Merkez Bankası oranlarına göre hesaplanır.`;
-    }
-    
-    return result;
+    return template;
   };
 
-  // Filtreleme fonksiyonları
-  const getFilteredExamples = (): PetitionExample[] => {
+  // Form doğrulama
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    formFields.forEach(field => {
+      if (field.required && !formData[field.id]?.trim()) {
+        errors[field.id] = `${field.label} alanı zorunludur`;
+      }
+    });
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Filtrelenmiş örnekler
+  const getFilteredExamples = () => {
+    let filtered = combinedPetitionDatabase;
+    
     if (searchTerm) {
-      return searchCombinedByKeyword(searchTerm);
+      filtered = searchCombinedByKeyword(searchTerm);
     }
+    
     if (selectedCategory) {
-      return searchCombinedByCategory(selectedCategory);
+      filtered = searchCombinedByCategory(selectedCategory);
     }
-    return combinedPetitionDatabase;
+    
+    return filtered;
+  };
+
+  // Field icon helper function
+  const getFieldIcon = (fieldType: string) => {
+    switch (fieldType) {
+      case 'text':
+        return Users;
+      case 'number':
+        return DollarSign;
+      case 'date':
+        return Calendar;
+      case 'textarea':
+        return FileText;
+      case 'select':
+        return CheckSquare;
+      default:
+        return FileText;
+    }
+  };
+
+  const handleFormChange = (key: string, value: string) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[key]) {
+      setFieldErrors(prev => ({ ...prev, [key]: '' }));
+    }
   };
 
   const categories = [...new Set(combinedPetitionDatabase.map(ex => ex.category))];
-  const categoryStats = getCombinedCategoryStats();
 
   // Dinamik form alanları oluştur (Geliştirilmiş)
   const generateFormFields = (example: PetitionExample): PetitionField[] => {
@@ -419,274 +397,240 @@ Saygılarımla,
     return generateFormFields(selectedExample);
   }, [selectedExample]);
 
-  // Form doğrulama (Contract Generator tarzı)
-  const validateForm = (): boolean => {
-    const requiredFields = formFields.filter(field => field.required);
-    const missingFields = requiredFields.filter(field => !formData[field.id]?.trim());
-    
-    if (missingFields.length > 0) {
-      alert(`Lütfen şu zorunlu alanları doldurun: ${missingFields.map(f => f.label).join(', ')}`);
-      return false;
-    }
-    return true;
-  };
-
-  // Yardımcı fonksiyonlar
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedPetition);
-    alert('Dilekçe panoya kopyalandı!');
-  };
-
-  const downloadPetition = () => {
-    const element = document.createElement('a');
-    const file = new Blob([generatedPetition], { type: 'text/plain; charset=utf-8' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${(selectedExample?.title || 'dilekce').replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
-  const handleFormChange = (key: string, value: string) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header - İstatistiklerle */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <FileText className="h-8 w-8" />
-          <div>
-            <h1 className="text-2xl font-bold">🤖 AI Destekli Dilekçe Yazım Sistemi</h1>
-            <p className="text-blue-100">70+ gerçek dilekçe örneğiyle desteklenen yapay zeka sistemi</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              <span>Toplam Örnek</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1"></div>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg">
+              <FileText className="w-8 h-8 text-white" />
             </div>
-            <div className="text-2xl font-bold">{combinedPetitionDatabase.length}</div>
-          </div>
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4" />
-              <span>Gerçek Örnek</span>
-            </div>
-            <div className="text-2xl font-bold">{realPetitions.length}</div>
-          </div>
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-4 w-4" />
-              <span>Kategori</span>
-            </div>
-            <div className="text-2xl font-bold">{categories.length}</div>
-          </div>
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4" />
-              <span>AI Destekli</span>
-            </div>
-            <div className="text-2xl font-bold">✓</div>
-          </div>
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              <span>Gemini</span>
-            </div>
-            <div className={`text-lg font-bold ${geminiService.isInitialized() ? 'text-green-300' : 'text-red-300'}`}>
-              {geminiService.isInitialized() ? '✓' : '✗'}
+            <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={() => setShowExamples(!showExamples)}
+                className="p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
+                title="Dilekçe Örnekleri"
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
             </div>
           </div>
-          <div className="bg-white/20 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              <span>OpenAI</span>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            AI Destekli Dilekçe Yazım Sistemi
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gemini ve OpenAI ile profesyonel mahkeme dilekçelerinizi oluşturun
+          </p>
+          
+          {/* AI Status */}
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
+              <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Gemini</span>
             </div>
-            <div className={`text-lg font-bold ${openaiService.isInitialized() ? 'text-green-300' : 'text-red-300'}`}>
-              {openaiService.isInitialized() ? '✓' : '✗'}
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
+              <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Örnek Seçimi */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">📂 Gerçek Dilekçe Örnekleri</h2>
-          <button
-            onClick={() => setShowExamples(!showExamples)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            {showExamples ? 'Gizle' : 'Örnekleri Göster'} ({combinedPetitionDatabase.length})
-          </button>
         </div>
 
-        {showExamples && (
-          <div className="space-y-4">
+        {/* Dilekçe Örnekleri Seçimi */}
+        {!selectedExample && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Dilekçe Türü Seçin
+              </h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
+                  <select
+                    value={aiModel}
+                    onChange={(e) => setAIModel(e.target.value as AIModel)}
+                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
+                  >
+                    <option value="auto">🤖 Otomatik</option>
+                    <option value="gemini">✨ Gemini</option>
+                    <option value="gpt-4">⚡ GPT-4</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => setUseAI(!useAI)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    useAI 
+                      ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' 
+                      : 'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
+                </button>
+              </div>
+            </div>
+            
             {/* Arama ve Filtre */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Dilekçe ara... (örn: işten çıkarma, boşanma, trafik)"
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-300"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <select
                 title="Kategori Seçimi"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-300"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="">Tüm Kategoriler</option>
                 {categories.map(cat => (
-                  <option key={cat} value={cat}>
-                    {cat} ({categoryStats[cat]?.total || 0})
-                  </option>
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
-
-            {/* Örnek Listesi */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {getFilteredExamples().map((example) => (
                 <div
                   key={example.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedExample?.id === example.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
                   onClick={() => setSelectedExample(example)}
+                  className="group p-6 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 dark:from-gray-700 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl border-2 border-blue-100 dark:border-blue-800/30 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
-                  <h3 className="font-semibold text-gray-800">{example.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{example.category}</p>
-                  {example.subcategory && (
-                    <p className="text-xs text-blue-600 mb-2">{example.subcategory}</p>
-                  )}
-                  <div className="flex flex-wrap gap-1">
-                    {example.keywords.slice(0, 3).map((keyword, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Gerçek örnek mi göster */}
-                  {realPetitions.some(r => r.id === example.id) && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-orange-600">
-                      <Star className="h-3 w-3" />
-                      <span>Gerçek Örnek</span>
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="w-6 h-6" />
                     </div>
-                  )}
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                        {example.title}
+                      </h4>
+                      <p className="text-sm text-green-600 dark:text-green-400 mb-2 font-semibold">
+                        {example.category}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        {(example as any).description || (example as any).content || 'Profesyonel dilekçe örneği'}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {example.variables.length} alan
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Wand2 className="w-3 h-3" />
+                          AI destekli
+                        </span>
+                        {realPetitions.some(r => r.id === example.id) && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <Star className="w-3 h-3" />
+                            Gerçek örnek
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Dinamik Form Bilgileri (Contract Generator Tarzı) */}
-      {selectedExample && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <FileText className="h-6 w-6 text-blue-600" />
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">📝 Dilekçe Bilgileri</h2>
-                <p className="text-sm text-gray-600">Lütfen aşağıdaki bilgileri eksiksiz doldurun</p>
-              </div>
-            </div>
-            
-            {/* AI Ayarları */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">AI Model:</label>
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAIModel(e.target.value as AIModel)}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="auto">🤖 Otomatik</option>
-                  <option value="gemini">✨ Gemini</option>
-                  <option value="gpt-4">⚡ GPT-4</option>
-                </select>
+        {/* Form Bilgileri */}
+        {selectedExample && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl text-white shadow-lg">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Dilekçe Bilgileri
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Lütfen aşağıdaki bilgileri eksiksiz doldurun
+                  </p>
+                </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">AI:</label>
+              {/* AI Ayarları */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
+                  <select
+                    value={aiModel}
+                    onChange={(e) => setAIModel(e.target.value as AIModel)}
+                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
+                  >
+                    <option value="auto">🤖 Otomatik</option>
+                    <option value="gemini">✨ Gemini</option>
+                    <option value="gpt-4">⚡ GPT-4</option>
+                  </select>
+                </div>
                 <button
                   onClick={() => setUseAI(!useAI)}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     useAI 
-                      ? 'bg-green-100 text-green-800 border border-green-300' 
-                      : 'bg-gray-100 text-gray-800 border border-gray-300'
+                      ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' 
+                      : 'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
                   }`}
                 >
-                  {useAI ? '✓ Aktif' : '✗ Pasif'}
+                  {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Seçilen Dilekçe Bilgisi */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-l-4 border-blue-500">
-            <div className="flex items-start gap-3">
-              {realPetitions.some(r => r.id === selectedExample.id) ? (
-                <Star className="h-5 w-5 text-orange-500 mt-1" />
-              ) : (
-                <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
-              )}
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-800">{selectedExample.title}</h3>
-                <p className="text-sm text-gray-600 mb-1">{selectedExample.category}</p>
-                {selectedExample.subcategory && (
-                  <p className="text-xs text-blue-600">{selectedExample.subcategory}</p>
+            {/* Seçilen Dilekçe Bilgisi */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                {realPetitions.some(r => r.id === selectedExample.id) ? (
+                  <Star className="h-5 w-5 text-orange-500 mt-1" />
+                ) : (
+                  <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
                 )}
-                {realPetitions.some(r => r.id === selectedExample.id) && (
-                  <div className="mt-2 flex items-center gap-2 text-orange-600">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
-                  </div>
-                )}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">{selectedExample.title}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{selectedExample.category}</p>
+                  {selectedExample.subcategory && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400">{selectedExample.subcategory}</p>
+                  )}
+                  {realPetitions.some(r => r.id === selectedExample.id) && (
+                    <div className="mt-2 flex items-center gap-2 text-orange-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Dinamik Form Alanları - Geliştirilmiş Tasarım */}
-          <div className="space-y-8">
-            {/* Temel Bilgiler */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                Temel Bilgiler
-              </h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                {formFields.slice(0, 6).map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      {field.required && <span className="text-red-500">*</span>}
+            {/* Form Alanları */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {formFields.map((field) => {
+                const IconComponent = getFieldIcon(field.type);
+                const inputId = `field-${field.id}`;
+                return (
+                  <div key={field.id}>
+                    <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <IconComponent className="w-4 h-4 inline mr-2" />
                       {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
                     
                     {field.type === 'textarea' ? (
                       <div className="relative">
                         <textarea
-                          id={`field-${field.id}`}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 pr-12 bg-white"
-                          placeholder={field.placeholder}
+                          id={inputId}
                           value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
                           onChange={(e) => handleFormChange(field.id, e.target.value)}
+                          placeholder={field.placeholder}
                           rows={3}
+                          className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white pr-12 transition-all duration-300`}
                         />
                         <div className="absolute right-3 top-3">
                           <DictationButton
@@ -701,10 +645,10 @@ Saygılarımla,
                       </div>
                     ) : field.type === 'select' ? (
                       <select
-                        title={field.label}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                        id={inputId}
                         value={formData[field.id] || ''}
                         onChange={(e) => handleFormChange(field.id, e.target.value)}
+                        className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
                       >
                         <option value="">Seçiniz...</option>
                         {field.options?.map((option) => (
@@ -716,257 +660,102 @@ Saygılarımla,
                     ) : (
                       <input
                         type={field.type}
-                        id={`field-${field.id}`}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
-                        placeholder={field.placeholder}
+                        id={inputId}
                         value={formData[field.id] || ''}
                         onChange={(e) => handleFormChange(field.id, e.target.value)}
+                        placeholder={field.placeholder}
+                        className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
                       />
                     )}
+                    
+                    {fieldErrors[field.id] && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors[field.id]}</p>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
 
-            {/* Ek Bilgiler */}
-            {formFields.length > 6 && (
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-green-600" />
-                  Ek Bilgiler
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {formFields.slice(6).map((field) => (
-                    <div key={field.id} className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        {field.required && <span className="text-red-500">*</span>}
-                        {field.label}
-                      </label>
-                      
-                      {field.type === 'textarea' ? (
-                        <div className="relative">
-                          <textarea
-                            id={`field-${field.id}`}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12 bg-white"
-                            placeholder={field.placeholder}
-                            value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
-                            onChange={(e) => handleFormChange(field.id, e.target.value)}
-                            rows={3}
-                          />
-                          <div className="absolute right-3 top-3">
-                            <DictationButton
-                              isListening={isDictating}
-                              isSupported={isDictationSupported}
-                              onStart={startDictation}
-                              onStop={stopDictation}
-                              size="sm"
-                              title="Sesli yazım"
-                            />
-                          </div>
-                        </div>
-                      ) : field.type === 'select' ? (
-                        <select
-                          title={field.label}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
-                          value={formData[field.id] || ''}
-                          onChange={(e) => handleFormChange(field.id, e.target.value)}
-                        >
-                          <option value="">Seçiniz...</option>
-                          {field.options?.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={field.type}
-                          id={`field-${field.id}`}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
-                          placeholder={field.placeholder}
-                          value={formData[field.id] || ''}
-                          onChange={(e) => handleFormChange(field.id, e.target.value)}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Generate Button */}
+            <button
+              onClick={generateAIPetition}
+              disabled={isGenerating}
+              className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              {isGenerating ? (
+                <>
+                  <RefreshCw className="h-6 w-6 animate-spin" />
+                  <span>AI Dilekçe Oluşturuyor...</span>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-6 w-6" />
+                  <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
+                  <Zap className="h-5 w-5" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
-            {/* Akıllı Tavsiyeler - Geliştirilmiş */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-yellow-100 p-3 rounded-full">
-                  <Lightbulb className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-yellow-800 mb-3 text-lg">💡 Profesyonel Tavsiyeler</h4>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-yellow-700">
-                        <CheckSquare className="h-4 w-4 text-yellow-600" />
-                        <span>Tüm tarih bilgilerini tam ve doğru formatta girin</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-yellow-700">
-                        <CheckSquare className="h-4 w-4 text-yellow-600" />
-                        <span>Tutar bilgilerini sadece rakam olarak yazın (örn: 15000)</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-yellow-700">
-                        <CheckSquare className="h-4 w-4 text-yellow-600" />
-                        <span>Adres bilgilerini detaylı ve net şekilde belirtin</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-yellow-700">
-                        <CheckSquare className="h-4 w-4 text-yellow-600" />
-                        <span>Kişisel bilgilerde T.C. kimlik numarasını eksiksiz yazın</span>
-                      </div>
-                    </div>
+        {/* Oluşturulan Dilekçe */}
+        {generatedPetition && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 overflow-hidden mt-8">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">Oluşturulan Dilekçe</h3>
+                    <p className="text-green-100 text-sm">AI tarafından oluşturuldu</p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Generate Button - Geliştirilmiş */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
-              <button
-                onClick={generateAIPetition}
-                disabled={isGenerating}
-                className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="h-6 w-6 animate-spin" />
-                    <span>AI Dilekçe Oluşturuyor...</span>
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-6 w-6" />
-                    <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
-                    <Zap className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-              
-              {/* AI Durum Göstergesi */}
-              <div className="mt-4 flex items-center justify-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                  <span className="text-gray-600">Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                  <span className="text-gray-600">OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Oluşturulan Dilekçe (Contract Generator Tarzı) */}
-      {generatedPetition && (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckSquare className="h-6 w-6" />
-                <div>
-                  <h2 className="text-xl font-semibold">✅ Dilekçe Başarıyla Oluşturuldu</h2>
-                  <p className="text-green-100">AI destekli profesyonel dilekçe hazır</p>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(generatedPetition)}
+                    className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                    title="Kopyala"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([generatedPetition], { type: 'text/plain' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${selectedExample?.title || 'dilekce'}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                    title="İndir"
+                  >
+                    <Download className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-medium">AI Üretimi</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="border-b bg-gray-50 p-4">
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={copyToClipboard}
-                className="flex-1 min-w-[200px] px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
-              >
-                <Copy className="h-4 w-4" />
-                📋 Panoya Kopyala
-              </button>
-              <button
-                onClick={downloadPetition}
-                className="flex-1 min-w-[200px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium"
-              >
-                <Download className="h-4 w-4" />
-                💾 Word Dosyası İndir
-              </button>
-              <button
-                onClick={() => setGeneratedPetition('')}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Yeni Dilekçe
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {/* Dilekçe Bilgileri */}
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="font-semibold text-blue-800">
-                  {selectedExample?.title || 'Özel Dilekçe'}
-                </span>
-              </div>
-              <div className="text-sm text-blue-600 space-y-1">
-                <p>📂 Kategori: {selectedExample?.category}</p>
-                <p>📅 Oluşturma Tarihi: {new Date().toLocaleDateString('tr-TR')}</p>
-                <p>🤖 AI Model: GPT-4 + Gerçek Örnekler</p>
-                <p>⭐ Kalite: Profesyonel Seviye</p>
-              </div>
             </div>
 
-            {/* Dilekçe İçeriği */}
-            <div className="bg-gray-50 border rounded-lg">
-              <div className="p-4 border-b bg-gray-100">
-                <h3 className="font-semibold text-gray-800">📄 Dilekçe İçeriği</h3>
-                <p className="text-sm text-gray-600">Aşağıdaki metni kopyalayıp kullanabilirsiniz</p>
-              </div>
-              <div className="p-6 max-h-96 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
+            {/* Content */}
+            <div className="p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedPetition}
                 </pre>
               </div>
             </div>
-
-            {/* Önemli Notlar */}
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Önemli Hatırlatmalar</h4>
-                  <ul className="text-sm text-yellow-700 space-y-1">
-                    <li>• Dilekçeyi imzalamadan önce bir hukuk uzmanına gösterin</li>
-                    <li>• Eksik kalan {"{PLACEHOLDER}"} alanlarını doldurmayı unutmayın</li>
-                    <li>• Eklenmesi gereken belgeler varsa ekleyin</li>
-                    <li>• Mahkeme harç ve posta ücretlerini hesaplayın</li>
-                    <li>• Zamanaşımı sürelerini kontrol edin</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
