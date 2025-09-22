@@ -22,7 +22,11 @@ import { COMMIT_SHA, BUILD_TIME } from './lib/version';
 import Header from './components/layout/Header';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Sayfa yenilendiğinde son aktif tab'ı localStorage'dan al
+    const savedTab = localStorage.getItem('activeTab');
+    return savedTab || 'dashboard';
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(() => {
     // Check localStorage first, then system preference
@@ -33,6 +37,12 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const { loading, error } = useSupabase();
+
+  // Tab değiştiğinde localStorage'a kaydet
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    localStorage.setItem('activeTab', tab);
+  };
 
   // Backend health check state
   const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -194,7 +204,7 @@ function App() {
       case 'clients':
         return <ClientManagement />;
       case 'appointments':
-        return <EnhancedAppointmentManagement onNavigate={setActiveTab} />;
+        return <EnhancedAppointmentManagement onNavigate={handleTabChange} />;
       case 'financials':
         return <FinancialManagement />;
       case 'settings':
@@ -202,7 +212,7 @@ function App() {
       case 'profile':
         return <Profile />;
       default:
-        return <EnhancedDashboard onNavigate={setActiveTab} />;
+        return <EnhancedDashboard onNavigate={handleTabChange} />;
     }
   };
 
@@ -397,7 +407,7 @@ function App() {
           const target = (intent as any)?.parameters?.target as string | undefined;
           if (target === 'whatsapp_input') {
             // WhatsApp mesaj alanına odaklan ve dikteyi başlat
-            if (activeTab !== 'whatsapp') setActiveTab('whatsapp');
+            if (activeTab !== 'whatsapp') handleTabChange('whatsapp');
             setTimeout(() => {
               try { window.dispatchEvent(new CustomEvent('focus-whatsapp-input')); } catch {}
               try { window.dispatchEvent(new CustomEvent('dictate-start', { detail: { target: 'whatsapp_input' } })); } catch {}
@@ -510,7 +520,7 @@ function App() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleTabChange(item.id)}
                 title={item.label}
                 className={`w-full flex items-center justify-start gap-2 px-2 py-2 rounded-lg transition-all duration-200 ${
                   isActive
@@ -617,7 +627,7 @@ function App() {
                 )}
               </button>
               <button 
-                onClick={() => setActiveTab('settings')}
+                onClick={() => handleTabChange('settings')}
                 title="Ayarlar"
                 aria-label="Ayarlar"
                 className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm"
@@ -625,7 +635,7 @@ function App() {
                 <SettingsIcon className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => setActiveTab('profile')}
+                onClick={() => handleTabChange('profile')}
                 className="flex items-center gap-3 pl-4 border-l border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg p-2 transition-all duration-200"
                 aria-label="Profil"
               >

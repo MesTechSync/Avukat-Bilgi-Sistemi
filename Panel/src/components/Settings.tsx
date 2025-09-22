@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Save, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Shield, Palette, Database, Save, Eye, EyeOff, MessageCircle, Code, ExternalLink } from 'lucide-react';
 import LiveSupport from './LiveSupport';
 
 export default function Settings() {
@@ -45,7 +45,8 @@ export default function Settings() {
     { id: 'security', label: 'Güvenlik', icon: Shield },
     { id: 'appearance', label: 'Görünüm', icon: Palette },
     { id: 'system', label: 'Sistem', icon: Database },
-    { id: 'support', label: 'Canlı Destek', icon: MessageCircle }
+    { id: 'support', label: 'AI Destek', icon: MessageCircle },
+    { id: 'developer', label: 'Geliştirici', icon: Code }
   ];
 
   const handleSettingChange = (key: string, value: any) => {
@@ -610,6 +611,107 @@ export default function Settings() {
     </div>
   );
 
+  const renderDeveloperTab = () => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Geliştirici Bilgileri
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400">
+          Sistem geliştirici bilgileri ve teknik detaylar
+        </p>
+      </div>
+
+      {/* Developer Info */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+            <Code className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-purple-800 dark:text-purple-200">Arax Teknoloji</h4>
+            <p className="text-sm text-purple-700 dark:text-purple-300">Sistem Geliştiricisi</p>
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-purple-700 dark:text-purple-300">Web Sitesi:</span>
+            <a 
+              href="https://arax.tr/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors"
+            >
+              arax.tr
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-purple-700 dark:text-purple-300">Sistem Versiyonu:</span>
+            <span className="text-sm font-medium text-purple-800 dark:text-purple-200">v1.0.0</span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-purple-700 dark:text-purple-300">Build Tarihi:</span>
+            <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
+              {new Date().toLocaleDateString('tr-TR')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Technical Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Teknoloji Stack</h4>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div>• React + TypeScript</div>
+            <div>• Supabase Database</div>
+            <div>• Gemini AI Integration</div>
+            <div>• OpenAI API</div>
+            <div>• Tailwind CSS</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Özellikler</h4>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div>• AI Destek Asistanı</div>
+            <div>• Dava Yönetimi</div>
+            <div>• Müvekkil Takibi</div>
+            <div>• Mali İşler</div>
+            <div>• Hukuki Analiz</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Developer */}
+      <div className="bg-white dark:bg-gray-700 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Geliştirici ile İletişim</h4>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Sistem ile ilgili teknik sorularınız için geliştirici ile iletişime geçebilirsiniz.
+        </p>
+        <div className="flex gap-3">
+          <a 
+            href="https://arax.tr/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Web Sitesi
+          </a>
+          <button className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+            <MessageCircle className="w-4 h-4" />
+            Mesaj Gönder
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -624,6 +726,8 @@ export default function Settings() {
         return renderSystemTab();
       case 'support':
         return renderSupportTab();
+      case 'developer':
+        return renderDeveloperTab();
       default:
         return renderProfileTab();
     }
