@@ -198,30 +198,30 @@ export default function NotebookLLM() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="text-center mb-4 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex-1"></div>
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-lg">
-              <Wand2 className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl md:rounded-2xl shadow-lg">
+              <Wand2 className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
             <div className="flex-1 flex justify-end">
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
+                className="p-2 md:p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
                 title="Ayarlar"
               >
-                <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Avukat AI Asistanı
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
             Hukuki belgelerinizi ve dava dosyalarınızı AI ile analiz edin
           </p>
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <div className={`px-4 py-2 rounded-full text-sm font-medium ${
+          <div className="mt-3 md:mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4">
+            <div className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium ${
               useRealAI 
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
                 : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
@@ -229,7 +229,7 @@ export default function NotebookLLM() {
               {useRealAI ? '🤖 Gerçek AI (Gemini)' : '🎭 Demo Modu'}
             </div>
             {useRealAI && (
-              <div className="px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded-full border border-green-200 dark:border-green-800">
+              <div className="px-2 md:px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded-full border border-green-200 dark:border-green-800">
                 ✅ API Key Tanımlı
               </div>
             )}
