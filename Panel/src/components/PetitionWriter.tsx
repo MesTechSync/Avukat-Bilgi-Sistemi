@@ -319,11 +319,57 @@ Saygılarımla,
   const categories = [...new Set(combinedPetitionDatabase.map(ex => ex.category))];
   const categoryStats = getCombinedCategoryStats();
 
-  // Dinamik form alanları oluştur (Contract Generator tarzı)
+  // Dinamik form alanları oluştur (Geliştirilmiş)
   const generateFormFields = (example: PetitionExample): PetitionField[] => {
     const fields: PetitionField[] = [];
     
-    // Örneğin variables'ından otomatik field'lar oluştur
+    // Temel alanlar - her dilekçe için gerekli
+    const basicFields: PetitionField[] = [
+      {
+        id: 'davaci_adi',
+        label: 'Davacı Adı Soyadı',
+        type: 'text',
+        required: true,
+        placeholder: 'Ad Soyad girin'
+      },
+      {
+        id: 'davaci_tc',
+        label: 'Davacı T.C. Kimlik No',
+        type: 'text',
+        required: true,
+        placeholder: '11 haneli T.C. kimlik numarası'
+      },
+      {
+        id: 'davaci_adres',
+        label: 'Davacı Adresi',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Tam adres bilgisi girin'
+      },
+      {
+        id: 'davali_adi',
+        label: 'Davalı Adı Soyadı',
+        type: 'text',
+        required: true,
+        placeholder: 'Ad Soyad girin'
+      },
+      {
+        id: 'davali_tc',
+        label: 'Davalı T.C. Kimlik No',
+        type: 'text',
+        required: false,
+        placeholder: '11 haneli T.C. kimlik numarası'
+      },
+      {
+        id: 'davali_adres',
+        label: 'Davalı Adresi',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Tam adres bilgisi girin'
+      }
+    ];
+
+    // Örneğin variables'ından ek alanlar oluştur
     example.variables.forEach((variable, index) => {
       const fieldId = variable.toLowerCase().replace(/[^a-z0-9]/g, '_');
       let fieldType: PetitionField['type'] = 'text';
@@ -332,31 +378,39 @@ Saygılarımla,
       // Akıllı tip tanıma
       if (variable.includes('TARİH') || variable.includes('DATE')) {
         fieldType = 'date';
+        placeholder = 'Tarih seçin';
       } else if (variable.includes('TUTAR') || variable.includes('MAAŞ') || variable.includes('ÜCRET') || variable.includes('TL')) {
         fieldType = 'number';
-        placeholder = 'Tutarı TL olarak girin';
-      } else if (variable.includes('ADRES') || variable.includes('AÇIKLAMA') || variable.includes('DETAY')) {
+        placeholder = 'Tutarı TL olarak girin (örn: 15000)';
+      } else if (variable.includes('ADRES') || variable.includes('AÇIKLAMA') || variable.includes('DETAY') || variable.includes('SEBEP')) {
         fieldType = 'textarea';
-      } else if (variable.includes('CİNSİYET') || variable.includes('DURUM')) {
+        placeholder = 'Detaylı açıklama girin';
+      } else if (variable.includes('CİNSİYET') || variable.includes('DURUM') || variable.includes('TİP')) {
         fieldType = 'select';
       }
       
-      fields.push({
-        id: fieldId,
-        label: variable.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-        type: fieldType,
-        required: index < 5, // İlk 5 alan zorunlu
-        placeholder: placeholder || `${variable.replace(/_/g, ' ').toLowerCase()} bilgisini girin`,
-        ...(fieldType === 'select' && variable.includes('CİNSİYET') && {
-          options: ['Erkek', 'Kadın']
-        }),
-        ...(fieldType === 'select' && variable.includes('DURUM') && {
-          options: ['Evli', 'Bekar', 'Boşanmış', 'Dul']
-        })
-      });
+      // Temel alanlarda yoksa ekle
+      if (!basicFields.some(f => f.id === fieldId)) {
+        fields.push({
+          id: fieldId,
+          label: variable.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+          type: fieldType,
+          required: index < 3, // İlk 3 ek alan zorunlu
+          placeholder: placeholder || `${variable.replace(/_/g, ' ').toLowerCase()} bilgisini girin`,
+          ...(fieldType === 'select' && variable.includes('CİNSİYET') && {
+            options: ['Erkek', 'Kadın']
+          }),
+          ...(fieldType === 'select' && variable.includes('DURUM') && {
+            options: ['Evli', 'Bekar', 'Boşanmış', 'Dul']
+          }),
+          ...(fieldType === 'select' && variable.includes('TİP') && {
+            options: ['Bireysel', 'Kurumsal', 'Kamu']
+          })
+        });
+      }
     });
     
-    return fields;
+    return [...basicFields, ...fields];
   };
 
   // Seçilen örnek için dinamik form alanları
@@ -608,100 +662,210 @@ Saygılarımla,
             </div>
           </div>
 
-          {/* Dinamik Form Alanları */}
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              {formFields.map((field) => (
-                <div key={field.id} className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    {field.required && <span className="text-red-500">*</span>}
-                    {field.label}
-                  </label>
-                  
-                  {field.type === 'textarea' ? (
-                    <div className="relative">
-                      <textarea
-                        id={`field-${field.id}`}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
-                        placeholder={field.placeholder}
-                        value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
-                        onChange={(e) => handleFormChange(field.id, e.target.value)}
-                        rows={3}
-                      />
-                      <div className="absolute right-2 top-2">
-                        <DictationButton
-                          isListening={isDictating}
-                          isSupported={isDictationSupported}
-                          onStart={startDictation}
-                          onStop={stopDictation}
-                          size="sm"
-                          title="Sesli yazım"
+          {/* Dinamik Form Alanları - Geliştirilmiş Tasarım */}
+          <div className="space-y-8">
+            {/* Temel Bilgiler */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Temel Bilgiler
+              </h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {formFields.slice(0, 6).map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      {field.required && <span className="text-red-500">*</span>}
+                      {field.label}
+                    </label>
+                    
+                    {field.type === 'textarea' ? (
+                      <div className="relative">
+                        <textarea
+                          id={`field-${field.id}`}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 pr-12 bg-white"
+                          placeholder={field.placeholder}
+                          value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
+                          onChange={(e) => handleFormChange(field.id, e.target.value)}
+                          rows={3}
                         />
+                        <div className="absolute right-3 top-3">
+                          <DictationButton
+                            isListening={isDictating}
+                            isSupported={isDictationSupported}
+                            onStart={startDictation}
+                            onStop={stopDictation}
+                            size="sm"
+                            title="Sesli yazım"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ) : field.type === 'select' ? (
-                    <select
-                      title={field.label}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={formData[field.id] || ''}
-                      onChange={(e) => handleFormChange(field.id, e.target.value)}
-                    >
-                      <option value="">Seçiniz...</option>
-                      {field.options?.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder={field.placeholder}
-                      value={formData[field.id] || ''}
-                      onChange={(e) => handleFormChange(field.id, e.target.value)}
-                    />
-                  )}
-                </div>
-              ))}
+                    ) : field.type === 'select' ? (
+                      <select
+                        title={field.label}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                        value={formData[field.id] || ''}
+                        onChange={(e) => handleFormChange(field.id, e.target.value)}
+                      >
+                        <option value="">Seçiniz...</option>
+                        {field.options?.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        id={`field-${field.id}`}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                        placeholder={field.placeholder}
+                        value={formData[field.id] || ''}
+                        onChange={(e) => handleFormChange(field.id, e.target.value)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Akıllı Tavsiyeler */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <Lightbulb className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-yellow-800 mb-1">💡 Profesyonel Tavsiyeler</h4>
-                  <ul className="text-sm text-yellow-700 space-y-1">
-                    <li>• Tüm tarih bilgilerini tam ve doğru formatta girin</li>
-                    <li>• Tutar bilgilerini sadece rakam olarak yazın (örn: 15000)</li>
-                    <li>• Adres bilgilerini detaylı ve net şekilde belirtin</li>
-                    <li>• Kişisel bilgilerde T.C. kimlik numarasını eksiksiz yazın</li>
-                  </ul>
+            {/* Ek Bilgiler */}
+            {formFields.length > 6 && (
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  Ek Bilgiler
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {formFields.slice(6).map((field) => (
+                    <div key={field.id} className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        {field.required && <span className="text-red-500">*</span>}
+                        {field.label}
+                      </label>
+                      
+                      {field.type === 'textarea' ? (
+                        <div className="relative">
+                          <textarea
+                            id={`field-${field.id}`}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12 bg-white"
+                            placeholder={field.placeholder}
+                            value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
+                            onChange={(e) => handleFormChange(field.id, e.target.value)}
+                            rows={3}
+                          />
+                          <div className="absolute right-3 top-3">
+                            <DictationButton
+                              isListening={isDictating}
+                              isSupported={isDictationSupported}
+                              onStart={startDictation}
+                              onStop={stopDictation}
+                              size="sm"
+                              title="Sesli yazım"
+                            />
+                          </div>
+                        </div>
+                      ) : field.type === 'select' ? (
+                        <select
+                          title={field.label}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
+                          value={formData[field.id] || ''}
+                          onChange={(e) => handleFormChange(field.id, e.target.value)}
+                        >
+                          <option value="">Seçiniz...</option>
+                          {field.options?.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={field.type}
+                          id={`field-${field.id}`}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white"
+                          placeholder={field.placeholder}
+                          value={formData[field.id] || ''}
+                          onChange={(e) => handleFormChange(field.id, e.target.value)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Akıllı Tavsiyeler - Geliştirilmiş */}
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-yellow-100 p-3 rounded-full">
+                  <Lightbulb className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-yellow-800 mb-3 text-lg">💡 Profesyonel Tavsiyeler</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-yellow-700">
+                        <CheckSquare className="h-4 w-4 text-yellow-600" />
+                        <span>Tüm tarih bilgilerini tam ve doğru formatta girin</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-yellow-700">
+                        <CheckSquare className="h-4 w-4 text-yellow-600" />
+                        <span>Tutar bilgilerini sadece rakam olarak yazın (örn: 15000)</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-yellow-700">
+                        <CheckSquare className="h-4 w-4 text-yellow-600" />
+                        <span>Adres bilgilerini detaylı ve net şekilde belirtin</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-yellow-700">
+                        <CheckSquare className="h-4 w-4 text-yellow-600" />
+                        <span>Kişisel bilgilerde T.C. kimlik numarasını eksiksiz yazın</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Generate Button */}
-            <button
-              onClick={generateAIPetition}
-              disabled={isGenerating}
-              className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-3 font-medium"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="h-5 w-5 animate-spin" />
-                  <span>AI Dilekçe Oluşturuyor...</span>
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-5 w-5" />
-                  <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
-                  <Wand2 className="h-5 w-5" />
-                </>
-              )}
-            </button>
+            {/* Generate Button - Geliştirilmiş */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
+              <button
+                onClick={generateAIPetition}
+                disabled={isGenerating}
+                className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                    <span>AI Dilekçe Oluşturuyor...</span>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-6 w-6" />
+                    <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
+                    <Zap className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+              
+              {/* AI Durum Göstergesi */}
+              <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-gray-600">Gemini: {geminiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-gray-600">OpenAI: {openaiService.isInitialized() ? 'Aktif' : 'Pasif'}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
