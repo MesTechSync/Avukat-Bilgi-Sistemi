@@ -404,7 +404,7 @@ Saygılarımla,
         <div className="text-center mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1"></div>
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg">
               <FileText className="w-8 h-8 text-white" />
             </div>
             <div className="flex-1 flex justify-end gap-2">
@@ -500,23 +500,34 @@ Saygılarımla,
                 <div
                   key={example.id}
                   onClick={() => setSelectedExample(example)}
-                  className="group p-6 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 dark:from-gray-700 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl border-2 border-blue-100 dark:border-blue-800/30 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <FileText className="w-6 h-6" />
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-white font-semibold text-sm leading-tight">
+                          {example.title}
+                        </h4>
+                        <p className="text-blue-100 text-xs mt-1">
+                          {example.category}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                        {example.title}
-                      </h4>
-                      <p className="text-sm text-green-600 dark:text-green-400 mb-2 font-semibold">
-                        {example.category}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        {(example as any).description || (example as any).content || 'Profesyonel dilekçe örneği'}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="p-4">
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+                      {(example as any).description || (example as any).content || 'Profesyonel dilekçe örneği'}
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {example.variables.length} alan
@@ -525,15 +536,18 @@ Saygılarımla,
                           <Wand2 className="w-3 h-3" />
                           AI destekli
                         </span>
-                        {realPetitions.some(r => r.id === example.id) && (
-                          <span className="flex items-center gap-1 text-orange-600">
-                            <Star className="w-3 h-3" />
-                            Gerçek örnek
-                          </span>
-                        )}
                       </div>
+                      {realPetitions.some(r => r.id === example.id) && (
+                        <div className="flex items-center gap-1 text-orange-600 text-xs">
+                          <Star className="w-3 h-3" />
+                          <span>Gerçek örnek</span>
+                        </div>
+                      )}
                     </div>
                   </div>
+                  
+                  {/* Hover Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               ))}
             </div>
@@ -542,72 +556,77 @@ Saygılarımla,
 
         {/* Form Bilgileri */}
         {selectedExample && (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl text-white shadow-lg">
-                  <FileText className="w-6 h-6" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* Form Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">
+                      Dilekçe Bilgileri
+                    </h3>
+                    <p className="text-blue-100 text-sm">
+                      Lütfen aşağıdaki bilgileri eksiksiz doldurun
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Dilekçe Bilgileri
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Lütfen aşağıdaki bilgileri eksiksiz doldurun
-                  </p>
-                </div>
-              </div>
-              
-              {/* AI Ayarları */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
-                  <select
-                    value={aiModel}
-                    onChange={(e) => setAIModel(e.target.value as AIModel)}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
+                
+                {/* AI Ayarları */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-white">AI Model:</label>
+                    <select
+                      value={aiModel}
+                      onChange={(e) => setAIModel(e.target.value as AIModel)}
+                      className="px-3 py-1 border border-white/30 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/20 text-white"
+                    >
+                      <option value="auto" className="text-gray-900">🤖 Otomatik</option>
+                      <option value="gemini" className="text-gray-900">✨ Gemini</option>
+                      <option value="gpt-4" className="text-gray-900">⚡ GPT-4</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => setUseAI(!useAI)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                      useAI 
+                        ? 'bg-green-500 text-white hover:bg-green-600' 
+                        : 'bg-white/20 text-white hover:bg-white/30'
+                    }`}
                   >
-                    <option value="auto">🤖 Otomatik</option>
-                    <option value="gemini">✨ Gemini</option>
-                    <option value="gpt-4">⚡ GPT-4</option>
-                  </select>
+                    {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
+                  </button>
                 </div>
-                <button
-                  onClick={() => setUseAI(!useAI)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    useAI 
-                      ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' 
-                      : 'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
-                </button>
               </div>
             </div>
 
-            {/* Seçilen Dilekçe Bilgisi */}
-            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                {realPetitions.some(r => r.id === selectedExample.id) ? (
-                  <Star className="h-5 w-5 text-orange-500 mt-1" />
-                ) : (
-                  <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
-                )}
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">{selectedExample.title}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{selectedExample.category}</p>
-                  {selectedExample.subcategory && (
-                    <p className="text-xs text-blue-600 dark:text-blue-400">{selectedExample.subcategory}</p>
+            {/* Form Content */}
+            <div className="p-6">
+              {/* Seçilen Dilekçe Bilgisi */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  {realPetitions.some(r => r.id === selectedExample.id) ? (
+                    <Star className="h-5 w-5 text-orange-500 mt-1" />
+                  ) : (
+                    <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
                   )}
-                  {realPetitions.some(r => r.id === selectedExample.id) && (
-                    <div className="mt-2 flex items-center gap-2 text-orange-600">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{selectedExample.title}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{selectedExample.category}</p>
+                    {selectedExample.subcategory && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400">{selectedExample.subcategory}</p>
+                    )}
+                    {realPetitions.some(r => r.id === selectedExample.id) && (
+                      <div className="mt-2 flex items-center gap-2 text-orange-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
             {/* Form Alanları */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -677,44 +696,47 @@ Saygılarımla,
             </div>
 
             {/* Generate Button */}
-            <button
-              onClick={generateAIPetition}
-              disabled={isGenerating}
-              className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span>AI Dilekçe Oluşturuyor...</span>
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-6 w-6" />
-                  <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
-                  <Zap className="h-5 w-5" />
-                </>
-              )}
-            </button>
+            <div className="mt-6">
+              <button
+                onClick={generateAIPetition}
+                disabled={isGenerating}
+                className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                    <span>AI Dilekçe Oluşturuyor...</span>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-6 w-6" />
+                    <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
+                    <Zap className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </div>
+            </div>
           </div>
         )}
 
         {/* Oluşturulan Dilekçe */}
         {generatedPetition && (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 overflow-hidden mt-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-8">
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
                     <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">Oluşturulan Dilekçe</h3>
+                    <h3 className="text-white font-semibold text-lg">Oluşturulan Dilekçe</h3>
                     <p className="text-green-100 text-sm">AI tarafından oluşturuldu</p>
                   </div>
                 </div>
@@ -747,7 +769,7 @@ Saygılarımla,
 
             {/* Content */}
             <div className="p-6">
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedPetition}
                 </pre>
