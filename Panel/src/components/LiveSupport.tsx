@@ -59,27 +59,27 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
 
   const getAISupportResponse = async (userMessage: string): Promise<string> => {
     try {
-      const supportPrompt = `Sen Avukat Bilgi Sistemi'nin samimi ve yardımsever AI destek asistanısın. Kullanıcılarla doğal, sıcak ve insanı bir şekilde konuşuyorsun.
+      const supportPrompt = `Sen Avukat Bilgi Sistemi'nin destek asistanısın. Kullanıcılarla profesyonel ama samimi bir şekilde konuşuyorsun.
 
 Kullanıcı mesajı: "${userMessage}"
 
 Önemli kurallar:
-1. Çok samimi ve doğal konuş, robot gibi değil
-2. Kısa ve öz yanıt ver
+1. Profesyonel ama samimi ol, yapmacık değil
+2. Kısa ve net yanıt ver
 3. Türkçe konuş
-4. Günlük konuşma dilini kullan
-5. Sorulara pratik çözümler öner
-6. Eğer teknik sorun değilse, samimi bir şekilde yanıtla
-7. "lan", "ya", "hadi" gibi samimi ifadeler kullanabilirsin
-8. Çok uzun açıklamalar yapma
+4. Gereksiz emoji ve aşırı samimi ifadeler kullanma
+5. Sorulara direkt çözüm öner
+6. Ciddi ama dostane bir ton kullan
+7. "canım", "yavrum" gibi aşırı samimi ifadeler kullanma
+8. Teknik konularda yardımcı ol
 
 Yanıt:`;
 
       const response = await geminiService.analyzeText(supportPrompt);
-      return response || 'Hmm, şu anda bir sorun var gibi. Tekrar dener misin?';
+      return response || 'Bir sorun var gibi, tekrar dener misin?';
     } catch (error) {
       console.error('AI yanıt hatası:', error);
-      return 'Ups, bir şeyler ters gitti. Tekrar deneyelim mi?';
+      return 'Bir hata oluştu, tekrar deneyelim.';
     }
   };
 
