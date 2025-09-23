@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Mic, Heart } from 'lucide-react';
+import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Mic, Heart, Brain, Clock } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 
 // Import all components
@@ -24,6 +24,8 @@ import Header from './components/layout/Header';
 // 🚀 Benzersiz Özellikler
 import VoiceCommands from './components/VoiceCommands';
 import AIEmotionAnalysis from './components/AIEmotionAnalysis';
+import SmartLegalSearch from './components/SmartLegalSearch';
+import LegalTimeline from './components/LegalTimeline';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -187,6 +189,8 @@ function App() {
     // 🚀 Benzersiz Efsane Özellikler
     { id: 'voice-commands', label: 'Sesli Komutlar', icon: Mic, color: 'text-green-600', badge: 'EFSANE' },
     { id: 'ai-emotion-analysis', label: 'AI Duygu Analizi', icon: Heart, color: 'text-pink-600', badge: 'EFSANE' },
+    { id: 'smart-legal-search', label: 'Akıllı Hukuki Arama', icon: Brain, color: 'text-purple-600', badge: 'EFSANE' },
+    { id: 'legal-timeline', label: 'Hukuki Zaman Çizelgesi', icon: Clock, color: 'text-indigo-600', badge: 'EFSANE' },
     
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
@@ -224,6 +228,10 @@ function App() {
         return <VoiceCommands />;
       case 'ai-emotion-analysis':
         return <AIEmotionAnalysis />;
+      case 'smart-legal-search':
+        return <SmartLegalSearch />;
+      case 'legal-timeline':
+        return <LegalTimeline />;
       
       case 'cases':
         return <CaseManagement />;
