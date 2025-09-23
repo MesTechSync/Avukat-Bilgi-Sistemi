@@ -44,11 +44,21 @@ const AdvancedSearch: React.FC = () => {
   const [showAiSummary, setShowAiSummary] = useState(false);
 
   // 🚀 Yeni Özellikler
-  const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics' | 'emotion' | 'voice'>('search');
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [searchAnalytics, setSearchAnalytics] = useState<any>(null);
   const [aiInsights, setAiInsights] = useState<string[]>([]);
   const [showAiInsights, setShowAiInsights] = useState(false);
+  
+  // AI Duygu Analizi State'leri
+  const [emotionAnalysis, setEmotionAnalysis] = useState<any[]>([]);
+  const [isAnalyzingEmotion, setIsAnalyzingEmotion] = useState(false);
+  const [emotionStats, setEmotionStats] = useState<any>(null);
+  
+  // Sesli Komutlar State'leri
+  const [voiceCommands, setVoiceCommands] = useState<any[]>([]);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [currentCommand, setCurrentCommand] = useState('');
 
   const { isListening, startListening, stopListening, transcript, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -606,11 +616,13 @@ const AdvancedSearch: React.FC = () => {
         {/* Tab Navigation */}
         <div className="max-w-4xl mx-auto mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2">
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto">
               {[
                 { id: 'search', label: 'Akıllı Arama', icon: Search },
                 { id: 'timeline', label: 'Zaman Çizelgesi', icon: Clock },
-                { id: 'analytics', label: 'Analitik', icon: BarChart3 }
+                { id: 'analytics', label: 'Analitik', icon: BarChart3 },
+                { id: 'emotion', label: 'Duygu Analizi', icon: Heart },
+                { id: 'voice', label: 'Sesli Komutlar', icon: Mic }
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
@@ -1021,6 +1033,40 @@ const AdvancedSearch: React.FC = () => {
                 <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400">
                   Analitik özelliği yakında eklenecek...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Duygu Analizi Tab */}
+        {activeTab === 'emotion' && (
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+                AI Duygu Analizi
+              </h3>
+              <div className="text-center py-12">
+                <Heart className="w-16 h-16 text-pink-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">
+                  AI Duygu Analizi özelliği yakında eklenecek...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sesli Komutlar Tab */}
+        {activeTab === 'voice' && (
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+                Sesli Komutlar
+              </h3>
+              <div className="text-center py-12">
+                <Mic className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">
+                  Sesli Komutlar özelliği yakında eklenecek...
                 </p>
               </div>
             </div>

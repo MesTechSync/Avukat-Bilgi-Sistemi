@@ -21,9 +21,7 @@ import HeaderVoiceControl from './components/HeaderVoiceControl';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
 import Header from './components/layout/Header';
 
-// 🚀 Benzersiz Özellikler
-import VoiceCommands from './components/VoiceCommands';
-import AIEmotionAnalysis from './components/AIEmotionAnalysis';
+// 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -184,9 +182,7 @@ function App() {
     { id: 'ai-chat', label: 'Hukuk Asistanı', icon: Bot, color: 'text-purple-600', badge: 'BETA' },
     { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
     
-    // 🚀 Benzersiz Efsane Özellikler
-    { id: 'voice-commands', label: 'Sesli Komutlar', icon: Mic, color: 'text-green-600', badge: 'EFSANE' },
-    { id: 'ai-emotion-analysis', label: 'AI Duygu Analizi', icon: Heart, color: 'text-pink-600', badge: 'EFSANE' },
+    // 🚀 Benzersiz Efsane Özellikler - Artık İçtihat & Mevzuat içinde
     
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
@@ -219,11 +215,7 @@ function App() {
       case 'notebook-llm':
         return <NotebookLLM />;
       
-      // 🚀 Benzersiz Özellikler
-      case 'voice-commands':
-        return <VoiceCommands />;
-      case 'ai-emotion-analysis':
-        return <AIEmotionAnalysis />;
+      // 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
       
       case 'cases':
         return <CaseManagement />;
