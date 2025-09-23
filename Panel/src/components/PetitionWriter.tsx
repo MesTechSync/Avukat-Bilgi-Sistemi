@@ -11,7 +11,8 @@ import {
   Users, 
   BookOpen, 
   Wand2, 
-  RefreshCw
+  RefreshCw,
+  Brain
 } from 'lucide-react';
 import { 
   petitionTemplates, 
@@ -53,6 +54,8 @@ export default function PetitionWriter() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview'>('templates');
   const [sortBy, setSortBy] = useState<'popular' | 'recent' | 'rating' | 'alphabetical'>('popular');
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
   // Filtrelenmiş şablonlar
   const filteredTemplates = useMemo(() => {
@@ -106,12 +109,13 @@ export default function PetitionWriter() {
     }));
   };
 
-  // Şablon seçildiğinde form alanlarını oluştur
+  // Şablon seçildiğinde form alanlarını oluştur ve AI önerilerini al
   useEffect(() => {
     if (selectedTemplate) {
       const fields = createFormFields(selectedTemplate);
       setFormFields(fields);
       setActiveTab('create');
+      getAISuggestions();
     }
   }, [selectedTemplate]);
 
@@ -156,8 +160,16 @@ GÖREVLERİN:
 5. Dilekçe formatını koru
 6. Hukuki dayanakları doğru kullan
 7. Mahkeme adresini uygun şekilde düzenle
+8. Dilekçeyi tam ve eksiksiz hale getir
+9. Hukuki açıdan güçlü argümanlar kullan
+10. Sonuç ve talep kısmını net şekilde belirt
 
-ÖNEMLİ: Sadece dilekçe içeriğini döndür, açıklama veya yorum ekleme. Dilekçe tamamen hazır ve kullanıma uygun olmalı.
+ÖNEMLİ: 
+- Sadece dilekçe içeriğini döndür, açıklama veya yorum ekleme
+- Dilekçe tamamen hazır ve kullanıma uygun olmalı
+- Türk hukuk sistemine uygun format kullan
+- Profesyonel ve resmi dil kullan
+- Hukuki dayanakları doğru şekilde uygula
       `;
 
       const response = await geminiService.analyzeText(prompt);
@@ -179,6 +191,45 @@ GÖREVLERİN:
       alert('Dilekçe oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // AI ile öneriler al
+  const getAISuggestions = async () => {
+    if (!selectedTemplate) return;
+    
+    setIsGeneratingSuggestions(true);
+    try {
+      const prompt = `
+Sen Türkiye'de çalışan deneyimli bir avukatsın. Aşağıdaki dilekçe şablonu için profesyonel öneriler ver:
+
+ŞABLON BİLGİLERİ:
+- Başlık: ${selectedTemplate.title}
+- Kategori: ${selectedTemplate.category} - ${selectedTemplate.subcategory}
+- Hukuki Dayanak: ${selectedTemplate.legalBasis.join(', ')}
+- Mahkeme Türü: ${selectedTemplate.courtType}
+- Zorluk Seviyesi: ${selectedTemplate.difficulty}
+
+GÖREVİN:
+Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
+1. Hukuki açıdan önemli bir nokta
+2. Pratik bir ipucu
+3. Dikkat edilmesi gereken bir husus
+4. Başarı şansını artıran bir faktör
+5. Yaygın hata veya eksiklik
+
+Önerileri kısa ve net şekilde ver. Her öneri maksimum 2 cümle olsun.
+      `;
+
+      const response = await geminiService.analyzeText(prompt);
+      if (response) {
+        const suggestions = response.split('\n').filter(line => line.trim()).slice(0, 5);
+        setAiSuggestions(suggestions);
+      }
+    } catch (error) {
+      console.error('AI önerileri alma hatası:', error);
+    } finally {
+      setIsGeneratingSuggestions(false);
     }
   };
 
@@ -295,8 +346,8 @@ GÖREVLERİN:
                 <option value="">Tüm Kategoriler</option>
                     {Object.keys(petitionCategories).map(category => (
                       <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
+                ))}
+              </select>
 
                   {selectedCategory && (
                     <select
@@ -463,7 +514,36 @@ GÖREVLERİN:
                   )}
                 </div>
               ))}
-            </div>
+              </div>
+
+              {/* AI Önerileri */}
+              {aiSuggestions.length > 0 && (
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1 bg-blue-600 rounded">
+                      <Brain className="w-4 h-4 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-200">AI Önerileri</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {aiSuggestions.map((suggestion, index) => (
+                      <div key={index} className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>{suggestion}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isGeneratingSuggestions && (
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>AI önerileri alınıyor...</span>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-8 flex gap-4">
             <button
