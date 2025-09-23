@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Brain, Mic, TrendingUp } from 'lucide-react';
+import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Brain, Mic, TrendingUp, Eye, Heart, Shield } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 
 // Import all components
@@ -25,6 +25,9 @@ import Header from './components/layout/Header';
 import AILegalAssistant from './components/AILegalAssistant';
 import PredictiveAnalytics from './components/PredictiveAnalytics';
 import VoiceCommands from './components/VoiceCommands';
+import ARVRCourtroom from './components/ARVRCourtroom';
+import AIEmotionAnalysis from './components/AIEmotionAnalysis';
+import BlockchainVerification from './components/BlockchainVerification';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -189,6 +192,9 @@ function App() {
     { id: 'ai-legal-assistant', label: 'AI Hukuki Danışman', icon: Brain, color: 'text-purple-600', badge: 'EFSANE' },
     { id: 'predictive-analytics', label: 'Tahmine Dayalı Analiz', icon: TrendingUp, color: 'text-blue-600', badge: 'EFSANE' },
     { id: 'voice-commands', label: 'Sesli Komutlar', icon: Mic, color: 'text-green-600', badge: 'EFSANE' },
+    { id: 'ar-vr-courtroom', label: 'AR/VR Sanal Mahkeme', icon: Eye, color: 'text-indigo-600', badge: 'EFSANE' },
+    { id: 'ai-emotion-analysis', label: 'AI Duygu Analizi', icon: Heart, color: 'text-pink-600', badge: 'EFSANE' },
+    { id: 'blockchain-verification', label: 'Blockchain Doğrulama', icon: Shield, color: 'text-cyan-600', badge: 'EFSANE' },
     
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
@@ -228,6 +234,12 @@ function App() {
         return <PredictiveAnalytics />;
       case 'voice-commands':
         return <VoiceCommands />;
+      case 'ar-vr-courtroom':
+        return <ARVRCourtroom />;
+      case 'ai-emotion-analysis':
+        return <AIEmotionAnalysis />;
+      case 'blockchain-verification':
+        return <BlockchainVerification />;
       
       case 'cases':
         return <CaseManagement />;
