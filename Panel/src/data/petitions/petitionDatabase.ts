@@ -182,6 +182,126 @@ SONUÇ VE TALEP: Ayrılık süresinin tamamlanması nedeniyle boşanma kararı v
     usageCount: 0,
     rating: 4.3
   },
+  {
+    id: 'evliligin-butlani',
+    title: 'Evliliğin Butlanı Dilekçesi',
+    category: 'Aile Hukuku',
+    subcategory: 'Evlilik',
+    description: 'Evliliğin geçersizliği talebi',
+    keywords: ['evlilik', 'butlan', 'geçersizlik', 'aile'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Evliliğin butlanı davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Evlilik Tarihi] tarihinde evlilik akdi yapılmıştır.
+
+2. Evlilik sırasında [Butlan Nedeni] nedeniyle evlilik geçersizdir.
+
+3. Bu durum evliliğin temelinden sarsılmasına neden olmuştur.
+
+4. Evliliğin butlanına karar verilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 145. maddesi
+
+SONUÇ VE TALEP: Evliliğin butlanına karar verilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Evlilik Tarihi', 'Butlan Nedeni'],
+    legalBasis: ['TMK 145', 'TMK 146'],
+    courtType: 'Aile Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  {
+    id: 'evlenmenin-men-i',
+    title: 'Evlenmenin Men\'i Dilekçesi',
+    category: 'Aile Hukuku',
+    subcategory: 'Evlilik',
+    description: 'Evlenmenin engellenmesi talebi',
+    keywords: ['evlilik', 'men', 'engelleme', 'aile'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Evlenmenin men'i davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Evlilik Tarihi] tarihinde evlilik akdi yapılmıştır.
+
+2. Evlilik sırasında [Men Nedeni] nedeniyle evlilik engellenmelidir.
+
+3. Bu durum evliliğin temelinden sarsılmasına neden olmuştur.
+
+4. Evlenmenin men'ine karar verilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 147. maddesi
+
+SONUÇ VE TALEP: Evlenmenin men'ine karar verilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Evlilik Tarihi', 'Men Nedeni'],
+    legalBasis: ['TMK 147', 'TMK 148'],
+    courtType: 'Aile Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  {
+    id: 'gaiplik-nedeni-ile-evliligin-feshi',
+    title: 'Gaiplik Nedeniyle Evliliğin Feshi Dilekçesi',
+    category: 'Aile Hukuku',
+    subcategory: 'Evlilik',
+    description: 'Eşin gaipliği nedeniyle evliliğin feshi',
+    keywords: ['evlilik', 'gaiplik', 'fesih', 'aile'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Gaiplik nedeniyle evliliğin feshi davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Evlilik Tarihi] tarihinde evlilik akdi yapılmıştır.
+
+2. Davalı, [Gaiplik Tarihi] tarihinden itibaren gaip durumundadır.
+
+3. Davalı hakkında [Gaiplik Süresi] süre boyunca hiçbir haber alınamamıştır.
+
+4. Bu durum evliliğin feshini gerektirmektedir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 31. maddesi
+
+SONUÇ VE TALEP: Gaiplik nedeniyle evliliğin feshine karar verilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Evlilik Tarihi', 'Gaiplik Tarihi', 'Gaiplik Süresi'],
+    legalBasis: ['TMK 31', 'TMK 32'],
+    courtType: 'Aile Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.9
+  },
   // AİLE HUKUKU - VELAYET
   {
     id: 'velayet-degisikligi',
@@ -262,6 +382,46 @@ SONUÇ VE TALEP: Çocukla kişisel ilişkinin [Yeni Düzenleme] şeklinde yenide
     lastUpdated: '2024-01-15',
     usageCount: 0,
     rating: 4.4
+  },
+  {
+    id: 'velayet-kaldirma',
+    title: 'Velayet Kaldırma Dilekçesi',
+    category: 'Aile Hukuku',
+    subcategory: 'Velayet',
+    description: 'Velayetin kaldırılması talebi',
+    keywords: ['velayet', 'kaldırma', 'çocuk', 'aile'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Velayet kaldırma davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Boşanma Tarihi] tarihinde boşanma gerçekleşmiştir.
+
+2. Çocuğun velayeti davalıya verilmiştir.
+
+3. Davalının velayet görevini yerine getirmediği tespit edilmiştir.
+
+4. [Velayet Kaldırma Nedeni] nedeniyle velayetin kaldırılması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 182. maddesi
+
+SONUÇ VE TALEP: Velayetin kaldırılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Çocuk Bilgileri', 'Boşanma Tarihi', 'Velayet Kaldırma Nedeni'],
+    legalBasis: ['TMK 182', 'TMK 183'],
+    courtType: 'Aile Mahkemesi',
+    estimatedTime: '60-90 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.2
   },
   // AİLE HUKUKU - NAFAKA
   {
@@ -383,6 +543,46 @@ SONUÇ VE TALEP: Boşanma davası süresince [Talep Edilen Miktar] TL tedbir naf
     lastUpdated: '2024-01-15',
     usageCount: 0,
     rating: 4.1
+  },
+  {
+    id: 'nafaka-kesme',
+    title: 'Nafaka Kesme Dilekçesi',
+    category: 'Aile Hukuku',
+    subcategory: 'Nafaka',
+    description: 'Nafaka yükümlülüğünün kaldırılması talebi',
+    keywords: ['nafaka', 'kesme', 'kaldırma', 'aile'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Nafaka kesme davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Boşanma Tarihi] tarihinde boşanma gerçekleşmiştir.
+
+2. Davacıya nafaka yükümlülüğü getirilmiştir.
+
+3. [Nafaka Kesme Nedeni] nedeniyle nafaka yükümlülüğünün kaldırılması gerekmektedir.
+
+4. Davalının ekonomik durumu değişmiştir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 175. maddesi
+
+SONUÇ VE TALEP: Nafaka yükümlülüğünün kaldırılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Boşanma Tarihi', 'Nafaka Kesme Nedeni'],
+    legalBasis: ['TMK 175', 'TMK 176'],
+    courtType: 'Aile Mahkemesi',
+    estimatedTime: '45-60 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
   },
   // MEDENİ HUKUK - MİRAS
   {
@@ -704,6 +904,776 @@ SONUÇ VE TALEP: Davalıdan [Zarar Miktarı] TL maddi tazminat ödenmesini talep
     lastUpdated: '2024-01-15',
     usageCount: 0,
     rating: 4.1
+  },
+  // MEDENİ HUKUK - TAPU
+  {
+    id: 'tapu-iptali',
+    title: 'Tapu İptali Dilekçesi',
+    category: 'Medeni Hukuk',
+    subcategory: 'Tapu',
+    description: 'Tapu kaydının iptali talebi',
+    keywords: ['tapu', 'iptal', 'gayrimenkul', 'kayıt'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Tapu iptali davası
+
+AÇIKLAMALAR:
+
+1. [Gayrimenkul Bilgileri] adlı gayrimenkulün tapusu davalı adına kayıtlıdır.
+
+2. Bu tapu kaydı [İptal Nedeni] nedeniyle hatalıdır.
+
+3. Tapu kaydının iptal edilmesi gerekmektedir.
+
+4. Davacının mülkiyet hakkı ihlal edilmiştir.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 705. maddesi
+
+SONUÇ VE TALEP: Tapu kaydının iptal edilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Gayrimenkul Bilgileri', 'İptal Nedeni'],
+    legalBasis: ['TMK 705', 'TMK 706'],
+    courtType: 'Asliye Hukuk Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.2
+  },
+  {
+    id: 'tapu-tescil',
+    title: 'Tapu Tescil Dilekçesi',
+    category: 'Medeni Hukuk',
+    subcategory: 'Tapu',
+    description: 'Tapu tescil talebi',
+    keywords: ['tapu', 'tescil', 'gayrimenkul', 'kayıt'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Tapu tescil davası
+
+AÇIKLAMALAR:
+
+1. [Gayrimenkul Bilgileri] adlı gayrimenkulün mülkiyeti davacıya aittir.
+
+2. Bu gayrimenkulün tapuya tescil edilmesi gerekmektedir.
+
+3. Davalı, tapu tescilini engellemektedir.
+
+4. Mülkiyet hakkının korunması için tescil şarttır.
+
+HUKUKİ DAYANAK: Türk Medeni Kanunu'nun 705. maddesi
+
+SONUÇ VE TALEP: Tapu tescilinin yapılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Gayrimenkul Bilgileri'],
+    legalBasis: ['TMK 705', 'TMK 706'],
+    courtType: 'Asliye Hukuk Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.3
+  },
+  // MEDENİ HUKUK - KİRA
+  {
+    id: 'kira-artirimi',
+    title: 'Kira Artırımı Dilekçesi',
+    category: 'Medeni Hukuk',
+    subcategory: 'Kira',
+    description: 'Kira bedelinin artırılması talebi',
+    keywords: ['kira', 'artırım', 'bedel', 'gayrimenkul'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Kira artırımı davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Kira Sözleşmesi Tarihi] tarihinde kira sözleşmesi yapılmıştır.
+
+2. Mevcut kira bedeli [Mevcut Kira Bedeli] TL'dir.
+
+3. [Artırım Nedeni] nedeniyle kira bedelinin artırılması gerekmektedir.
+
+4. Piyasa koşulları değişmiştir.
+
+HUKUKİ DAYANAK: Türk Borçlar Kanunu'nun 344. maddesi
+
+SONUÇ VE TALEP: Kira bedelinin artırılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Kira Sözleşmesi Tarihi', 'Mevcut Kira Bedeli', 'Artırım Nedeni'],
+    legalBasis: ['TBK 344', 'TBK 345'],
+    courtType: 'Asliye Hukuk Mahkemesi',
+    estimatedTime: '60-90 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  {
+    id: 'kira-feshi',
+    title: 'Kira Feshi Dilekçesi',
+    category: 'Medeni Hukuk',
+    subcategory: 'Kira',
+    description: 'Kira sözleşmesinin feshi talebi',
+    keywords: ['kira', 'fesih', 'sözleşme', 'gayrimenkul'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Kira feshi davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Kira Sözleşmesi Tarihi] tarihinde kira sözleşmesi yapılmıştır.
+
+2. [Fesih Nedeni] nedeniyle kira sözleşmesinin feshi gerekmektedir.
+
+3. Davalı, sözleşme şartlarına uymamaktadır.
+
+4. Sözleşmenin devamı mümkün değildir.
+
+HUKUKİ DAYANAK: Türk Borçlar Kanunu'nun 331. maddesi
+
+SONUÇ VE TALEP: Kira sözleşmesinin feshini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Kira Sözleşmesi Tarihi', 'Fesih Nedeni'],
+    legalBasis: ['TBK 331', 'TBK 332'],
+    courtType: 'Asliye Hukuk Mahkemesi',
+    estimatedTime: '60-90 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  // İŞ HUKUKU - İŞÇİ
+  {
+    id: 'isci-tazminati',
+    title: 'İşçi Tazminatı Dilekçesi',
+    category: 'İş Hukuku',
+    subcategory: 'İşçi',
+    description: 'İşçi tazminatı talebi',
+    keywords: ['işçi', 'tazminat', 'iş', 'çalışan'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: İşçi tazminatı davası
+
+AÇIKLAMALAR:
+
+1. Davacı, davalının işyerinde [İşe Başlama Tarihi] tarihinden itibaren çalışmıştır.
+
+2. [İşten Çıkış Tarihi] tarihinde işten çıkarılmıştır.
+
+3. [Tazminat Nedeni] nedeniyle tazminat hakkı doğmuştur.
+
+4. İşveren, tazminat ödememiştir.
+
+HUKUKİ DAYANAK: İş Kanunu'nun 17. maddesi
+
+SONUÇ VE TALEP: İşçi tazminatının ödenmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'İşe Başlama Tarihi', 'İşten Çıkış Tarihi', 'Tazminat Nedeni'],
+    legalBasis: ['İK 17', 'İK 18'],
+    courtType: 'İş Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.2
+  },
+  {
+    id: 'isci-gerialma',
+    title: 'İşçi Geri Alma Dilekçesi',
+    category: 'İş Hukuku',
+    subcategory: 'İşçi',
+    description: 'İşçinin geri alınması talebi',
+    keywords: ['işçi', 'geri alma', 'iş', 'çalışan'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: İşçi geri alma davası
+
+AÇIKLAMALAR:
+
+1. Davacı, davalının işyerinde [İşe Başlama Tarihi] tarihinden itibaren çalışmıştır.
+
+2. [İşten Çıkış Tarihi] tarihinde haksız yere işten çıkarılmıştır.
+
+3. [Geri Alma Nedeni] nedeniyle işe geri alınması gerekmektedir.
+
+4. İşveren, haksız fesih yapmıştır.
+
+HUKUKİ DAYANAK: İş Kanunu'nun 20. maddesi
+
+SONUÇ VE TALEP: İşe geri alınmamı talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'İşe Başlama Tarihi', 'İşten Çıkış Tarihi', 'Geri Alma Nedeni'],
+    legalBasis: ['İK 20', 'İK 21'],
+    courtType: 'İş Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  // İŞ HUKUKU - İŞVEREN
+  {
+    id: 'isveren-tazminati',
+    title: 'İşveren Tazminatı Dilekçesi',
+    category: 'İş Hukuku',
+    subcategory: 'İşveren',
+    description: 'İşveren tazminatı talebi',
+    keywords: ['işveren', 'tazminat', 'iş', 'zarar'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: İşveren tazminatı davası
+
+AÇIKLAMALAR:
+
+1. Davalı, davacının işyerinde [İşe Başlama Tarihi] tarihinden itibaren çalışmıştır.
+
+2. [İşten Çıkış Tarihi] tarihinde işten ayrılmıştır.
+
+3. [Tazminat Nedeni] nedeniyle işverene zarar vermiştir.
+
+4. Bu zararın tazmin edilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: İş Kanunu'nun 25. maddesi
+
+SONUÇ VE TALEP: İşveren tazminatının ödenmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'İşe Başlama Tarihi', 'İşten Çıkış Tarihi', 'Tazminat Nedeni'],
+    legalBasis: ['İK 25', 'İK 26'],
+    courtType: 'İş Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.9
+  },
+  // TİCARET HUKUKU - ŞİRKET
+  {
+    id: 'sirket-kurulus',
+    title: 'Şirket Kuruluş Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Şirket',
+    description: 'Şirket kuruluş talebi',
+    keywords: ['şirket', 'kuruluş', 'ticaret', 'ortaklık'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Şirket kuruluş davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Sözleşme Tarihi] tarihinde şirket kuruluş sözleşmesi yapılmıştır.
+
+2. [Şirket Türü] türünde şirket kurulması planlanmıştır.
+
+3. [Kuruluş Nedeni] nedeniyle şirket kuruluşu gerçekleştirilememiştir.
+
+4. Şirket kuruluşunun tamamlanması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 332. maddesi
+
+SONUÇ VE TALEP: Şirket kuruluşunun tamamlanmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Sözleşme Tarihi', 'Şirket Türü', 'Kuruluş Nedeni'],
+    legalBasis: ['TTK 332', 'TTK 333'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  {
+    id: 'sirket-feshi',
+    title: 'Şirket Feshi Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Şirket',
+    description: 'Şirket feshi talebi',
+    keywords: ['şirket', 'fesih', 'ticaret', 'ortaklık'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Şirket feshi davası
+
+AÇIKLAMALAR:
+
+1. Davacı ile davalı arasında [Sözleşme Tarihi] tarihinde şirket kuruluş sözleşmesi yapılmıştır.
+
+2. [Şirket Türü] türünde şirket kurulmuştur.
+
+3. [Fesih Nedeni] nedeniyle şirketin feshi gerekmektedir.
+
+4. Şirketin devamı mümkün değildir.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 580. maddesi
+
+SONUÇ VE TALEP: Şirketin feshini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Sözleşme Tarihi', 'Şirket Türü', 'Fesih Nedeni'],
+    legalBasis: ['TTK 580', 'TTK 581'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.8
+  },
+  // TİCARET HUKUKU - ÇEK
+  {
+    id: 'cek-protestosu',
+    title: 'Çek Protestosu Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Çek',
+    description: 'Çek protestosu talebi',
+    keywords: ['çek', 'protesto', 'ticaret', 'ödeme'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Çek protestosu davası
+
+AÇIKLAMALAR:
+
+1. Davalı, davacıya [Çek Tarihi] tarihinde [Çek Tutarı] TL tutarında çek vermiştir.
+
+2. Çek, [Vade Tarihi] tarihinde vadesi gelmiştir.
+
+3. Çek, ödeme için ibraz edildiğinde ödenmemiştir.
+
+4. Çek protestosu yapılması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 680. maddesi
+
+SONUÇ VE TALEP: Çek protestosunun yapılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Çek Tarihi', 'Çek Tutarı', 'Vade Tarihi'],
+    legalBasis: ['TTK 680', 'TTK 681'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '60-90 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  {
+    id: 'cek-tazminati',
+    title: 'Çek Tazminatı Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Çek',
+    description: 'Çek tazminatı talebi',
+    keywords: ['çek', 'tazminat', 'ticaret', 'ödeme'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Çek tazminatı davası
+
+AÇIKLAMALAR:
+
+1. Davalı, davacıya [Çek Tarihi] tarihinde [Çek Tutarı] TL tutarında çek vermiştir.
+
+2. Çek, [Vade Tarihi] tarihinde vadesi gelmiştir.
+
+3. Çek, ödeme için ibraz edildiğinde ödenmemiştir.
+
+4. Bu durum nedeniyle tazminat hakkı doğmuştur.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 680. maddesi
+
+SONUÇ VE TALEP: Çek tazminatının ödenmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Çek Tarihi', 'Çek Tutarı', 'Vade Tarihi'],
+    legalBasis: ['TTK 680', 'TTK 681'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  // TİCARET HUKUKU - SENET
+  {
+    id: 'senet-protestosu',
+    title: 'Senet Protestosu Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Senet',
+    description: 'Senet protestosu talebi',
+    keywords: ['senet', 'protesto', 'ticaret', 'ödeme'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Senet protestosu davası
+
+AÇIKLAMALAR:
+
+1. Davalı, davacıya [Senet Tarihi] tarihinde [Senet Tutarı] TL tutarında senet vermiştir.
+
+2. Senet, [Vade Tarihi] tarihinde vadesi gelmiştir.
+
+3. Senet, ödeme için ibraz edildiğinde ödenmemiştir.
+
+4. Senet protestosu yapılması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 680. maddesi
+
+SONUÇ VE TALEP: Senet protestosunun yapılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Senet Tarihi', 'Senet Tutarı', 'Vade Tarihi'],
+    legalBasis: ['TTK 680', 'TTK 681'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '60-90 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  {
+    id: 'senet-tazminati',
+    title: 'Senet Tazminatı Dilekçesi',
+    category: 'Ticaret Hukuku',
+    subcategory: 'Senet',
+    description: 'Senet tazminatı talebi',
+    keywords: ['senet', 'tazminat', 'ticaret', 'ödeme'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Senet tazminatı davası
+
+AÇIKLAMALAR:
+
+1. Davalı, davacıya [Senet Tarihi] tarihinde [Senet Tutarı] TL tutarında senet vermiştir.
+
+2. Senet, [Vade Tarihi] tarihinde vadesi gelmiştir.
+
+3. Senet, ödeme için ibraz edildiğinde ödenmemiştir.
+
+4. Bu durum nedeniyle tazminat hakkı doğmuştur.
+
+HUKUKİ DAYANAK: Türk Ticaret Kanunu'nun 680. maddesi
+
+SONUÇ VE TALEP: Senet tazminatının ödenmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Senet Tarihi', 'Senet Tutarı', 'Vade Tarihi'],
+    legalBasis: ['TTK 680', 'TTK 681'],
+    courtType: 'Asliye Ticaret Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  // CEZA HUKUKU - SUÇ
+  {
+    id: 'suclama',
+    title: 'Suçlama Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Suç',
+    description: 'Suçlama talebi',
+    keywords: ['suç', 'suçlama', 'ceza', 'şikayet'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Suçlama davası
+
+AÇIKLAMALAR:
+
+1. Davalı, [Suç Tarihi] tarihinde [Suç Yeri]'nde [Suç Türü] suçunu işlemiştir.
+
+2. Bu suç nedeniyle davacıya zarar vermiştir.
+
+3. [Suç Delilleri] delilleri mevcuttur.
+
+4. Suçlama yapılması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 2. maddesi
+
+SONUÇ VE TALEP: Suçlamanın yapılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Suç Tarihi', 'Suç Yeri', 'Suç Türü', 'Suç Delilleri'],
+    legalBasis: ['TCK 2', 'TCK 3'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.9
+  },
+  {
+    id: 'suclama-iptali',
+    title: 'Suçlama İptali Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Suç',
+    description: 'Suçlama iptali talebi',
+    keywords: ['suç', 'iptal', 'ceza', 'şikayet'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Suçlama iptali davası
+
+AÇIKLAMALAR:
+
+1. Davalı hakkında [Suçlama Tarihi] tarihinde suçlama yapılmıştır.
+
+2. Bu suçlama [İptal Nedeni] nedeniyle hatalıdır.
+
+3. Suçlama delilleri yetersizdir.
+
+4. Suçlamanın iptal edilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 2. maddesi
+
+SONUÇ VE TALEP: Suçlamanın iptal edilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Suçlama Tarihi', 'İptal Nedeni'],
+    legalBasis: ['TCK 2', 'TCK 3'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.8
+  },
+  // CEZA HUKUKU - TAZMİNAT
+  {
+    id: 'ceza-tazminati',
+    title: 'Ceza Tazminatı Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Tazminat',
+    description: 'Ceza tazminatı talebi',
+    keywords: ['ceza', 'tazminat', 'zarar', 'suç'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Ceza tazminatı davası
+
+AÇIKLAMALAR:
+
+1. Davalı, [Suç Tarihi] tarihinde [Suç Yeri]'nde [Suç Türü] suçunu işlemiştir.
+
+2. Bu suç nedeniyle davacıya [Zarar Miktarı] TL zarar vermiştir.
+
+3. [Zarar Delilleri] delilleri mevcuttur.
+
+4. Zararın tazmin edilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 53. maddesi
+
+SONUÇ VE TALEP: Ceza tazminatının ödenmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Suç Tarihi', 'Suç Yeri', 'Suç Türü', 'Zarar Miktarı', 'Zarar Delilleri'],
+    legalBasis: ['TCK 53', 'TCK 54'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  {
+    id: 'ceza-tazminati-artirimi',
+    title: 'Ceza Tazminatı Artırımı Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Tazminat',
+    description: 'Ceza tazminatı artırımı talebi',
+    keywords: ['ceza', 'tazminat', 'artırım', 'zarar'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Ceza tazminatı artırımı davası
+
+AÇIKLAMALAR:
+
+1. Davalı, [Suç Tarihi] tarihinde [Suç Yeri]'nde [Suç Türü] suçunu işlemiştir.
+
+2. Bu suç nedeniyle davacıya [Mevcut Tazminat] TL tazminat ödenmiştir.
+
+3. [Artırım Nedeni] nedeniyle tazminatın artırılması gerekmektedir.
+
+4. Mevcut tazminat yetersizdir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 53. maddesi
+
+SONUÇ VE TALEP: Ceza tazminatının artırılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Suç Tarihi', 'Suç Yeri', 'Suç Türü', 'Mevcut Tazminat', 'Artırım Nedeni'],
+    legalBasis: ['TCK 53', 'TCK 54'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '120-180 gün',
+    difficulty: 'Zor',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.9
+  },
+  // CEZA HUKUKU - ŞİKAYET
+  {
+    id: 'sikayet',
+    title: 'Şikayet Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Şikayet',
+    description: 'Şikayet talebi',
+    keywords: ['şikayet', 'suç', 'ceza', 'ihbar'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Şikayet davası
+
+AÇIKLAMALAR:
+
+1. Davalı, [Suç Tarihi] tarihinde [Suç Yeri]'nde [Suç Türü] suçunu işlemiştir.
+
+2. Bu suç nedeniyle davacıya zarar vermiştir.
+
+3. [Şikayet Delilleri] delilleri mevcuttur.
+
+4. Şikayet yapılması gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 2. maddesi
+
+SONUÇ VE TALEP: Şikayetin yapılmasını talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Suç Tarihi', 'Suç Yeri', 'Suç Türü', 'Şikayet Delilleri'],
+    legalBasis: ['TCK 2', 'TCK 3'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  {
+    id: 'sikayet-iptali',
+    title: 'Şikayet İptali Dilekçesi',
+    category: 'Ceza Hukuku',
+    subcategory: 'Şikayet',
+    description: 'Şikayet iptali talebi',
+    keywords: ['şikayet', 'iptal', 'ceza', 'suç'],
+    content: `MAHKEMESİNE
+
+DAVA DİLEKÇESİ
+
+DAVACI: [Davacı Ad Soyad]
+DAVALI: [Davalı Ad Soyad]
+
+KONU: Şikayet iptali davası
+
+AÇIKLAMALAR:
+
+1. Davalı hakkında [Şikayet Tarihi] tarihinde şikayet yapılmıştır.
+
+2. Bu şikayet [İptal Nedeni] nedeniyle hatalıdır.
+
+3. Şikayet delilleri yetersizdir.
+
+4. Şikayetin iptal edilmesi gerekmektedir.
+
+HUKUKİ DAYANAK: Türk Ceza Kanunu'nun 2. maddesi
+
+SONUÇ VE TALEP: Şikayetin iptal edilmesini talep ederim.
+
+[İmza]`,
+    requiredFields: ['Davacı Ad Soyad', 'Davalı Ad Soyad', 'Şikayet Tarihi', 'İptal Nedeni'],
+    legalBasis: ['TCK 2', 'TCK 3'],
+    courtType: 'Asliye Ceza Mahkemesi',
+    estimatedTime: '90-120 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 3.9
   }
 ];
 

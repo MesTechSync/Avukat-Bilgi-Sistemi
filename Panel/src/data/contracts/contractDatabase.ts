@@ -757,6 +757,453 @@ KİRA VEREN                KİRACI
     lastUpdated: '2024-01-15',
     usageCount: 0,
     rating: 4.7
+  },
+  // BORÇLAR HUKUKU - KİRA
+  {
+    id: 'kira-sozlesmesi',
+    title: 'Kira Sözleşmesi',
+    category: 'Borçlar Hukuku',
+    subcategory: 'Kira',
+    description: 'Genel kira sözleşmesi şablonu',
+    keywords: ['kira', 'sözleşme', 'gayrimenkul', 'kiralama'],
+    content: `KİRA SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Gayrimenkul Bilgileri] adlı gayrimenkulün kiralanması
+
+ŞARTLAR:
+
+1. KİRA BEDELİ
+Kira bedeli aylık [Kira Bedeli] TL'dir.
+
+2. ÖDEME ŞEKLİ
+Kira bedeli her ayın [Ödeme Günü]'ünde ödenir.
+
+3. KİRA SÜRESİ
+Kira süresi [Kira Süresi] yıldır.
+
+4. DEPOZİTO
+Kiracı, [Depozito Miktarı] TL depozito öder.
+
+5. KULLANIM
+Gayrimenkul sadece [Kullanım Amacı] için kullanılır.
+
+6. BAKIM VE ONARIM
+Küçük onarımlar kiracıya, büyük onarımlar kiraya verene aittir.
+
+7. FESİH
+Sözleşme [Fesih Şartları] ile feshedilebilir.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Gayrimenkul Bilgileri', 'Kira Bedeli', 'Kira Süresi', 'Depozito Miktarı'],
+    legalBasis: ['Borçlar Kanunu 331', 'Borçlar Kanunu 332', 'Borçlar Kanunu 333'],
+    contractType: 'Kira Sözleşmesi',
+    estimatedTime: '30-45 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.2
+  },
+  {
+    id: 'kira-artirimi-sozlesmesi',
+    title: 'Kira Artırımı Sözleşmesi',
+    category: 'Borçlar Hukuku',
+    subcategory: 'Kira',
+    description: 'Kira artırımı sözleşmesi şablonu',
+    keywords: ['kira', 'artırım', 'sözleşme', 'gayrimenkul'],
+    content: `KİRA ARTIRIMI SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Gayrimenkul Bilgileri] adlı gayrimenkulün kira bedelinin artırılması
+
+ŞARTLAR:
+
+1. MEVCUT KİRA BEDELİ
+Mevcut kira bedeli aylık [Mevcut Kira Bedeli] TL'dir.
+
+2. YENİ KİRA BEDELİ
+Yeni kira bedeli aylık [Yeni Kira Bedeli] TL'dir.
+
+3. ARTIRIM ORANI
+Kira bedeli %[Artırım Oranı] oranında artırılmıştır.
+
+4. ARTIRIM NEDENİ
+Artırım nedeni: [Artırım Nedeni]
+
+5. GEÇERLİLİK TARİHİ
+Yeni kira bedeli [Geçerlilik Tarihi] tarihinden itibaren geçerlidir.
+
+6. DİĞER ŞARTLAR
+Diğer sözleşme şartları aynen devam eder.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Gayrimenkul Bilgileri', 'Mevcut Kira Bedeli', 'Yeni Kira Bedeli', 'Artırım Nedeni'],
+    legalBasis: ['Borçlar Kanunu 344', 'Borçlar Kanunu 345', 'Borçlar Kanunu 346'],
+    contractType: 'Kira Artırımı Sözleşmesi',
+    estimatedTime: '15-30 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  // BORÇLAR HUKUKU - HİZMET
+  {
+    id: 'hizmet-sozlesmesi',
+    title: 'Hizmet Sözleşmesi',
+    category: 'Borçlar Hukuku',
+    subcategory: 'Hizmet',
+    description: 'Genel hizmet sözleşmesi şablonu',
+    keywords: ['hizmet', 'sözleşme', 'hizmet', 'verim'],
+    content: `HİZMET SÖZLEŞMESİ
+
+HİZMET VEREN: [Hizmet Veren Ad Soyad]
+Adres: [Hizmet Veren Adresi]
+Telefon: [Hizmet Veren Telefonu]
+
+HİZMET ALAN: [Hizmet Alan Ad Soyad]
+Adres: [Hizmet Alan Adresi]
+Telefon: [Hizmet Alan Telefonu]
+
+KONU: [Hizmet Türü] hizmetinin verilmesi
+
+ŞARTLAR:
+
+1. HİZMET KONUSU
+Hizmet konusu: [Hizmet Konusu]
+
+2. HİZMET BEDELİ
+Hizmet bedeli [Hizmet Bedeli] TL'dir.
+
+3. ÖDEME ŞEKLİ
+Hizmet bedeli [Ödeme Şekli] ile ödenir.
+
+4. HİZMET SÜRESİ
+Hizmet süresi [Hizmet Süresi]'dir.
+
+5. HİZMET YERİ
+Hizmet [Hizmet Yeri]'nde verilir.
+
+6. HİZMET STANDARTLARI
+Hizmet [Hizmet Standartları] standartlarında verilir.
+
+7. SORUMLULUK
+Hizmet veren, hizmetin eksiksiz verilmesinden sorumludur.
+
+8. FESİH
+Sözleşme [Fesih Şartları] ile feshedilebilir.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+HİZMET VEREN: [İmza]    HİZMET ALAN: [İmza]`,
+    requiredFields: ['Hizmet Veren Ad Soyad', 'Hizmet Veren Adresi', 'Hizmet Alan Ad Soyad', 'Hizmet Alan Adresi', 'Hizmet Türü', 'Hizmet Konusu', 'Hizmet Bedeli', 'Hizmet Süresi'],
+    legalBasis: ['Borçlar Kanunu 480', 'Borçlar Kanunu 481', 'Borçlar Kanunu 482'],
+    contractType: 'Hizmet Sözleşmesi',
+    estimatedTime: '30-45 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  {
+    id: 'hizmet-artirimi-sozlesmesi',
+    title: 'Hizmet Artırımı Sözleşmesi',
+    category: 'Borçlar Hukuku',
+    subcategory: 'Hizmet',
+    description: 'Hizmet artırımı sözleşmesi şablonu',
+    keywords: ['hizmet', 'artırım', 'sözleşme', 'hizmet'],
+    content: `HİZMET ARTIRIMI SÖZLEŞMESİ
+
+HİZMET VEREN: [Hizmet Veren Ad Soyad]
+Adres: [Hizmet Veren Adresi]
+Telefon: [Hizmet Veren Telefonu]
+
+HİZMET ALAN: [Hizmet Alan Ad Soyad]
+Adres: [Hizmet Alan Adresi]
+Telefon: [Hizmet Alan Telefonu]
+
+KONU: [Hizmet Türü] hizmetinin artırılması
+
+ŞARTLAR:
+
+1. MEVCUT HİZMET BEDELİ
+Mevcut hizmet bedeli [Mevcut Hizmet Bedeli] TL'dir.
+
+2. YENİ HİZMET BEDELİ
+Yeni hizmet bedeli [Yeni Hizmet Bedeli] TL'dir.
+
+3. ARTIRIM ORANI
+Hizmet bedeli %[Artırım Oranı] oranında artırılmıştır.
+
+4. ARTIRIM NEDENİ
+Artırım nedeni: [Artırım Nedeni]
+
+5. GEÇERLİLİK TARİHİ
+Yeni hizmet bedeli [Geçerlilik Tarihi] tarihinden itibaren geçerlidir.
+
+6. DİĞER ŞARTLAR
+Diğer sözleşme şartları aynen devam eder.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+HİZMET VEREN: [İmza]    HİZMET ALAN: [İmza]`,
+    requiredFields: ['Hizmet Veren Ad Soyad', 'Hizmet Veren Adresi', 'Hizmet Alan Ad Soyad', 'Hizmet Alan Adresi', 'Hizmet Türü', 'Mevcut Hizmet Bedeli', 'Yeni Hizmet Bedeli', 'Artırım Nedeni'],
+    legalBasis: ['Borçlar Kanunu 344', 'Borçlar Kanunu 345', 'Borçlar Kanunu 346'],
+    contractType: 'Hizmet Artırımı Sözleşmesi',
+    estimatedTime: '15-30 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
+  },
+  // GAYRİMENKUL - KONUT KİRASI
+  {
+    id: 'konut-kira-sozlesmesi',
+    title: 'Konut Kira Sözleşmesi',
+    category: 'Gayrimenkul',
+    subcategory: 'Konut Kirası',
+    description: 'Konut kira sözleşmesi şablonu',
+    keywords: ['konut', 'kira', 'sözleşme', 'gayrimenkul'],
+    content: `KONUT KİRA SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Konut Bilgileri] adlı konutun kiralanması
+
+ŞARTLAR:
+
+1. KONUT BİLGİLERİ
+Konut adresi: [Konut Adresi]
+Konut tipi: [Konut Tipi]
+Oda sayısı: [Oda Sayısı]
+Metrekare: [Metrekare] m²
+
+2. KİRA BEDELİ
+Kira bedeli aylık [Kira Bedeli] TL'dir.
+
+3. ÖDEME ŞEKLİ
+Kira bedeli her ayın [Ödeme Günü]'ünde ödenir.
+
+4. KİRA SÜRESİ
+Kira süresi [Kira Süresi] yıldır.
+
+5. DEPOZİTO
+Kiracı, [Depozito Miktarı] TL depozito öder.
+
+6. KULLANIM
+Konut sadece ikamet amaçlı kullanılır.
+
+7. BAKIM VE ONARIM
+Küçük onarımlar kiracıya, büyük onarımlar kiraya verene aittir.
+
+8. FESİH
+Sözleşme [Fesih Şartları] ile feshedilebilir.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Konut Bilgileri', 'Konut Adresi', 'Kira Bedeli', 'Kira Süresi', 'Depozito Miktarı'],
+    legalBasis: ['Borçlar Kanunu 331', 'Borçlar Kanunu 332', 'Borçlar Kanunu 333'],
+    contractType: 'Konut Kira Sözleşmesi',
+    estimatedTime: '30-45 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.3
+  },
+  {
+    id: 'konut-kira-artirimi-sozlesmesi',
+    title: 'Konut Kira Artırımı Sözleşmesi',
+    category: 'Gayrimenkul',
+    subcategory: 'Konut Kirası',
+    description: 'Konut kira artırımı sözleşmesi şablonu',
+    keywords: ['konut', 'kira', 'artırım', 'sözleşme'],
+    content: `KONUT KİRA ARTIRIMI SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Konut Bilgileri] adlı konutun kira bedelinin artırılması
+
+ŞARTLAR:
+
+1. KONUT BİLGİLERİ
+Konut adresi: [Konut Adresi]
+Konut tipi: [Konut Tipi]
+
+2. MEVCUT KİRA BEDELİ
+Mevcut kira bedeli aylık [Mevcut Kira Bedeli] TL'dir.
+
+3. YENİ KİRA BEDELİ
+Yeni kira bedeli aylık [Yeni Kira Bedeli] TL'dir.
+
+4. ARTIRIM ORANI
+Kira bedeli %[Artırım Oranı] oranında artırılmıştır.
+
+5. ARTIRIM NEDENİ
+Artırım nedeni: [Artırım Nedeni]
+
+6. GEÇERLİLİK TARİHİ
+Yeni kira bedeli [Geçerlilik Tarihi] tarihinden itibaren geçerlidir.
+
+7. DİĞER ŞARTLAR
+Diğer sözleşme şartları aynen devam eder.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Konut Bilgileri', 'Konut Adresi', 'Mevcut Kira Bedeli', 'Yeni Kira Bedeli', 'Artırım Nedeni'],
+    legalBasis: ['Borçlar Kanunu 344', 'Borçlar Kanunu 345', 'Borçlar Kanunu 346'],
+    contractType: 'Konut Kira Artırımı Sözleşmesi',
+    estimatedTime: '15-30 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.1
+  },
+  // GAYRİMENKUL - TİCARİ KİRA
+  {
+    id: 'ticari-kira-sozlesmesi',
+    title: 'Ticari Kira Sözleşmesi',
+    category: 'Gayrimenkul',
+    subcategory: 'Ticari Kira',
+    description: 'Ticari kira sözleşmesi şablonu',
+    keywords: ['ticari', 'kira', 'sözleşme', 'gayrimenkul'],
+    content: `TİCARİ KİRA SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Ticari Gayrimenkul Bilgileri] adlı ticari gayrimenkulün kiralanması
+
+ŞARTLAR:
+
+1. TİCARİ GAYRİMENKUL BİLGİLERİ
+Gayrimenkul adresi: [Gayrimenkul Adresi]
+Gayrimenkul tipi: [Gayrimenkul Tipi]
+Metrekare: [Metrekare] m²
+Kullanım amacı: [Kullanım Amacı]
+
+2. KİRA BEDELİ
+Kira bedeli aylık [Kira Bedeli] TL'dir.
+
+3. ÖDEME ŞEKLİ
+Kira bedeli her ayın [Ödeme Günü]'ünde ödenir.
+
+4. KİRA SÜRESİ
+Kira süresi [Kira Süresi] yıldır.
+
+5. DEPOZİTO
+Kiracı, [Depozito Miktarı] TL depozito öder.
+
+6. KULLANIM
+Gayrimenkul sadece [Kullanım Amacı] için kullanılır.
+
+7. BAKIM VE ONARIM
+Küçük onarımlar kiracıya, büyük onarımlar kiraya verene aittir.
+
+8. FESİH
+Sözleşme [Fesih Şartları] ile feshedilebilir.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Ticari Gayrimenkul Bilgileri', 'Gayrimenkul Adresi', 'Kira Bedeli', 'Kira Süresi', 'Depozito Miktarı', 'Kullanım Amacı'],
+    legalBasis: ['Borçlar Kanunu 331', 'Borçlar Kanunu 332', 'Borçlar Kanunu 333'],
+    contractType: 'Ticari Kira Sözleşmesi',
+    estimatedTime: '30-45 gün',
+    difficulty: 'Orta',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.2
+  },
+  {
+    id: 'ticari-kira-artirimi-sozlesmesi',
+    title: 'Ticari Kira Artırımı Sözleşmesi',
+    category: 'Gayrimenkul',
+    subcategory: 'Ticari Kira',
+    description: 'Ticari kira artırımı sözleşmesi şablonu',
+    keywords: ['ticari', 'kira', 'artırım', 'sözleşme'],
+    content: `TİCARİ KİRA ARTIRIMI SÖZLEŞMESİ
+
+KİRAYA VEREN: [Kiraya Veren Ad Soyad]
+Adres: [Kiraya Veren Adresi]
+Telefon: [Kiraya Veren Telefonu]
+
+KİRACI: [Kiracı Ad Soyad]
+Adres: [Kiracı Adresi]
+Telefon: [Kiracı Telefonu]
+
+KONU: [Ticari Gayrimenkul Bilgileri] adlı ticari gayrimenkulün kira bedelinin artırılması
+
+ŞARTLAR:
+
+1. TİCARİ GAYRİMENKUL BİLGİLERİ
+Gayrimenkul adresi: [Gayrimenkul Adresi]
+Gayrimenkul tipi: [Gayrimenkul Tipi]
+
+2. MEVCUT KİRA BEDELİ
+Mevcut kira bedeli aylık [Mevcut Kira Bedeli] TL'dir.
+
+3. YENİ KİRA BEDELİ
+Yeni kira bedeli aylık [Yeni Kira Bedeli] TL'dir.
+
+4. ARTIRIM ORANI
+Kira bedeli %[Artırım Oranı] oranında artırılmıştır.
+
+5. ARTIRIM NEDENİ
+Artırım nedeni: [Artırım Nedeni]
+
+6. GEÇERLİLİK TARİHİ
+Yeni kira bedeli [Geçerlilik Tarihi] tarihinden itibaren geçerlidir.
+
+7. DİĞER ŞARTLAR
+Diğer sözleşme şartları aynen devam eder.
+
+Bu sözleşme [Tarih] tarihinde imzalanmıştır.
+
+KİRAYA VEREN: [İmza]    KİRACI: [İmza]`,
+    requiredFields: ['Kiraya Veren Ad Soyad', 'Kiraya Veren Adresi', 'Kiracı Ad Soyad', 'Kiracı Adresi', 'Ticari Gayrimenkul Bilgileri', 'Gayrimenkul Adresi', 'Mevcut Kira Bedeli', 'Yeni Kira Bedeli', 'Artırım Nedeni'],
+    legalBasis: ['Borçlar Kanunu 344', 'Borçlar Kanunu 345', 'Borçlar Kanunu 346'],
+    contractType: 'Ticari Kira Artırımı Sözleşmesi',
+    estimatedTime: '15-30 gün',
+    difficulty: 'Kolay',
+    lastUpdated: '2024-01-15',
+    usageCount: 0,
+    rating: 4.0
   }
 ];
 
