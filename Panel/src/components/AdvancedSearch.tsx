@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, Lightbulb, TrendingUp, BookOpen, Gavel, FileText, Users, Calendar, Filter, SortAsc, SortDesc, Share2, Star, History, Zap, Target, BarChart3, PieChart, MapPin, Eye, MessageSquare } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
 
@@ -42,6 +42,13 @@ const AdvancedSearch: React.FC = () => {
   const [trendAnalysis, setTrendAnalysis] = useState<{trend: string, count: number}[]>([]);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [showAiSummary, setShowAiSummary] = useState(false);
+
+  // 🚀 Yeni Özellikler
+  const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics'>('search');
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [searchAnalytics, setSearchAnalytics] = useState<any>(null);
+  const [aiInsights, setAiInsights] = useState<string[]>([]);
+  const [showAiInsights, setShowAiInsights] = useState(false);
 
   const { isListening, startListening, stopListening, transcript, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -596,6 +603,38 @@ const AdvancedSearch: React.FC = () => {
           </p>
                   </div>
 
+        {/* Tab Navigation */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2">
+            <div className="flex gap-2">
+              {[
+                { id: 'search', label: 'Akıllı Arama', icon: Search },
+                { id: 'timeline', label: 'Zaman Çizelgesi', icon: Clock },
+                { id: 'analytics', label: 'Analitik', icon: BarChart3 }
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'search' && (
+          <>
         {/* Search Bar */}
         <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-xl p-3 md:p-6 mb-4 md:mb-8">
           <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mb-3 md:mb-4">
@@ -951,6 +990,42 @@ const AdvancedSearch: React.FC = () => {
             </div>
         </div>
       )}
+          </>
+        )}
+
+        {/* Timeline Tab */}
+        {activeTab === 'timeline' && (
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+                Hukuki Zaman Çizelgesi
+              </h3>
+              <div className="text-center py-12">
+                <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">
+                  Zaman çizelgesi özelliği yakında eklenecek...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
+                Arama Analitiği
+              </h3>
+              <div className="text-center py-12">
+                <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">
+                  Analitik özelliği yakında eklenecek...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
