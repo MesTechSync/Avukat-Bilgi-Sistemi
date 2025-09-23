@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, Lightbulb, TrendingUp, BookOpen, Gavel, FileText, Users, Calendar, Filter, SortAsc, SortDesc, Share2, Star, History, Zap, Target, BarChart3, PieChart, MapPin, Eye, MessageSquare } from 'lucide-react';
+import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, Lightbulb, TrendingUp, BookOpen, Gavel, FileText, Users, Calendar, Filter, SortAsc, SortDesc, Share2, Star, History, Zap, Target, BarChart3, PieChart, MapPin, Eye, MessageSquare, Heart } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
 
