@@ -52,6 +52,19 @@ const AdvancedSearch: React.FC = () => {
   // Sesli Komutlar State'leri
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceCommandHistory, setVoiceCommandHistory] = useState<Array<{command: string, time: string, status: string}>>([]);
+  const [currentVoiceCommand, setCurrentVoiceCommand] = useState('');
+  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'processing' | 'success' | 'error'>('idle');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [recognizedText, setRecognizedText] = useState('');
+  const [voiceCommands, setVoiceCommands] = useState([
+    { command: 'velayet ara', action: 'search', params: { query: 'velayet', type: 'ictihat' } },
+    { command: 'iş hukuku', action: 'search', params: { query: 'iş hukuku', type: 'ictihat' } },
+    { command: 'boşanma kararları', action: 'search', params: { query: 'boşanma', type: 'ictihat' } },
+    { command: 'analitik aç', action: 'navigate', params: { tab: 'analytics' } },
+    { command: 'duygu analizi', action: 'navigate', params: { tab: 'emotion' } },
+    { command: 'zaman çizelgesi', action: 'navigate', params: { tab: 'timeline' } },
+    { command: 'arama sayfası', action: 'navigate', params: { tab: 'search' } }
+  ]);
 
   const { isListening, startDictation, stopDictation, interimText, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -532,6 +545,74 @@ const AdvancedSearch: React.FC = () => {
   const clearSearchHistory = () => {
     setSearchHistory([]);
     localStorage.removeItem('searchHistory');
+  };
+
+  // 🎤 Sesli Komut İşleme
+  const processVoiceCommand = (text: string) => {
+    const normalizedText = text.toLowerCase().trim();
+    setRecognizedText(text);
+    setVoiceStatus('processing');
+
+    // Komut eşleştirme
+    const matchedCommand = voiceCommands.find(cmd => 
+      normalizedText.includes(cmd.command.toLowerCase())
+    );
+
+    if (matchedCommand) {
+      setCurrentVoiceCommand(matchedCommand.command);
+      
+      // Komut işleme
+      if (matchedCommand.action === 'search') {
+        setQuery(matchedCommand.params.query);
+        setSearchType(matchedCommand.params.type);
+        handleSearch();
+        setVoiceStatus('success');
+      } else if (matchedCommand.action === 'navigate') {
+        setActiveTab(matchedCommand.params.tab);
+        setVoiceStatus('success');
+      }
+
+      // Geçmişe ekle
+      const newCommand = {
+        command: matchedCommand.command,
+        time: new Date().toLocaleTimeString('tr-TR'),
+        status: 'success'
+      };
+      setVoiceCommandHistory(prev => [newCommand, ...prev.slice(0, 9)]);
+    } else {
+      setVoiceError('Komut tanınmadı. Desteklenen komutları kontrol edin.');
+      setVoiceStatus('error');
+      
+      const newCommand = {
+        command: text,
+        time: new Date().toLocaleTimeString('tr-TR'),
+        status: 'error'
+      };
+      setVoiceCommandHistory(prev => [newCommand, ...prev.slice(0, 9)]);
+    }
+
+    // 3 saniye sonra durumu sıfırla
+    setTimeout(() => {
+      setVoiceStatus('idle');
+      setVoiceError(null);
+      setRecognizedText('');
+    }, 3000);
+  };
+
+  const startVoiceCommand = () => {
+    setVoiceStatus('listening');
+    setVoiceError(null);
+    setRecognizedText('');
+    startDictation();
+  };
+
+  const stopVoiceCommand = () => {
+    setVoiceStatus('idle');
+    stopDictation();
+    
+    if (interimText.trim()) {
+      processVoiceCommand(interimText);
+    }
   };
 
   // LocalStorage'dan verileri yükle
@@ -1458,63 +1539,75 @@ const AdvancedSearch: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  Sesli Komutlar
+                  🎤 Akıllı Sesli Komutlar
                 </h3>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => {
-                      if (isVoiceListening) {
-                        setIsVoiceListening(false);
-                        stopDictation();
-                      } else {
-                        setIsVoiceListening(true);
-                        startDictation();
-                        // Simüle edilmiş komut
-                        setTimeout(() => {
-                          const newCommand = {
-                            command: 'Velayet kararlarını ara',
-                            time: 'Şimdi',
-                            status: 'success'
-                          };
-                          setVoiceCommandHistory(prev => [newCommand, ...prev.slice(0, 9)]);
-                          setIsVoiceListening(false);
-                          stopDictation();
-                        }, 3000);
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                      isVoiceListening 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
+                    onClick={voiceStatus === 'listening' ? stopVoiceCommand : startVoiceCommand}
+                    disabled={voiceStatus === 'processing'}
+                    className={`px-6 py-3 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                      voiceStatus === 'listening' 
+                        ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' 
+                        : voiceStatus === 'processing'
+                        ? 'bg-yellow-600 text-white cursor-not-allowed'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
-                    <Mic className="w-4 h-4" />
-                    {isVoiceListening ? 'Durdur' : 'Başlat'}
+                    <Mic className="w-5 h-5" />
+                    {voiceStatus === 'listening' ? 'Durdur' : 
+                     voiceStatus === 'processing' ? 'İşleniyor...' : 
+                     'Başlat'}
                   </button>
                 </div>
               </div>
 
               {/* Voice Commands Status */}
               <div className="mb-8">
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-6 rounded-lg">
+                <div className={`p-6 rounded-lg transition-all ${
+                  voiceStatus === 'listening' ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20' :
+                  voiceStatus === 'processing' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20' :
+                  voiceStatus === 'success' ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20' :
+                  voiceStatus === 'error' ? 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20' :
+                  'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20'
+                }`}>
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      isVoiceListening ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                      voiceStatus === 'listening' ? 'bg-red-100 dark:bg-red-900/30 animate-pulse' :
+                      voiceStatus === 'processing' ? 'bg-yellow-100 dark:bg-yellow-900/30 animate-spin' :
+                      voiceStatus === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
+                      voiceStatus === 'error' ? 'bg-red-100 dark:bg-red-900/30' :
+                      'bg-blue-100 dark:bg-blue-900/30'
                     }`}>
-                      <Mic className={`w-6 h-6 ${
-                        isVoiceListening ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                      <Mic className={`w-8 h-8 ${
+                        voiceStatus === 'listening' ? 'text-red-600 dark:text-red-400' :
+                        voiceStatus === 'processing' ? 'text-yellow-600 dark:text-yellow-400' :
+                        voiceStatus === 'success' ? 'text-green-600 dark:text-green-400' :
+                        voiceStatus === 'error' ? 'text-red-600 dark:text-red-400' :
+                        'text-blue-600 dark:text-blue-400'
                       }`} />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-white">
-                        {isVoiceListening ? 'Dinleniyor...' : 'Hazır'}
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 dark:text-white text-lg">
+                        {voiceStatus === 'listening' ? '🎤 Dinleniyor...' :
+                         voiceStatus === 'processing' ? '⚡ İşleniyor...' :
+                         voiceStatus === 'success' ? '✅ Başarılı!' :
+                         voiceStatus === 'error' ? '❌ Hata!' :
+                         '🎯 Hazır'}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {isVoiceListening 
-                          ? 'Komutunuzu söyleyin, sistem dinliyor...' 
-                          : 'Mikrofonu başlatmak için butona tıklayın'
-                        }
+                        {voiceStatus === 'listening' ? 'Komutunuzu net bir şekilde söyleyin...' :
+                         voiceStatus === 'processing' ? 'Komutunuz analiz ediliyor...' :
+                         voiceStatus === 'success' ? 'Komut başarıyla işlendi!' :
+                         voiceStatus === 'error' ? voiceError || 'Bir hata oluştu' :
+                         'Mikrofonu başlatmak için butona tıklayın'}
                       </p>
+                      {recognizedText && (
+                        <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <strong>Tanınan metin:</strong> "{recognizedText}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1523,40 +1616,58 @@ const AdvancedSearch: React.FC = () => {
               {/* Voice Commands List */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Arama Komutları</h4>
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    🔍 Arama Komutları
+                  </h4>
                   <div className="space-y-3">
-                    {[
-                      { command: 'Velayet ile ilgili kararları ara', action: 'Arama yapar' },
-                      { command: 'İş hukuku sonuçlarını getir', action: 'Filtreli arama' },
-                      { command: 'Son 6 ayın kararlarını göster', action: 'Tarih filtresi' },
-                      { command: 'Yargıtay kararlarını listele', action: 'Mahkeme filtresi' }
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-start gap-3">
+                    {voiceCommands.filter(cmd => cmd.action === 'search').map((item, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border">
                         <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.action}</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            "{item.command}"
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.params.query} araması yapar
+                          </p>
                         </div>
+                        <button 
+                          onClick={() => {
+                            setQuery(item.params.query);
+                            setSearchType(item.params.type);
+                            handleSearch();
+                          }}
+                          className="px-2 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-800 dark:text-green-200 rounded text-xs transition-colors"
+                        >
+                          Test Et
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Sistem Komutları</h4>
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    🧭 Navigasyon Komutları
+                  </h4>
                   <div className="space-y-3">
-                    {[
-                      { command: 'Analitik sayfasını aç', action: 'Tab değiştirir' },
-                      { command: 'Duygu analizi yap', action: 'Özellik açar' },
-                      { command: 'Zaman çizelgesini göster', action: 'Timeline açar' },
-                      { command: 'Sonuçları filtrele', action: 'Filtre menüsü' }
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-start gap-3">
+                    {voiceCommands.filter(cmd => cmd.action === 'navigate').map((item, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border">
                         <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.action}</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            "{item.command}"
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.params.tab} tab'ına geçer
+                          </p>
                         </div>
+                        <button 
+                          onClick={() => setActiveTab(item.params.tab)}
+                          className="px-2 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 rounded text-xs transition-colors"
+                        >
+                          Test Et
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -1565,67 +1676,117 @@ const AdvancedSearch: React.FC = () => {
 
               {/* Voice Commands History */}
               <div className="mb-8">
-                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Son Komutlar</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                    📋 Komut Geçmişi
+                  </h4>
+                  <button 
+                    onClick={() => setVoiceCommandHistory([])}
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded text-sm transition-colors"
+                  >
+                    Temizle
+                  </button>
+                </div>
                 <div className="space-y-3">
                   {voiceCommandHistory.length > 0 ? voiceCommandHistory.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div key={index} className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                      item.status === 'success' 
+                        ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' 
+                        : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                    }`}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${
+                        <div className={`w-3 h-3 rounded-full ${
                           item.status === 'success' ? 'bg-green-500' : 'bg-red-500'
                         }`}></div>
                         <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.time}</p>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            "{item.command}"
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.time}
+                          </p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs ${
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                         item.status === 'success' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                       }`}>
-                        {item.status === 'success' ? 'Başarılı' : 'Hata'}
+                        {item.status === 'success' ? '✅ Başarılı' : '❌ Hata'}
                       </div>
                     </div>
                   )) : (
-                    <div className="text-center py-8">
-                      <Mic className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">Henüz komut geçmişi yok</p>
+                    <div className="text-center py-12">
+                      <Mic className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 text-lg">Henüz komut geçmişi yok</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                        İlk sesli komutunuzu söyleyerek başlayın
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Voice Settings */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
-                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Sesli Komut Ayarları</h4>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+                  ⚙️ Sesli Komut Ayarları
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Dil
+                      🌍 Dil
                     </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm">
+                    <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-blue-500">
                       <option value="tr">Türkçe</option>
                       <option value="en">English</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Ses Seviyesi
+                      🔊 Ses Hassasiyeti
                     </label>
                     <input 
                       type="range" 
                       min="0" 
                       max="100" 
                       defaultValue="70"
-                      className="w-full"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                     />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>Düşük</span>
+                      <span>Yüksek</span>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <input type="checkbox" id="autoStart" className="rounded" />
-                  <label htmlFor="autoStart" className="text-sm text-gray-700 dark:text-gray-300">
-                    Sayfa açıldığında otomatik başlat
-                  </label>
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="autoStart" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                    <label htmlFor="autoStart" className="text-sm text-gray-700 dark:text-gray-300">
+                      Sayfa açıldığında otomatik başlat
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="soundFeedback" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" defaultChecked />
+                    <label htmlFor="soundFeedback" className="text-sm text-gray-700 dark:text-gray-300">
+                      Ses geri bildirimi
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="visualFeedback" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" defaultChecked />
+                    <label htmlFor="visualFeedback" className="text-sm text-gray-700 dark:text-gray-300">
+                      Görsel geri bildirim
+                    </label>
+                  </div>
+                </div>
+                <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">💡 İpuçları</h5>
+                  <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Komutları net ve yavaş söyleyin</li>
+                    <li>• Arka plan gürültüsünü azaltın</li>
+                    <li>• Mikrofonu ağzınızdan 15-20 cm uzakta tutun</li>
+                    <li>• Desteklenen komutları "Test Et" butonuyla deneyin</li>
+                  </ul>
                 </div>
               </div>
             </div>
