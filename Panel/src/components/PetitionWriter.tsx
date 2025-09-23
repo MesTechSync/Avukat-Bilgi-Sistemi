@@ -1,782 +1,596 @@
-import { useState, useMemo } from 'react';
-import { FileText, Wand2, Download, Copy, RefreshCw, Search, BookOpen, Star, Users, Calendar, DollarSign, Sparkles, AlertTriangle, CheckSquare, Zap } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  combinedPetitionDatabase,
-  searchCombinedByCategory,
-  searchCombinedByKeyword,
-  type PetitionExample
-} from '../data/petitionExamples';
-import { useDictation } from '../hooks/useDictation';
-import DictationButton from './DictationButton';
-import { realPetitions, type RealPetition } from '../data/realPetitions';
+  FileText, 
+  Search, 
+  Filter, 
+  Download, 
+  Copy, 
+  Edit3, 
+  Eye, 
+  Star, 
+  Clock, 
+  Users, 
+  BookOpen, 
+  Wand2, 
+  RefreshCw,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle,
+  AlertCircle,
+  Brain,
+  Sparkles,
+  Target,
+  Zap
+} from 'lucide-react';
+import { 
+  petitionTemplates, 
+  petitionCategories, 
+  getPetitionsByCategory, 
+  getPetitionsBySubcategory, 
+  searchPetitions, 
+  getPetitionById,
+  getPopularPetitions,
+  getRecentPetitions,
+  type PetitionTemplate 
+} from '../data/petitions/petitionDatabase';
 import { geminiService } from '../services/geminiService';
-import { openaiService } from '../services/openaiService';
 
-interface FormData {
-  [key: string]: string;
-}
-
-interface PetitionField {
+interface FormField {
   id: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'textarea';
+  type: 'text' | 'textarea' | 'date' | 'number' | 'select';
   required: boolean;
-  options?: string[];
   placeholder?: string;
+  options?: string[];
+  value: string;
 }
 
-// AI Model seçenekleri
-type AIModel = 'gemini' | 'gpt-4' | 'auto';
+interface GeneratedPetition {
+  content: string;
+  metadata: {
+    templateId: string;
+    generatedAt: string;
+    aiModel: string;
+    wordCount: number;
+  };
+}
 
 export default function PetitionWriter() {
-  const [selectedExample, setSelectedExample] = useState<PetitionExample | null>(null);
-  const [formData, setFormData] = useState<FormData>({});
-  const [generatedPetition, setGeneratedPetition] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<PetitionTemplate | null>(null);
+  const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [generatedPetition, setGeneratedPetition] = useState<GeneratedPetition | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [showExamples, setShowExamples] = useState(false);
-  const [aiModel, setAIModel] = useState<AIModel>('auto');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [aiModel, setAiModel] = useState<'gemini' | 'gpt-4' | 'auto'>('auto');
   const [useAI, setUseAI] = useState(true);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview'>('templates');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<'popular' | 'recent' | 'rating' | 'alphabetical'>('popular');
 
-  // Dikte hook'u - form alanları için
-  const {
-    isListening: isDictating,
-    isSupported: isDictationSupported,
-    interimText: dictationInterimText,
-    startDictation,
-    stopDictation,
-    clearDictation
-  } = useDictation({
-    onResult: (text) => {
-      // Aktif form alanına dikte metnini ekle
-      const activeField = document.activeElement as HTMLInputElement | HTMLTextAreaElement;
-      if (activeField && (activeField.tagName === 'INPUT' || activeField.tagName === 'TEXTAREA')) {
-        const fieldId = activeField.id;
-        if (fieldId && fieldId.startsWith('field-')) {
-          const fieldKey = fieldId.replace('field-', '');
-          setFormData(prev => ({
-            ...prev,
-            [fieldKey]: (prev[fieldKey] || '') + (prev[fieldKey] ? ' ' : '') + text
-          }));
-        }
+  // Filtrelenmiş şablonlar
+  const filteredTemplates = useMemo(() => {
+    let templates = petitionTemplates;
+
+    // Kategori filtresi
+    if (selectedCategory) {
+      templates = getPetitionsByCategory(selectedCategory);
+      
+      // Alt kategori filtresi
+      if (selectedSubcategory) {
+        templates = getPetitionsBySubcategory(selectedCategory, selectedSubcategory);
       }
-      clearDictation();
-    },
-    onError: (error) => {
-      console.error('Dikte hatası:', error);
-    },
-    continuous: false,
-    interimResults: true
-  });
-
-  // AI Prompt sistemi - Türk Hukuku uzmanı
-  const buildAIPrompt = (petitionType: string, formData: FormData, realExample?: RealPetition): string => {
-    const currentDate = new Date().toLocaleDateString('tr-TR');
-    
-    const basePrompt = `Sen Türkiye'de uzman bir avukatsın ve mahkemeye sunulmaya uygun profesyonel dilekçeler yazıyorsun. 
-    
-ÖNEMLI KURALLAR:
-1. Türk Hukuku terminolojisi kullan
-2. Mahkeme standartlarına uygun format
-3. Mevcut kanunları referans al (TMK, İK, TBK, HMK)
-4. Profesyonel dil kullan
-5. Ek belge listesi ekle
-6. Yasal dayanak göster
-
-DİLEKÇE TÜRÜ: ${petitionType}
-TARİH: ${currentDate}
-
-KULLANICI BİLGİLERİ:
-${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join('\n')}
-
-${realExample ? `
-REFERANS ÖRNEK:
-${realExample.template}
-
-Bu örneği referans alarak, kullanıcının verdiği bilgilerle mahkeme kalitesinde yeni bir dilekçe yaz.
-` : ''}
-
-Lütfen aşağıdaki formatta dilekçe yaz:
-
-T.C.
-[MAHKEME ADI]
-
-DİLEKÇE
-
-Davacı: [Ad Soyad ve kimlik bilgileri]
-Davalı: [Ad Soyad ve kimlik bilgileri]
-
-KONU: ${petitionType}
-
-Sayın Mahkeme,
-
-[Ana dilekçe metni - hukuki gerekçeler ve talepler]
-
-HUKUKİ DAYANAK:
-[İlgili kanun maddeleri]
-
-SONUÇ ve TALEP:
-[Somut talepler]
-
-EK BELGELER:
-[Gerekli belgeler listesi]
-
-Saygılarımla,
-[Tarih ve imza]`;
-    
-    return basePrompt;
-  };
-
-  // AI ile dilekçe oluşturma
-  const generateAIPetition = async () => {
-    if (!selectedExample) {
-      alert('Lütfen önce bir dilekçe örneği seçin.');
-      return;
     }
 
-    if (!validateForm()) {
+    // Arama filtresi
+    if (searchQuery) {
+      templates = searchPetitions(searchQuery);
+    }
+
+    // Sıralama
+    switch (sortBy) {
+      case 'popular':
+        templates = templates.sort((a, b) => b.usageCount - a.usageCount);
+        break;
+      case 'recent':
+        templates = templates.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+        break;
+      case 'rating':
+        templates = templates.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'alphabetical':
+        templates = templates.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+    }
+
+    return templates;
+  }, [selectedCategory, selectedSubcategory, searchQuery, sortBy]);
+
+  // Form alanlarını oluştur
+  const createFormFields = (template: PetitionTemplate): FormField[] => {
+    return template.requiredFields.map((field, index) => ({
+      id: `field_${index}`,
+      label: field,
+      type: field.toLowerCase().includes('tarih') ? 'date' : 
+            field.toLowerCase().includes('miktar') || field.toLowerCase().includes('tutar') ? 'number' :
+            field.toLowerCase().includes('açıklama') || field.toLowerCase().includes('detay') ? 'textarea' : 'text',
+      required: true,
+      placeholder: `${field} girin...`,
+      value: ''
+    }));
+  };
+
+  // Şablon seçildiğinde form alanlarını oluştur
+  useEffect(() => {
+    if (selectedTemplate) {
+      const fields = createFormFields(selectedTemplate);
+      setFormFields(fields);
+      setActiveTab('create');
+    }
+  }, [selectedTemplate]);
+
+  // Form alanı değerini güncelle
+  const updateFieldValue = (fieldId: string, value: string) => {
+    setFormFields(prev => prev.map(field => 
+      field.id === fieldId ? { ...field, value } : field
+    ));
+  };
+
+  // AI ile dilekçe oluştur
+  const generatePetition = async () => {
+    if (!selectedTemplate || formFields.some(field => field.required && !field.value.trim())) {
+      alert('Lütfen tüm gerekli alanları doldurun.');
       return;
     }
 
     setIsGenerating(true);
-    
     try {
-      let generated = '';
-      
-      if (useAI) {
-        // Gerçek AI servislerini kullan
-        const realExample = realPetitions.find(r => r.id === selectedExample.id);
-        const prompt = buildAIPrompt(selectedExample.title, formData, realExample);
-        
-        if (aiModel === 'auto') {
-          // Otomatik seçim: Gemini ve OpenAI'yi karşılaştır
-          const promises = [];
-          
-          if (geminiService.isInitialized()) {
-            promises.push(
-              geminiService.analyzeText('Dilekçe yazımı', prompt)
-                .then(result => ({ type: 'gemini', result }))
-                .catch(error => ({ type: 'gemini', result: `Gemini hatası: ${error.message}` }))
-            );
-          }
-          
-          if (openaiService.isInitialized()) {
-            promises.push(
-              openaiService.generateContract({
-                contractType: selectedExample.title,
-                description: prompt,
-                requirements: ['Dilekçe yazımı'],
-                parties: ['Davacı', 'Davalı'],
-                additionalInfo: 'Bu bir mahkeme dilekçesi. Türk hukuk sistemine uygun profesyonel dilekçe yaz.'
-              })
-              .then(result => ({ type: 'openai', result }))
-              .catch(error => ({ type: 'openai', result: `OpenAI hatası: ${error.message}` }))
-            );
-          }
-          
-          if (promises.length === 0) {
-            // AI servisleri aktif değilse template-based generation'a geç
-            generated = generateFromTemplate(selectedExample, formData);
-          } else {
-            const results = await Promise.all(promises);
-            
-            // En iyi sonucu seç (daha uzun ve detaylı olanı)
-            let bestResult = '';
-            let bestLength = 0;
-            
-            results.forEach(result => {
-              if (result.result.length > bestLength) {
-                bestResult = result.result;
-                bestLength = result.result.length;
-              }
-            });
-            
-            generated = bestResult || generateFromTemplate(selectedExample, formData);
-          }
-        } else {
-          // Belirli model seçimi
-          if (aiModel === 'gemini' && geminiService.isInitialized()) {
-            generated = await geminiService.analyzeText('Dilekçe yazımı', prompt);
-          } else if (aiModel === 'gpt-4' && openaiService.isInitialized()) {
-            generated = await openaiService.generateContract({
-              contractType: selectedExample.title,
-              description: prompt,
-              requirements: ['Dilekçe yazımı'],
-              parties: ['Davacı', 'Davalı'],
-              additionalInfo: 'Bu bir mahkeme dilekçesi. Türk hukuk sistemine uygun profesyonel dilekçe yaz.'
-            });
-          } else {
-            // Seçilen model aktif değilse template-based generation'a geç
-            generated = generateFromTemplate(selectedExample, formData);
-          }
+      const prompt = `
+Aşağıdaki bilgileri kullanarak ${selectedTemplate.title} oluştur:
+
+Şablon: ${selectedTemplate.title}
+Kategori: ${selectedTemplate.category} - ${selectedTemplate.subcategory}
+Hukuki Dayanak: ${selectedTemplate.legalBasis.join(', ')}
+Mahkeme: ${selectedTemplate.courtType}
+
+Form Verileri:
+${formFields.map(field => `${field.label}: ${field.value}`).join('\n')}
+
+Şablon İçeriği:
+${selectedTemplate.content}
+
+Lütfen:
+1. Form verilerini şablon içeriğine uygun şekilde yerleştir
+2. Hukuki terminolojiyi doğru kullan
+3. Türkçe dilbilgisi kurallarına uy
+4. Profesyonel ve resmi bir ton kullan
+5. Eksik bilgileri [Köşeli parantez] ile belirt
+
+Sadece dilekçe içeriğini döndür, açıklama ekleme.
+      `;
+
+      const response = await geminiService.analyzeText(prompt);
+      const content = response || 'Dilekçe oluşturulamadı. Lütfen tekrar deneyin.';
+
+      setGeneratedPetition({
+        content,
+        metadata: {
+          templateId: selectedTemplate.id,
+          generatedAt: new Date().toISOString(),
+          aiModel: 'gemini',
+          wordCount: content.split(' ').length
         }
-      } else {
-        // Template-based generation
-        generated = generateFromTemplate(selectedExample, formData);
-      }
-      
-      setGeneratedPetition(generated);
-      
+      });
+
+      setActiveTab('preview');
     } catch (error) {
-      console.error('AI dilekçe oluşturulurken hata:', error);
+      console.error('Dilekçe oluşturma hatası:', error);
       alert('Dilekçe oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Template-based generation (fallback)
-  const generateFromTemplate = (example: PetitionExample, formData: FormData): string => {
-    let template = (example as any).template || (example as any).content || '';
-    
-    // Form verilerini template'e yerleştir
-    Object.entries(formData).forEach(([key, value]) => {
-      const placeholder = `{${key.toUpperCase()}}`;
-      template = template.replace(new RegExp(placeholder, 'g'), value);
+  // Dilekçeyi kopyala
+  const copyToClipboard = async () => {
+    if (generatedPetition) {
+      try {
+        await navigator.clipboard.writeText(generatedPetition.content);
+        alert('Dilekçe panoya kopyalandı!');
+      } catch (error) {
+        console.error('Kopyalama hatası:', error);
+      }
+    }
+  };
+
+  // Dilekçeyi indir
+  const downloadPetition = () => {
+    if (generatedPetition) {
+      const blob = new Blob([generatedPetition.content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedTemplate?.title || 'dilekce'}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  // Kategoriyi genişlet/daralt
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
     });
-    
-    return template;
   };
-
-  // Form doğrulama
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    formFields.forEach(field => {
-      if (field.required && !formData[field.id]?.trim()) {
-        errors[field.id] = `${field.label} alanı zorunludur`;
-      }
-    });
-    
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Filtrelenmiş örnekler
-  const getFilteredExamples = () => {
-    let filtered = combinedPetitionDatabase;
-    
-    if (searchTerm) {
-      filtered = searchCombinedByKeyword(searchTerm);
-    }
-    
-    if (selectedCategory) {
-      filtered = searchCombinedByCategory(selectedCategory);
-    }
-    
-    return filtered;
-  };
-
-  // Field icon helper function
-  const getFieldIcon = (fieldType: string) => {
-    switch (fieldType) {
-      case 'text':
-        return Users;
-      case 'number':
-        return DollarSign;
-      case 'date':
-        return Calendar;
-      case 'textarea':
-        return FileText;
-      case 'select':
-        return CheckSquare;
-      default:
-        return FileText;
-    }
-  };
-
-  const handleFormChange = (key: string, value: string) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-    // Clear field error when user starts typing
-    if (fieldErrors[key]) {
-      setFieldErrors(prev => ({ ...prev, [key]: '' }));
-    }
-  };
-
-  const categories = [...new Set(combinedPetitionDatabase.map(ex => ex.category))];
-
-  // Dinamik form alanları oluştur (Geliştirilmiş)
-  const generateFormFields = (example: PetitionExample): PetitionField[] => {
-    const fields: PetitionField[] = [];
-    
-    // Temel alanlar - her dilekçe için gerekli
-    const basicFields: PetitionField[] = [
-      {
-        id: 'davaci_adi',
-        label: 'Davacı Adı Soyadı',
-        type: 'text',
-        required: true,
-        placeholder: 'Ad Soyad girin'
-      },
-      {
-        id: 'davaci_tc',
-        label: 'Davacı T.C. Kimlik No',
-        type: 'text',
-        required: true,
-        placeholder: '11 haneli T.C. kimlik numarası'
-      },
-      {
-        id: 'davaci_adres',
-        label: 'Davacı Adresi',
-        type: 'textarea',
-        required: true,
-        placeholder: 'Tam adres bilgisi girin'
-      },
-      {
-        id: 'davali_adi',
-        label: 'Davalı Adı Soyadı',
-        type: 'text',
-        required: true,
-        placeholder: 'Ad Soyad girin'
-      },
-      {
-        id: 'davali_tc',
-        label: 'Davalı T.C. Kimlik No',
-        type: 'text',
-        required: false,
-        placeholder: '11 haneli T.C. kimlik numarası'
-      },
-      {
-        id: 'davali_adres',
-        label: 'Davalı Adresi',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Tam adres bilgisi girin'
-      }
-    ];
-
-    // Örneğin variables'ından ek alanlar oluştur
-    example.variables.forEach((variable, index) => {
-      const fieldId = variable.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      let fieldType: PetitionField['type'] = 'text';
-      let placeholder = '';
-      
-      // Akıllı tip tanıma
-      if (variable.includes('TARİH') || variable.includes('DATE')) {
-        fieldType = 'date';
-        placeholder = 'Tarih seçin';
-      } else if (variable.includes('TUTAR') || variable.includes('MAAŞ') || variable.includes('ÜCRET') || variable.includes('TL')) {
-        fieldType = 'number';
-        placeholder = 'Tutarı TL olarak girin (örn: 15000)';
-      } else if (variable.includes('ADRES') || variable.includes('AÇIKLAMA') || variable.includes('DETAY') || variable.includes('SEBEP')) {
-        fieldType = 'textarea';
-        placeholder = 'Detaylı açıklama girin';
-      } else if (variable.includes('CİNSİYET') || variable.includes('DURUM') || variable.includes('TİP')) {
-        fieldType = 'select';
-      }
-      
-      // Temel alanlarda yoksa ekle
-      if (!basicFields.some(f => f.id === fieldId)) {
-      fields.push({
-        id: fieldId,
-        label: variable.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-        type: fieldType,
-          required: index < 3, // İlk 3 ek alan zorunlu
-        placeholder: placeholder || `${variable.replace(/_/g, ' ').toLowerCase()} bilgisini girin`,
-        ...(fieldType === 'select' && variable.includes('CİNSİYET') && {
-          options: ['Erkek', 'Kadın']
-        }),
-        ...(fieldType === 'select' && variable.includes('DURUM') && {
-          options: ['Evli', 'Bekar', 'Boşanmış', 'Dul']
-          }),
-          ...(fieldType === 'select' && variable.includes('TİP') && {
-            options: ['Bireysel', 'Kurumsal', 'Kamu']
-        })
-      });
-      }
-    });
-    
-    return [...basicFields, ...fields];
-  };
-
-  // Seçilen örnek için dinamik form alanları
-  const formFields = useMemo(() => {
-    if (!selectedExample) return [];
-    return generateFormFields(selectedExample);
-  }, [selectedExample]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-6xl mx-auto p-3 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="container mx-auto px-2 md:px-4 py-4 md:py-8">
         {/* Header */}
-        <div className="text-center mb-4 md:mb-8">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <div className="flex-1"></div>
-            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl md:rounded-2xl shadow-lg">
+        <div className="text-center mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 mb-3 md:mb-4">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg md:rounded-xl shadow-lg">
               <FileText className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <div className="flex-1 flex justify-end gap-1 md:gap-2">
-              <button
-                onClick={() => setShowExamples(!showExamples)}
-                className="p-2 md:p-3 bg-blue-500/80 dark:bg-blue-600/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200 dark:border-blue-700 text-white"
-                title="Dilekçe Örnekleri"
-              >
-                <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-          </div>
-        </div>
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            AI Destekli Dilekçe Yazım Sistemi
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
-            Gemini ve OpenAI ile profesyonel mahkeme dilekçelerinizi oluşturun
-          </p>
-          
-          {/* AI Status */}
-          <div className="mt-3 md:mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4">
-            <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
-              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${geminiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-              <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Gemini</span>
+            <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+              Dilekçe Yazım Sistemi
+            </h1>
+            <div className="flex items-center gap-1 md:gap-2">
+              <div className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
+                AI Destekli
+              </div>
             </div>
-            <div className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg border border-white/20 dark:border-gray-700/50">
-              <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${openaiService.isInitialized() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-              <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">OpenAI</span>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-lg">
+            Profesyonel dilekçe şablonları ve AI destekli oluşturma
+          </p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="max-w-6xl mx-auto mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2">
+            <div className="flex gap-2 overflow-x-auto">
+              {[
+                { id: 'templates', label: 'Şablonlar', icon: BookOpen },
+                { id: 'create', label: 'Oluştur', icon: Edit3 },
+                { id: 'preview', label: 'Önizleme', icon: Eye }
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-orange-600 text-white shadow-lg'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-        {/* Dilekçe Örnekleri Seçimi */}
-        {!selectedExample && (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-4 md:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
-              <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">
-                Dilekçe Türü Seçin
-              </h3>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">AI Model:</label>
+        {/* Templates Tab */}
+        {activeTab === 'templates' && (
+          <div className="max-w-6xl mx-auto">
+            {/* Search and Filters */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6 mb-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Dilekçe ara..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div className="flex gap-2">
                   <select
-                    value={aiModel}
-                    onChange={(e) => setAIModel(e.target.value as AIModel)}
-                    className="px-2 md:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs md:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700"
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSubcategory('');
+                    }}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
                   >
-                    <option value="auto">🤖 Otomatik</option>
-                    <option value="gemini">✨ Gemini</option>
-                    <option value="gpt-4">⚡ GPT-4</option>
+                    <option value="">Tüm Kategoriler</option>
+                    {Object.keys(petitionCategories).map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+
+                  {selectedCategory && (
+                    <select
+                      value={selectedSubcategory}
+                      onChange={(e) => setSelectedSubcategory(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
+                    >
+                      <option value="">Tüm Alt Kategoriler</option>
+                      {Object.keys(petitionCategories[selectedCategory] || {}).map(subcategory => (
+                        <option key={subcategory} value={subcategory}>{subcategory}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
+                  >
+                    <option value="popular">Popüler</option>
+                    <option value="recent">En Yeni</option>
+                    <option value="rating">En Yüksek Puan</option>
+                    <option value="alphabetical">Alfabetik</option>
                   </select>
                 </div>
-          <button
-                  onClick={() => setUseAI(!useAI)}
-                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300 ${
-                    useAI 
-                      ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' 
-                      : 'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
-          </button>
               </div>
-        </div>
-
-            {/* Arama ve Filtre */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Dilekçe ara... (örn: işten çıkarma, boşanma, trafik)"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-300"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <select
-                title="Kategori Seçimi"
-                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-300"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">Tüm Kategoriler</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {getFilteredExamples().map((example) => (
+            {/* Templates Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {filteredTemplates.map((template) => (
                 <div
-                  key={example.id}
-                  onClick={() => setSelectedExample(example)}
-                  className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
+                  key={template.id}
+                  onClick={() => setSelectedTemplate(template)}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-orange-200 dark:hover:border-orange-800"
                 >
-                  {/* Header */}
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold text-sm leading-tight">
-                          {example.title}
-                        </h4>
-                        <p className="text-blue-100 text-xs mt-1">
-                          {example.category}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="p-4">
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
-                      {(example as any).description || (example as any).content || 'Profesyonel dilekçe örneği'}
-                    </div>
-                    
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {example.variables.length} alan
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 dark:text-white mb-1 line-clamp-2">
+                        {template.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
+                          {template.category}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Wand2 className="w-3 h-3" />
-                          AI destekli
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                          {template.subcategory}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{template.rating}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                    {template.description}
+                  </p>
+
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{template.estimatedTime}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{template.usageCount}</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full ${
+                      template.difficulty === 'Kolay' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                      template.difficulty === 'Orta' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    }`}>
+                      {template.difficulty}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {template.keywords.slice(0, 3).map((keyword, index) => (
+                      <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs">
+                        {keyword}
                       </span>
+                    ))}
                   </div>
-                  {realPetitions.some(r => r.id === example.id) && (
-                        <div className="flex items-center gap-1 text-orange-600 text-xs">
-                          <Star className="w-3 h-3" />
-                          <span>Gerçek örnek</span>
-                    </div>
-                  )}
-                    </div>
-                  </div>
-                  
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+                  <button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <Edit3 className="w-4 h-4" />
+                    Kullan
+                  </button>
                 </div>
               ))}
+            </div>
+
+            {filteredTemplates.length === 0 && (
+              <div className="text-center py-12">
+                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 text-lg">Arama kriterlerinize uygun şablon bulunamadı</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                  Farklı anahtar kelimeler deneyin veya filtreleri temizleyin
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Create Tab */}
+        {activeTab === 'create' && selectedTemplate && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    {selectedTemplate.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedTemplate.category} - {selectedTemplate.subcategory}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">
+                    AI Destekli
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {formFields.map((field) => (
+                  <div key={field.id}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    {field.type === 'textarea' ? (
+                      <textarea
+                        value={field.value}
+                        onChange={(e) => updateFieldValue(field.id, e.target.value)}
+                        placeholder={field.placeholder}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                      />
+                    ) : field.type === 'select' ? (
+                      <select
+                        value={field.value}
+                        onChange={(e) => updateFieldValue(field.id, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      >
+                        <option value="">Seçin...</option>
+                        {field.options?.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        value={field.value}
+                        onChange={(e) => updateFieldValue(field.id, e.target.value)}
+                        placeholder={field.placeholder}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <button
+                  onClick={generatePetition}
+                  disabled={isGenerating || formFields.some(field => field.required && !field.value.trim())}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4" />
+                      AI ile Oluştur
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('templates')}
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Geri
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Form Bilgileri */}
-        {selectedExample && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {/* Form Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold text-lg">
-                      Dilekçe Bilgileri
-                    </h3>
-                    <p className="text-blue-100 text-sm">
-                      Lütfen aşağıdaki bilgileri eksiksiz doldurun
-                    </p>
-                  </div>
-      </div>
-
-                {/* AI Ayarları */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-white">AI Model:</label>
-                    <select
-                      value={aiModel}
-                      onChange={(e) => setAIModel(e.target.value as AIModel)}
-                      className="px-3 py-1 border border-white/30 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/20 text-white"
-                    >
-                      <option value="auto" className="text-gray-900">🤖 Otomatik</option>
-                      <option value="gemini" className="text-gray-900">✨ Gemini</option>
-                      <option value="gpt-4" className="text-gray-900">⚡ GPT-4</option>
-                    </select>
-                  </div>
+        {/* Preview Tab */}
+        {activeTab === 'preview' && generatedPetition && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    Dilekçe Önizleme
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {generatedPetition.metadata.wordCount} kelime • {new Date(generatedPetition.metadata.generatedAt).toLocaleString('tr-TR')}
+                  </p>
+                </div>
+                <div className="flex gap-2">
                   <button
-                    onClick={() => setUseAI(!useAI)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      useAI 
-                        ? 'bg-green-500 text-white hover:bg-green-600' 
-                        : 'bg-white/20 text-white hover:bg-white/30'
-                    }`}
+                    onClick={copyToClipboard}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
                   >
-                    {useAI ? '✓ AI Aktif' : '✗ AI Pasif'}
+                    <Copy className="w-4 h-4" />
+                    Kopyala
+                  </button>
+                  <button
+                    onClick={downloadPetition}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    İndir
                   </button>
                 </div>
-            </div>
-          </div>
-
-            {/* Form Content */}
-            <div className="p-6">
-          {/* Seçilen Dilekçe Bilgisi */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-            <div className="flex items-start gap-3">
-              {realPetitions.some(r => r.id === selectedExample.id) ? (
-                <Star className="h-5 w-5 text-orange-500 mt-1" />
-              ) : (
-                <CheckSquare className="h-5 w-5 text-blue-500 mt-1" />
-              )}
-              <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{selectedExample.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{selectedExample.category}</p>
-                {selectedExample.subcategory && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400">{selectedExample.subcategory}</p>
-                )}
-                {realPetitions.some(r => r.id === selectedExample.id) && (
-                  <div className="mt-2 flex items-center gap-2 text-orange-600">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Bu gerçek bir dilekçe örneğidir - Profesyonel kalitede</span>
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
 
-            {/* Form Alanları */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {formFields.map((field) => {
-                const IconComponent = getFieldIcon(field.type);
-                const inputId = `field-${field.id}`;
-                return (
-                  <div key={field.id}>
-                    <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <IconComponent className="w-4 h-4 inline mr-2" />
-                    {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  
-                  {field.type === 'textarea' ? (
-                    <div className="relative">
-                      <textarea
-                          id={inputId}
-                        value={(formData[field.id] || '') + (dictationInterimText ? ' ' + dictationInterimText : '')}
-                        onChange={(e) => handleFormChange(field.id, e.target.value)}
-                          placeholder={field.placeholder}
-                        rows={3}
-                          className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white pr-12 transition-all duration-300`}
-                      />
-                        <div className="absolute right-3 top-3">
-                        <DictationButton
-                          isListening={isDictating}
-                          isSupported={isDictationSupported}
-                          onStart={startDictation}
-                          onStop={stopDictation}
-                          size="sm"
-                          title="Sesli yazım"
-                        />
-                      </div>
-                    </div>
-                  ) : field.type === 'select' ? (
-                    <select
-                        id={inputId}
-                      value={formData[field.id] || ''}
-                      onChange={(e) => handleFormChange(field.id, e.target.value)}
-                        className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
-                    >
-                      <option value="">Seçiniz...</option>
-                      {field.options?.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
-                        id={inputId}
-                      value={formData[field.id] || ''}
-                      onChange={(e) => handleFormChange(field.id, e.target.value)}
-                        placeholder={field.placeholder}
-                        className={`w-full px-4 py-3 border-2 ${fieldErrors[field.id] ? 'border-red-500' : 'border-gray-200 dark:border-gray-600'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all duration-300`}
-                      />
-                    )}
-                    
-                    {fieldErrors[field.id] && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors[field.id]}</p>
-                    )}
-                </div>
-                );
-              })}
-            </div>
-
-            {/* Generate Button */}
-            <div className="mt-6">
-            <button
-              onClick={generateAIPetition}
-              disabled={isGenerating}
-                className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-4 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              {isGenerating ? (
-                <>
-                    <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span>AI Dilekçe Oluşturuyor...</span>
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    </div>
-                </>
-              ) : (
-                <>
-                    <Sparkles className="h-6 w-6" />
-                  <span>🤖 AI ile Profesyonel Dilekçe Oluştur</span>
-                    <Zap className="h-5 w-5" />
-                </>
-              )}
-            </button>
-          </div>
-            </div>
-        </div>
-      )}
-
-        {/* Oluşturulan Dilekçe */}
-      {generatedPetition && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mt-8">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                <div>
-                    <h3 className="text-white font-semibold text-lg">Oluşturulan Dilekçe</h3>
-                    <p className="text-green-100 text-sm">AI tarafından oluşturuldu</p>
-                </div>
-              </div>
-                <div className="flex items-center gap-2">
-              <button
-                    onClick={() => navigator.clipboard.writeText(generatedPetition)}
-                    className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                    title="Kopyala"
-              >
-                    <Copy className="w-5 h-5" />
-              </button>
-              <button
-                    onClick={() => {
-                      const blob = new Blob([generatedPetition], { type: 'text/plain' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${selectedExample?.title || 'dilekce'}.txt`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                    title="İndir"
-                  >
-                    <Download className="w-5 h-5" />
-              </button>
-                </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
-                  {generatedPetition}
+                  {generatedPetition.content}
                 </pre>
+              </div>
+
+              <div className="mt-6 flex gap-4">
+                <button
+                  onClick={() => setActiveTab('create')}
+                  className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
+                >
+                  Düzenle
+                </button>
+                <button
+                  onClick={() => setActiveTab('templates')}
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Yeni Şablon
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Empty State */}
+        {activeTab === 'create' && !selectedTemplate && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                Şablon Seçin
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Dilekçe oluşturmak için önce bir şablon seçmeniz gerekiyor
+              </p>
+              <button
+                onClick={() => setActiveTab('templates')}
+                className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-lg transition-colors"
+              >
+                Şablonları Görüntüle
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
