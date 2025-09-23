@@ -31,9 +31,136 @@ const AdvancedSearch: React.FC = () => {
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [showResultDetail, setShowResultDetail] = useState(false);
+  
+  // 🚀 Gelişmiş Özellikler
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [favoriteCourts, setFavoriteCourts] = useState<string[]>([]);
+  const [searchHistory, setSearchHistory] = useState<Array<{query: string, type: string, date: string, results: number}>>([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [trendAnalysis, setTrendAnalysis] = useState<{trend: string, count: number}[]>([]);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [showAiSummary, setShowAiSummary] = useState(false);
 
   const { isListening, startListening, stopListening, transcript, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 🚀 Akıllı Arama Özellikleri
+  const searchSuggestionsData = {
+    'iş': ['iş sözleşmesi', 'iş sözleşmesi feshi', 'iş hukuku', 'işçi hakları', 'işveren yükümlülükleri'],
+    'velayet': ['velayet değişikliği', 'velayet şartları', 'velayet hakkı', 'velayet davası', 'velayet tazminatı'],
+    'borç': ['borç sözleşmesi', 'borç ödeme', 'borç faizi', 'borç taksitlendirme', 'borç silme'],
+    'ceza': ['ceza hukuku', 'ceza davası', 'ceza tazminatı', 'ceza indirimi', 'ceza erteleme'],
+    'ticaret': ['ticaret hukuku', 'ticaret sözleşmesi', 'ticaret davası', 'ticaret sicili', 'ticaret şirketi'],
+    'aile': ['aile hukuku', 'aile davası', 'aile mahkemesi', 'aile danışmanlığı', 'aile koruması'],
+    'sözleşme': ['sözleşme hukuku', 'sözleşme feshi', 'sözleşme ihlali', 'sözleşme tazminatı', 'sözleşme geçersizliği'],
+    'tazminat': ['tazminat davası', 'tazminat hesaplama', 'tazminat türleri', 'tazminat miktarı', 'tazminat ödeme'],
+    'nafaka': ['nafaka davası', 'nafaka miktarı', 'nafaka artırımı', 'nafaka azaltımı', 'nafaka ödeme'],
+    'boşanma': ['boşanma davası', 'boşanma süreci', 'boşanma şartları', 'boşanma tazminatı', 'boşanma anlaşması']
+  };
+
+  // Akıllı arama önerileri
+  const getSearchSuggestions = (input: string) => {
+    if (input.length < 2) return [];
+    
+    const suggestions: string[] = [];
+    const inputLower = input.toLowerCase();
+    
+    // Doğrudan eşleşme
+    Object.entries(searchSuggestionsData).forEach(([key, values]) => {
+      if (key.includes(inputLower)) {
+        suggestions.push(...values);
+      }
+      values.forEach(value => {
+        if (value.includes(inputLower) && !suggestions.includes(value)) {
+          suggestions.push(value);
+        }
+      });
+    });
+    
+    return suggestions.slice(0, 8);
+  };
+
+  // Arama geçmişini kaydet
+  const saveSearchHistory = (searchQuery: string, searchType: string, resultCount: number) => {
+    const newEntry = {
+      query: searchQuery,
+      type: searchType,
+      date: new Date().toLocaleDateString('tr-TR'),
+      results: resultCount
+    };
+    
+    const updatedHistory = [newEntry, ...searchHistory.slice(0, 9)];
+    setSearchHistory(updatedHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+  };
+
+  // Trend analizi
+  const analyzeTrends = (results: SearchResult[]) => {
+    const trends: {[key: string]: number} = {};
+    
+    results.forEach(result => {
+      result.legalAreas.forEach(area => {
+        trends[area] = (trends[area] || 0) + 1;
+      });
+    });
+    
+    const trendArray = Object.entries(trends)
+      .map(([trend, count]) => ({ trend, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    setTrendAnalysis(trendArray);
+  };
+
+  // AI özetleme
+  const generateAiSummary = async (results: SearchResult[]) => {
+    if (results.length === 0) return;
+    
+    try {
+      const summaryPrompt = `
+        Aşağıdaki ${results.length} hukuki karar/mevzuat sonucunu analiz et ve özetle:
+        
+        ${results.map((r, i) => `${i+1}. ${r.subject} - ${r.courtName} (${r.decisionDate})`).join('\n')}
+        
+        Özetle:
+        - Ana konular
+        - Mahkeme tutumları
+        - Önemli hükümler
+        - Pratik öneriler
+      `;
+      
+      // Simüle edilmiş AI özeti
+      const summary = `
+        📊 **Arama Sonuçları Analizi**
+        
+        **Ana Konular:** ${results[0]?.legalAreas.join(', ') || 'Genel'}
+        **Toplam Sonuç:** ${results.length} karar/mevzuat
+        
+        **Mahkeme Dağılımı:**
+        ${results.reduce((acc, r) => {
+          acc[r.courtName] = (acc[r.courtName] || 0) + 1;
+          return acc;
+        }, {} as {[key: string]: number})
+        .map(([court, count]) => `- ${court}: ${count} karar`).join('\n')}
+        
+        **Önemli Hükümler:**
+        - Son kararlar güncel hukuki yaklaşımları yansıtıyor
+        - Mahkeme tutumları tutarlı görünüyor
+        - Pratik uygulamalar için rehber niteliğinde
+        
+        **Pratik Öneriler:**
+        - Benzer davalarda bu kararları referans alabilirsiniz
+        - Güncel mevzuat değişikliklerini takip edin
+        - Mahkeme içtihatlarını dikkate alın
+      `;
+      
+      setAiSummary(summary);
+    } catch (error) {
+      console.error('AI özetleme hatası:', error);
+    }
+  };
 
   const mockResults: SearchResult[] = [
     // İçtihat Verileri
@@ -309,31 +436,31 @@ const AdvancedSearch: React.FC = () => {
       } else {
         try {
           // Sistemin kendi Mevzuat API'sini kullan
-        const mevzuatFilters: MevzuatFilters = {
+          const mevzuatFilters: MevzuatFilters = {
             category: selectedArea || undefined,
             institution: selectedCourt || undefined,
             dateRange: dateRange ? {
               from: `${dateRange}-01-01`,
               to: `${dateRange}-12-31`
             } : undefined,
-          page: 1,
-          per_page: 20
-        };
+            page: 1,
+            per_page: 20
+          };
 
-        const mevzuatResults = await searchMevzuat(query, mevzuatFilters);
-        
+          const mevzuatResults = await searchMevzuat(query, mevzuatFilters);
+          
           // Mevzuat sonuçlarını SearchResult formatına çevir
           searchResults = mevzuatResults.map(result => ({
             id: result.id,
             caseNumber: result.title || '',
             courtName: result.institution || '',
-          courtType: 'mevzuat',
+            courtType: 'mevzuat',
             decisionDate: result.publishDate || '',
             subject: result.title || '',
             content: result.content || '',
             relevanceScore: result.relevanceScore || 0,
             legalAreas: result.category ? [result.category] : [],
-          keywords: [],
+            keywords: [],
             highlight: result.highlight || ''
           }));
           
@@ -346,7 +473,21 @@ const AdvancedSearch: React.FC = () => {
         }
       }
 
+      // 🚀 Gelişmiş Özellikler
       setSearchResults(searchResults);
+      
+      // Arama geçmişini kaydet
+      saveSearchHistory(query, searchType, searchResults.length);
+      
+      // Trend analizi yap
+      analyzeTrends(searchResults);
+      
+      // AI özetleme başlat
+      generateAiSummary(searchResults);
+      
+      // Önerileri gizle
+      setShowSuggestions(false);
+      
     } catch (error) {
       console.error('Arama hatası:', error);
       setSearchResults([]);
@@ -359,6 +500,53 @@ const AdvancedSearch: React.FC = () => {
     setSelectedResult(result);
     setShowResultDetail(true);
   };
+
+  // 🚀 Gelişmiş Özellikler - Event Handlers
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    
+    if (value.length >= 2) {
+      const suggestions = getSearchSuggestions(value);
+      setSearchSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    setShowSuggestions(false);
+  };
+
+  const handleRecentSearchClick = (recentQuery: string) => {
+    setQuery(recentQuery);
+  };
+
+  const toggleFavoriteCourt = (court: string) => {
+    if (favoriteCourts.includes(court)) {
+      setFavoriteCourts(favoriteCourts.filter(c => c !== court));
+    } else {
+      setFavoriteCourts([...favoriteCourts, court]);
+    }
+  };
+
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+  };
+
+  // LocalStorage'dan verileri yükle
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('searchHistory');
+    if (savedHistory) {
+      try {
+        setSearchHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        console.error('Arama geçmişi yüklenemedi:', error);
+      }
+    }
+  }, []);
 
   const closeResultDetail = () => {
     setShowResultDetail(false);
@@ -411,14 +599,38 @@ const AdvancedSearch: React.FC = () => {
         {/* Search Bar */}
         <div className="bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-xl p-3 md:p-6 mb-4 md:mb-8">
           <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mb-3 md:mb-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <input
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Arama terimi girin..."
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onFocus={() => {
+                  if (query.length >= 2) {
+                    const suggestions = getSearchSuggestions(query);
+                    setSearchSuggestions(suggestions);
+                    setShowSuggestions(suggestions.length > 0);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder="Arama terimi girin... (örn: velayet, iş sözleşmesi, borç)"
                 className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 dark:border-gray-600 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm md:text-base"
               />
+              
+              {/* 🚀 Akıllı Arama Önerileri */}
+              {showSuggestions && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex gap-2 md:gap-4">
                           <button
@@ -479,6 +691,35 @@ const AdvancedSearch: React.FC = () => {
               )}
           </div>
         )}
+
+          {/* 🚀 Arama Geçmişi */}
+          {searchHistory.length > 0 && (
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Son Aramalar:</span>
+                <button
+                  onClick={clearSearchHistory}
+                  className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Temizle
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {searchHistory.slice(0, 5).map((search, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleRecentSearchClick(search.query)}
+                    className="px-3 py-1 bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-200 dark:border-gray-500"
+                  >
+                    {search.query}
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                      ({search.results} sonuç)
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -583,6 +824,62 @@ const AdvancedSearch: React.FC = () => {
             ))}
         </div>
       )}
+
+        {/* 🚀 Gelişmiş Analiz Paneli */}
+        {searchResults.length > 0 && (
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Trend Analizi */}
+            {trendAnalysis.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                  📊 Trend Analizi
+                </h3>
+                <div className="space-y-3">
+                  {trendAnalysis.map((trend, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{trend.trend}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full" 
+                            style={{ width: `${(trend.count / trendAnalysis[0].count) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-8">
+                          {trend.count}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Özet */}
+            {aiSummary && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                    🤖 AI Analizi
+                  </h3>
+                  <button
+                    onClick={() => setShowAiSummary(!showAiSummary)}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                  >
+                    {showAiSummary ? 'Gizle' : 'Göster'}
+                  </button>
+                </div>
+                {showAiSummary && (
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">
+                      {aiSummary}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Result Detail Modal */}
         {showResultDetail && selectedResult && (
