@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2 } from 'lucide-react';
+import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Brain, Mic, TrendingUp } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 
 // Import all components
@@ -20,6 +20,11 @@ import Profile from './components/Profile';
 import HeaderVoiceControl from './components/HeaderVoiceControl';
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
 import Header from './components/layout/Header';
+
+// 🚀 Benzersiz Özellikler
+import AILegalAssistant from './components/AILegalAssistant';
+import PredictiveAnalytics from './components/PredictiveAnalytics';
+import VoiceCommands from './components/VoiceCommands';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -177,12 +182,18 @@ function App() {
 
   const menuItems = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: BarChart3, color: 'text-blue-600' },
-  { id: 'ai-chat', label: 'Hukuk Asistanı', icon: Bot, color: 'text-purple-600', badge: 'BETA' },
-  { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
+    { id: 'ai-chat', label: 'Hukuk Asistanı', icon: Bot, color: 'text-purple-600', badge: 'BETA' },
+    { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
+    
+    // 🚀 Benzersiz Efsane Özellikler
+    { id: 'ai-legal-assistant', label: 'AI Hukuki Danışman', icon: Brain, color: 'text-purple-600', badge: 'EFSANE' },
+    { id: 'predictive-analytics', label: 'Tahmine Dayalı Analiz', icon: TrendingUp, color: 'text-blue-600', badge: 'EFSANE' },
+    { id: 'voice-commands', label: 'Sesli Komutlar', icon: Mic, color: 'text-green-600', badge: 'EFSANE' },
+    
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
-  { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
-  { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
+    { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
+    { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
     { id: 'cases', label: 'Dava Yönetimi', icon: Gavel, color: 'text-red-600' },
     { id: 'clients', label: 'Müvekkil Yönetimi', icon: Users, color: 'text-blue-500' },
     { id: 'appointments', label: 'Randevu Yönetimi', icon: Calendar, color: 'text-purple-500' },
@@ -209,6 +220,15 @@ function App() {
         return <FileConverter />;
       case 'notebook-llm':
         return <NotebookLLM />;
+      
+      // 🚀 Benzersiz Özellikler
+      case 'ai-legal-assistant':
+        return <AILegalAssistant />;
+      case 'predictive-analytics':
+        return <PredictiveAnalytics />;
+      case 'voice-commands':
+        return <VoiceCommands />;
+      
       case 'cases':
         return <CaseManagement />;
       case 'clients':
@@ -568,6 +588,8 @@ function App() {
                       <span className={`ml-auto px-1.5 md:px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                         item.badge === 'YENİ' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
                         item.badge === 'AI' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                        item.badge === 'EFSANE' ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg animate-pulse' :
+                        item.badge === 'BETA' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
                         item.badge === '7/24' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
                         'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                       }`}>
