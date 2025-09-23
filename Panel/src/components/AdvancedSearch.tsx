@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, Lightbulb, TrendingUp, BookOpen, Gavel, FileText, Users, Calendar, Filter, SortAsc, SortDesc, Share2, Star, History, Zap, Target, BarChart3, PieChart, MapPin, Eye, MessageSquare, Heart } from 'lucide-react';
+import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
 
@@ -35,32 +35,25 @@ const AdvancedSearch: React.FC = () => {
   // 🚀 Gelişmiş Özellikler
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [favoriteCourts, setFavoriteCourts] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<Array<{query: string, type: string, date: string, results: number}>>([]);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [trendAnalysis, setTrendAnalysis] = useState<{trend: string, count: number}[]>([]);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [showAiSummary, setShowAiSummary] = useState(false);
 
   // 🚀 Yeni Özellikler
   const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics' | 'emotion' | 'voice'>('search');
-  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
-  const [searchAnalytics, setSearchAnalytics] = useState<any>(null);
-  const [aiInsights, setAiInsights] = useState<string[]>([]);
-  const [showAiInsights, setShowAiInsights] = useState(false);
   
   // AI Duygu Analizi State'leri
-  const [emotionAnalysis, setEmotionAnalysis] = useState<any[]>([]);
+  const [emotionText, setEmotionText] = useState('');
   const [isAnalyzingEmotion, setIsAnalyzingEmotion] = useState(false);
-  const [emotionStats, setEmotionStats] = useState<any>(null);
+  const [emotionResults, setEmotionResults] = useState<any>(null);
   
   // Sesli Komutlar State'leri
-  const [voiceCommands, setVoiceCommands] = useState<any[]>([]);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
-  const [currentCommand, setCurrentCommand] = useState('');
+  const [voiceCommandHistory, setVoiceCommandHistory] = useState<Array<{command: string, time: string, status: string}>>([]);
 
-  const { isListening, startListening, stopListening, transcript, error: dictationError } = useDictation();
+  const { isListening, startDictation, stopDictation, interimText, error: dictationError } = useDictation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 🚀 Akıllı Arama Özellikleri
@@ -136,18 +129,6 @@ const AdvancedSearch: React.FC = () => {
     if (results.length === 0) return;
     
     try {
-      const summaryPrompt = `
-        Aşağıdaki ${results.length} hukuki karar/mevzuat sonucunu analiz et ve özetle:
-        
-        ${results.map((r, i) => `${i+1}. ${r.subject} - ${r.courtName} (${r.decisionDate})`).join('\n')}
-        
-        Özetle:
-        - Ana konular
-        - Mahkeme tutumları
-        - Önemli hükümler
-        - Pratik öneriler
-      `;
-      
       // Simüle edilmiş AI özeti
       const summary = `
         📊 **Arama Sonuçları Analizi**
@@ -156,10 +137,10 @@ const AdvancedSearch: React.FC = () => {
         **Toplam Sonuç:** ${results.length} karar/mevzuat
         
         **Mahkeme Dağılımı:**
-        ${results.reduce((acc, r) => {
+        ${Object.entries(results.reduce((acc, r) => {
           acc[r.courtName] = (acc[r.courtName] || 0) + 1;
           return acc;
-        }, {} as {[key: string]: number})
+        }, {} as {[key: string]: number}))
         .map(([court, count]) => `- ${court}: ${count} karar`).join('\n')}
         
         **Önemli Hükümler:**
@@ -345,8 +326,7 @@ const AdvancedSearch: React.FC = () => {
     const checkBackendStatus = async () => {
       try {
         const response = await fetch('/api/health', { 
-          method: 'GET',
-          timeout: 5000 
+          method: 'GET'
         });
         if (response.ok) {
           setBackendStatus('ok');
@@ -540,6 +520,7 @@ const AdvancedSearch: React.FC = () => {
     setQuery(recentQuery);
   };
 
+  // Favori mahkeme yönetimi
   const toggleFavoriteCourt = (court: string) => {
     if (favoriteCourts.includes(court)) {
       setFavoriteCourts(favoriteCourts.filter(c => c !== court));
@@ -1016,7 +997,7 @@ const AdvancedSearch: React.FC = () => {
                 <div className="flex gap-2">
                   <select 
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
-                    onChange={(e) => {
+                    onChange={() => {
                       // Filtreleme mantığı
                     }}
                   >
@@ -1327,12 +1308,35 @@ const AdvancedSearch: React.FC = () => {
                 <textarea
                   className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white resize-none"
                   rows={4}
+                  value={emotionText}
+                  onChange={(e) => setEmotionText(e.target.value)}
                   placeholder="Müvekkil ifadesi, tanık beyanı veya herhangi bir metin girin..."
                 ></textarea>
                 <div className="mt-2 flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">0/1000 karakter</span>
-                  <button className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm transition-colors">
-                    Analiz Başlat
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{emotionText.length}/1000 karakter</span>
+                  <button 
+                    onClick={() => {
+                      if (emotionText.trim()) {
+                        setIsAnalyzingEmotion(true);
+                        // Simüle edilmiş analiz
+                        setTimeout(() => {
+                          setEmotionResults({
+                            positive: 65,
+                            neutral: 25,
+                            negative: 10,
+                            confidence: 85,
+                            stress: 'Orta',
+                            sincerity: 'Yüksek',
+                            consistency: 'Yüksek'
+                          });
+                          setIsAnalyzingEmotion(false);
+                        }, 2000);
+                      }
+                    }}
+                    disabled={!emotionText.trim() || isAnalyzingEmotion}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 text-white rounded-lg text-sm transition-colors"
+                  >
+                    {isAnalyzingEmotion ? 'Analiz Ediliyor...' : 'Analiz Başlat'}
                   </button>
                 </div>
               </div>
@@ -1343,9 +1347,9 @@ const AdvancedSearch: React.FC = () => {
                   <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Duygu Dağılımı</h4>
                   <div className="space-y-3">
                     {[
-                      { emotion: 'Pozitif', percentage: 65, color: 'bg-green-500' },
-                      { emotion: 'Nötr', percentage: 25, color: 'bg-gray-500' },
-                      { emotion: 'Negatif', percentage: 10, color: 'bg-red-500' }
+                      { emotion: 'Pozitif', percentage: emotionResults?.positive || 0, color: 'bg-green-500' },
+                      { emotion: 'Nötr', percentage: emotionResults?.neutral || 0, color: 'bg-gray-500' },
+                      { emotion: 'Negatif', percentage: emotionResults?.negative || 0, color: 'bg-red-500' }
                     ].map((item, index) => (
                       <div key={index} className="space-y-1">
                         <div className="flex items-center justify-between">
@@ -1367,10 +1371,10 @@ const AdvancedSearch: React.FC = () => {
                   <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Detaylı Analiz</h4>
                   <div className="space-y-3">
                     {[
-                      { label: 'Güven Seviyesi', value: 'Yüksek', color: 'text-green-600' },
-                      { label: 'Stres Seviyesi', value: 'Orta', color: 'text-yellow-600' },
-                      { label: 'Samimiyet', value: 'Yüksek', color: 'text-green-600' },
-                      { label: 'Tutarlılık', value: 'Yüksek', color: 'text-green-600' }
+                      { label: 'Güven Seviyesi', value: emotionResults?.confidence ? `${emotionResults.confidence}%` : '0%', color: 'text-green-600' },
+                      { label: 'Stres Seviyesi', value: emotionResults?.stress || 'Bilinmiyor', color: 'text-yellow-600' },
+                      { label: 'Samimiyet', value: emotionResults?.sincerity || 'Bilinmiyor', color: 'text-green-600' },
+                      { label: 'Tutarlılık', value: emotionResults?.consistency || 'Bilinmiyor', color: 'text-green-600' }
                     ].map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
@@ -1458,7 +1462,26 @@ const AdvancedSearch: React.FC = () => {
                 </h3>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => setIsVoiceListening(!isVoiceListening)}
+                    onClick={() => {
+                      if (isVoiceListening) {
+                        setIsVoiceListening(false);
+                        stopDictation();
+                      } else {
+                        setIsVoiceListening(true);
+                        startDictation();
+                        // Simüle edilmiş komut
+                        setTimeout(() => {
+                          const newCommand = {
+                            command: 'Velayet kararlarını ara',
+                            time: 'Şimdi',
+                            status: 'success'
+                          };
+                          setVoiceCommandHistory(prev => [newCommand, ...prev.slice(0, 9)]);
+                          setIsVoiceListening(false);
+                          stopDictation();
+                        }, 3000);
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
                       isVoiceListening 
                         ? 'bg-red-600 hover:bg-red-700 text-white' 
@@ -1544,12 +1567,7 @@ const AdvancedSearch: React.FC = () => {
               <div className="mb-8">
                 <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Son Komutlar</h4>
                 <div className="space-y-3">
-                  {[
-                    { command: 'Velayet kararlarını ara', time: '2 dakika önce', status: 'success' },
-                    { command: 'İş hukuku sonuçları', time: '5 dakika önce', status: 'success' },
-                    { command: 'Yargıtay kararları', time: '10 dakika önce', status: 'success' },
-                    { command: 'Son 3 ayın kararları', time: '15 dakika önce', status: 'error' }
-                  ].map((item, index) => (
+                  {voiceCommandHistory.length > 0 ? voiceCommandHistory.map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full ${
@@ -1568,7 +1586,12 @@ const AdvancedSearch: React.FC = () => {
                         {item.status === 'success' ? 'Başarılı' : 'Hata'}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-8">
+                      <Mic className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500 dark:text-gray-400">Henüz komut geçmişi yok</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
