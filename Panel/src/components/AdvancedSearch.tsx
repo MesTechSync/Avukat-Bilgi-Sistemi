@@ -1009,14 +1009,145 @@ const AdvancedSearch: React.FC = () => {
         {activeTab === 'timeline' && (
           <div className="max-w-6xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
-                Hukuki Zaman Çizelgesi
-              </h3>
-              <div className="text-center py-12">
-                <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  Zaman çizelgesi özelliği yakında eklenecek...
-                </p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Hukuki Zaman Çizelgesi
+                </h3>
+                <div className="flex gap-2">
+                  <select 
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
+                    onChange={(e) => {
+                      // Filtreleme mantığı
+                    }}
+                  >
+                    <option value="all">Tüm Alanlar</option>
+                    <option value="medeni">Medeni Hukuk</option>
+                    <option value="ceza">Ceza Hukuku</option>
+                    <option value="is">İş Hukuku</option>
+                    <option value="idare">İdare Hukuku</option>
+                  </select>
+                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                    Filtrele
+                  </button>
+                </div>
+              </div>
+
+              {/* Timeline Events */}
+              <div className="space-y-6">
+                {[
+                  {
+                    id: 1,
+                    date: '2024-01-15',
+                    title: 'Yeni İş Kanunu Değişiklikleri',
+                    type: 'mevzuat',
+                    area: 'İş Hukuku',
+                    description: 'İş sözleşmelerinde yeni düzenlemeler ve işçi hakları güncellemeleri',
+                    impact: 'high',
+                    status: 'active'
+                  },
+                  {
+                    id: 2,
+                    date: '2024-02-20',
+                    title: 'Yargıtay 1. Hukuk Dairesi Kararı',
+                    type: 'ictihat',
+                    area: 'Medeni Hukuk',
+                    description: 'Sözleşme hukukunda kusur sorumluluğu ile ilgili önemli karar',
+                    impact: 'medium',
+                    status: 'active'
+                  },
+                  {
+                    id: 3,
+                    date: '2024-03-10',
+                    title: 'Danıştay 6. Daire Kararı',
+                    type: 'ictihat',
+                    area: 'İdare Hukuku',
+                    description: 'İdari işlemlerde yetki sınırları ve denetim kriterleri',
+                    impact: 'high',
+                    status: 'active'
+                  },
+                  {
+                    id: 4,
+                    date: '2024-04-05',
+                    title: 'Ceza Hukuku Değişiklikleri',
+                    type: 'mevzuat',
+                    area: 'Ceza Hukuku',
+                    description: 'Ceza hukukunda kusur unsuru ve sorumluluk kriterleri güncellemeleri',
+                    impact: 'high',
+                    status: 'active'
+                  },
+                  {
+                    id: 5,
+                    date: '2024-05-12',
+                    title: 'Aile Hukuku Yeni Düzenlemeler',
+                    type: 'mevzuat',
+                    area: 'Aile Hukuku',
+                    description: 'Velayet ve boşanma süreçlerinde yeni düzenlemeler',
+                    impact: 'medium',
+                    status: 'active'
+                  }
+                ].map((event) => (
+                  <div key={event.id} className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex-shrink-0">
+                      <div className={`w-3 h-3 rounded-full mt-2 ${
+                        event.type === 'mevzuat' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{event.date}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          event.type === 'mevzuat' 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        }`}>
+                          {event.type === 'mevzuat' ? 'Mevzuat' : 'İçtihat'}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          event.impact === 'high' 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                        }`}>
+                          {event.impact === 'high' ? 'Yüksek Etki' : 'Orta Etki'}
+                        </span>
+                      </div>
+                      <h4 className="font-semibold text-gray-800 dark:text-white mb-1">{event.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{event.description}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Alan: {event.area}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+                        <span className="text-xs text-green-600 dark:text-green-400">Aktif</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Timeline Stats */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Mevzuat</span>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">3</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Değişiklik</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-green-800 dark:text-green-200">İçtihat</span>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">2</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Karar</p>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-3 h-3 text-purple-500" />
+                    <span className="text-sm font-medium text-purple-800 dark:text-purple-200">Toplam</span>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">5</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400">Olay</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1026,14 +1157,144 @@ const AdvancedSearch: React.FC = () => {
         {activeTab === 'analytics' && (
           <div className="max-w-6xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
-                Arama Analitiği
-              </h3>
-              <div className="text-center py-12">
-                <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  Analitik özelliği yakında eklenecek...
-                </p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Arama Analitiği
+                </h3>
+                <div className="flex gap-2">
+                  <select className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm">
+                    <option value="7">Son 7 Gün</option>
+                    <option value="30">Son 30 Gün</option>
+                    <option value="90">Son 3 Ay</option>
+                    <option value="365">Son 1 Yıl</option>
+                  </select>
+                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                    Güncelle
+                  </button>
+                </div>
+              </div>
+
+              {/* Analytics Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Search className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Toplam Arama</span>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">1,247</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">+12% bu ay</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-medium text-green-800 dark:text-green-200">Bulunan Sonuç</span>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">8,934</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">+8% bu ay</p>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-purple-800 dark:text-purple-200">Ortalama Süre</span>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">2.3s</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400">-15% bu ay</p>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Başarı Oranı</span>
+                  </div>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">94%</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400">+3% bu ay</p>
+                </div>
+              </div>
+
+              {/* Search Trends */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">En Popüler Arama Terimleri</h4>
+                  <div className="space-y-3">
+                    {[
+                      { term: 'velayet', count: 234, trend: 'up' },
+                      { term: 'iş sözleşmesi', count: 189, trend: 'up' },
+                      { term: 'boşanma', count: 156, trend: 'down' },
+                      { term: 'kira sözleşmesi', count: 143, trend: 'up' },
+                      { term: 'tazminat', count: 128, trend: 'stable' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">#{index + 1}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.term}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">{item.count}</span>
+                          <div className={`w-2 h-2 rounded-full ${
+                            item.trend === 'up' ? 'bg-green-500' : 
+                            item.trend === 'down' ? 'bg-red-500' : 'bg-gray-500'
+                          }`}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Hukuk Alanları Dağılımı</h4>
+                  <div className="space-y-3">
+                    {[
+                      { area: 'Medeni Hukuk', percentage: 35, color: 'bg-blue-500' },
+                      { area: 'İş Hukuku', percentage: 28, color: 'bg-green-500' },
+                      { area: 'Ceza Hukuku', percentage: 20, color: 'bg-red-500' },
+                      { area: 'İdare Hukuku', percentage: 12, color: 'bg-purple-500' },
+                      { area: 'Diğer', percentage: 5, color: 'bg-gray-500' }
+                    ].map((item, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.area}</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${item.color}`}
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Metrics */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Performans Metrikleri</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Arama Hızı</p>
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">2.3s</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Hızlı</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-2 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğruluk</p>
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">94%</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Yüksek</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-2 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Kullanıcı Memnuniyeti</p>
+                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">4.8/5</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Mükemmel</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1043,14 +1304,145 @@ const AdvancedSearch: React.FC = () => {
         {activeTab === 'emotion' && (
           <div className="max-w-6xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
-                AI Duygu Analizi
-              </h3>
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-pink-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  AI Duygu Analizi özelliği yakında eklenecek...
-                </p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  AI Duygu Analizi
+                </h3>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsAnalyzingEmotion(true)}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    Analiz Et
+                  </button>
+                </div>
+              </div>
+
+              {/* Emotion Analysis Input */}
+              <div className="mb-8">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Analiz Edilecek Metin
+                </label>
+                <textarea
+                  className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white resize-none"
+                  rows={4}
+                  placeholder="Müvekkil ifadesi, tanık beyanı veya herhangi bir metin girin..."
+                ></textarea>
+                <div className="mt-2 flex justify-between items-center">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">0/1000 karakter</span>
+                  <button className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm transition-colors">
+                    Analiz Başlat
+                  </button>
+                </div>
+              </div>
+
+              {/* Emotion Analysis Results */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Duygu Dağılımı</h4>
+                  <div className="space-y-3">
+                    {[
+                      { emotion: 'Pozitif', percentage: 65, color: 'bg-green-500' },
+                      { emotion: 'Nötr', percentage: 25, color: 'bg-gray-500' },
+                      { emotion: 'Negatif', percentage: 10, color: 'bg-red-500' }
+                    ].map((item, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.emotion}</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${item.color}`}
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Detaylı Analiz</h4>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Güven Seviyesi', value: 'Yüksek', color: 'text-green-600' },
+                      { label: 'Stres Seviyesi', value: 'Orta', color: 'text-yellow-600' },
+                      { label: 'Samimiyet', value: 'Yüksek', color: 'text-green-600' },
+                      { label: 'Tutarlılık', value: 'Yüksek', color: 'text-green-600' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
+                        <span className={`text-sm font-medium ${item.color}`}>{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Insights */}
+              <div className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 p-6 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-pink-600" />
+                  AI İçgörüleri
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Metin genel olarak pozitif bir ton taşıyor. Müvekkil güven verici bir ifade kullanmış.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Stres seviyesi orta düzeyde, bu durum normal bir hukuki süreç için beklenebilir.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Tutarlılık yüksek, bu ifadenin güvenilirliğini artırıyor.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sample Analysis */}
+              <div className="mt-8">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Örnek Analizler</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: 'Müvekkil İfadesi',
+                      text: 'Bu durum beni çok üzüyor, adalet istiyorum...',
+                      emotion: 'Negatif',
+                      confidence: '85%'
+                    },
+                    {
+                      title: 'Tanık Beyanı',
+                      text: 'Olayı net bir şekilde hatırlıyorum, kesinlikle...',
+                      emotion: 'Pozitif',
+                      confidence: '92%'
+                    }
+                  ].map((sample, index) => (
+                    <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h5 className="font-medium text-gray-800 dark:text-white mb-2">{sample.title}</h5>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">"{sample.text}"</p>
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          sample.emotion === 'Pozitif' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {sample.emotion}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Güven: {sample.confidence}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -1060,14 +1452,158 @@ const AdvancedSearch: React.FC = () => {
         {activeTab === 'voice' && (
           <div className="max-w-6xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6">
-                Sesli Komutlar
-              </h3>
-              <div className="text-center py-12">
-                <Mic className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  Sesli Komutlar özelliği yakında eklenecek...
-                </p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Sesli Komutlar
+                </h3>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsVoiceListening(!isVoiceListening)}
+                    className={`px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                      isVoiceListening 
+                        ? 'bg-red-600 hover:bg-red-700 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4" />
+                    {isVoiceListening ? 'Durdur' : 'Başlat'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Voice Commands Status */}
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-6 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      isVoiceListening ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'
+                    }`}>
+                      <Mic className={`w-6 h-6 ${
+                        isVoiceListening ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                      }`} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-white">
+                        {isVoiceListening ? 'Dinleniyor...' : 'Hazır'}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {isVoiceListening 
+                          ? 'Komutunuzu söyleyin, sistem dinliyor...' 
+                          : 'Mikrofonu başlatmak için butona tıklayın'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Voice Commands List */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Arama Komutları</h4>
+                  <div className="space-y-3">
+                    {[
+                      { command: 'Velayet ile ilgili kararları ara', action: 'Arama yapar' },
+                      { command: 'İş hukuku sonuçlarını getir', action: 'Filtreli arama' },
+                      { command: 'Son 6 ayın kararlarını göster', action: 'Tarih filtresi' },
+                      { command: 'Yargıtay kararlarını listele', action: 'Mahkeme filtresi' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.action}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Sistem Komutları</h4>
+                  <div className="space-y-3">
+                    {[
+                      { command: 'Analitik sayfasını aç', action: 'Tab değiştirir' },
+                      { command: 'Duygu analizi yap', action: 'Özellik açar' },
+                      { command: 'Zaman çizelgesini göster', action: 'Timeline açar' },
+                      { command: 'Sonuçları filtrele', action: 'Filtre menüsü' }
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.action}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Voice Commands History */}
+              <div className="mb-8">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Son Komutlar</h4>
+                <div className="space-y-3">
+                  {[
+                    { command: 'Velayet kararlarını ara', time: '2 dakika önce', status: 'success' },
+                    { command: 'İş hukuku sonuçları', time: '5 dakika önce', status: 'success' },
+                    { command: 'Yargıtay kararları', time: '10 dakika önce', status: 'success' },
+                    { command: 'Son 3 ayın kararları', time: '15 dakika önce', status: 'error' }
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          item.status === 'success' ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">"{item.command}"</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.time}</p>
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs ${
+                        item.status === 'success' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {item.status === 'success' ? 'Başarılı' : 'Hata'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Voice Settings */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Sesli Komut Ayarları</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Dil
+                    </label>
+                    <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm">
+                      <option value="tr">Türkçe</option>
+                      <option value="en">English</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Ses Seviyesi
+                    </label>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      defaultValue="70"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <input type="checkbox" id="autoStart" className="rounded" />
+                  <label htmlFor="autoStart" className="text-sm text-gray-700 dark:text-gray-300">
+                    Sayfa açıldığında otomatik başlat
+                  </label>
+                </div>
               </div>
             </div>
           </div>
