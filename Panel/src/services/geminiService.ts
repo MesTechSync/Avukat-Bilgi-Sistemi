@@ -24,26 +24,20 @@ export class GeminiService {
   }
 
   // Metin analizi yap
-  async analyzeText(instruction: string, text: string): Promise<string> {
+  async analyzeText(instruction: string, context?: string): Promise<string> {
     if (!this.model) {
       throw new Error('Gemini AI başlatılmamış. Lütfen API key girin.');
     }
 
     try {
       const prompt = `
-Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip ederek metni analiz et:
+Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip et:
 
-TALİMAT: ${instruction}
+${instruction}
 
-METİN:
-${text}
+${context ? `BAĞLAM: ${context}` : ''}
 
-Lütfen talimatı takip ederek detaylı bir hukuki analiz yap. Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun. Analizini şu başlıklar altında organize et:
-- Ana Bulgular
-- Hukuki Değerlendirme  
-- Risk Analizi
-- Öneriler
-- Yasal Dayanaklar
+Lütfen talimatı takip ederek Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun.
 `;
 
       const result = await this.model.generateContent(prompt);
@@ -136,3 +130,9 @@ Lütfen talimatı takip ederek tüm dosyaları birlikte detaylı hukuki analiz e
 
 // Singleton instance
 export const geminiService = new GeminiService();
+
+// API key ile başlat
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk';
+if (apiKey) {
+  geminiService.initialize(apiKey);
+}

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, 
   Search, 
-  Filter, 
   Download, 
   Copy, 
   Edit3, 
@@ -12,25 +11,14 @@ import {
   Users, 
   BookOpen, 
   Wand2, 
-  RefreshCw,
-  ChevronDown,
-  ChevronRight,
-  CheckCircle,
-  AlertCircle,
-  Brain,
-  Sparkles,
-  Target,
-  Zap
+  RefreshCw
 } from 'lucide-react';
 import { 
   petitionTemplates, 
   petitionCategories, 
   getPetitionsByCategory, 
   getPetitionsBySubcategory, 
-  searchPetitions, 
-  getPetitionById,
-  getPopularPetitions,
-  getRecentPetitions,
+  searchPetitions,
   type PetitionTemplate 
 } from '../data/petitions/petitionDatabase';
 import { geminiService } from '../services/geminiService';
@@ -63,11 +51,7 @@ export default function PetitionWriter() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
-  const [showPreview, setShowPreview] = useState(false);
-  const [aiModel, setAiModel] = useState<'gemini' | 'gpt-4' | 'auto'>('auto');
-  const [useAI, setUseAI] = useState(true);
   const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview'>('templates');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'popular' | 'recent' | 'rating' | 'alphabetical'>('popular');
 
   // Filtrelenmiş şablonlar
@@ -220,18 +204,6 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
     }
   };
 
-  // Kategoriyi genişlet/daralt
-  const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
-      } else {
-        newSet.add(category);
-      }
-      return newSet;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -248,13 +220,13 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
             <div className="flex items-center gap-1 md:gap-2">
               <div className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
                 AI Destekli
-              </div>
-            </div>
           </div>
+        </div>
+            </div>
           <p className="text-gray-600 dark:text-gray-300 text-sm md:text-lg">
             Profesyonel dilekçe şablonları ve AI destekli oluşturma
           </p>
-        </div>
+          </div>
 
         {/* Tab Navigation */}
         <div className="max-w-6xl mx-auto mb-6">
@@ -281,9 +253,9 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                   </button>
                 );
               })}
-            </div>
           </div>
         </div>
+      </div>
 
         {/* Templates Tab */}
         {activeTab === 'templates' && (
@@ -293,29 +265,29 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Search */}
                 <div className="flex-1">
-                  <div className="relative">
+              <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
+                <input
+                  type="text"
                       placeholder="Dilekçe ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
+                />
+              </div>
                 </div>
 
                 {/* Category Filter */}
                 <div className="flex gap-2">
-                  <select
-                    value={selectedCategory}
+              <select
+                value={selectedCategory}
                     onChange={(e) => {
                       setSelectedCategory(e.target.value);
                       setSelectedSubcategory('');
                     }}
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
-                  >
-                    <option value="">Tüm Kategoriler</option>
+              >
+                <option value="">Tüm Kategoriler</option>
                     {Object.keys(petitionCategories).map(category => (
                       <option key={category} value={category}>{category}</option>
                     ))}
@@ -328,9 +300,10 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
                     >
                       <option value="">Tüm Alt Kategoriler</option>
-                      {Object.keys(petitionCategories[selectedCategory] || {}).map(subcategory => (
-                        <option key={subcategory} value={subcategory}>{subcategory}</option>
-                      ))}
+                      {selectedCategory && petitionCategories[selectedCategory as keyof typeof petitionCategories] ? 
+                        Object.keys(petitionCategories[selectedCategory as keyof typeof petitionCategories]).map(subcategory => (
+                          <option key={subcategory} value={subcategory}>{subcategory}</option>
+                        )) : null}
                     </select>
                   )}
 
@@ -423,9 +396,9 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                   Farklı anahtar kelimeler deneyin veya filtreleri temizleyin
                 </p>
-              </div>
-            )}
           </div>
+        )}
+      </div>
         )}
 
         {/* Create Tab */}
@@ -433,29 +406,29 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
           <div className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
-                <div>
+            <div>
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     {selectedTemplate.title}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedTemplate.category} - {selectedTemplate.subcategory}
                   </p>
-                </div>
+            </div>
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">
                     AI Destekli
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
 
               <div className="space-y-4">
-                {formFields.map((field) => (
+              {formFields.map((field) => (
                   <div key={field.id}>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      {field.label}
+                    {field.label}
                       {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    {field.type === 'textarea' ? (
+                  </label>
+                  {field.type === 'textarea' ? (
                       <textarea
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
@@ -463,48 +436,48 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                       />
-                    ) : field.type === 'select' ? (
-                      <select
+                  ) : field.type === 'select' ? (
+                    <select
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         <option value="">Seçin...</option>
-                        {field.options?.map((option) => (
+                      {field.options?.map((option) => (
                           <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type}
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
-                        placeholder={field.placeholder}
+                      placeholder={field.placeholder}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
 
               <div className="mt-8 flex gap-4">
-                <button
+            <button
                   onClick={generatePetition}
                   disabled={isGenerating || formFields.some(field => field.required && !field.value.trim())}
                   className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {isGenerating ? (
-                    <>
+            >
+              {isGenerating ? (
+                <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Oluşturuluyor...
-                    </>
-                  ) : (
-                    <>
+                </>
+              ) : (
+                <>
                       <Wand2 className="w-4 h-4" />
                       AI ile Oluştur
-                    </>
-                  )}
-                </button>
+                </>
+              )}
+            </button>
                 <button
                   onClick={() => setActiveTab('templates')}
                   className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -512,9 +485,9 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                   Geri
                 </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Preview Tab */}
         {activeTab === 'preview' && generatedPetition && (
@@ -530,28 +503,28 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={copyToClipboard}
+              <button
+                onClick={copyToClipboard}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
+              >
                     <Copy className="w-4 h-4" />
                     Kopyala
-                  </button>
-                  <button
-                    onClick={downloadPetition}
+              </button>
+              <button
+                onClick={downloadPetition}
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
                     İndir
-                  </button>
-                </div>
-              </div>
+              </button>
+            </div>
+          </div>
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedPetition.content}
                 </pre>
-              </div>
+            </div>
 
               <div className="mt-6 flex gap-4">
                 <button
@@ -566,9 +539,9 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
                 >
                   Yeni Şablon
                 </button>
+                </div>
               </div>
             </div>
-          </div>
         )}
 
         {/* Empty State */}
@@ -588,9 +561,9 @@ Sadece dilekçe içeriğini döndür, açıklama ekleme.
               >
                 Şablonları Görüntüle
               </button>
-            </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );
