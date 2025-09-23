@@ -132,27 +132,32 @@ export default function PetitionWriter() {
     setIsGenerating(true);
     try {
       const prompt = `
-Aşağıdaki bilgileri kullanarak ${selectedTemplate.title} oluştur:
+Sen Türkiye'de çalışan deneyimli bir avukatsın. Aşağıdaki bilgileri kullanarak profesyonel bir dilekçe oluştur:
 
-Şablon: ${selectedTemplate.title}
-Kategori: ${selectedTemplate.category} - ${selectedTemplate.subcategory}
-Hukuki Dayanak: ${selectedTemplate.legalBasis.join(', ')}
-Mahkeme: ${selectedTemplate.courtType}
+DİLEKÇE BİLGİLERİ:
+- Başlık: ${selectedTemplate.title}
+- Kategori: ${selectedTemplate.category} - ${selectedTemplate.subcategory}
+- Hukuki Dayanak: ${selectedTemplate.legalBasis.join(', ')}
+- Mahkeme Türü: ${selectedTemplate.courtType}
+- Tahmini Süre: ${selectedTemplate.estimatedTime}
+- Zorluk Seviyesi: ${selectedTemplate.difficulty}
 
-Form Verileri:
-${formFields.map(field => `${field.label}: ${field.value}`).join('\n')}
+KULLANICI VERİLERİ:
+${formFields.map(field => `• ${field.label}: ${field.value || '[Boş]'}`).join('\n')}
 
-Şablon İçeriği:
+ŞABLON İÇERİĞİ:
 ${selectedTemplate.content}
 
-Lütfen:
-1. Form verilerini şablon içeriğine uygun şekilde yerleştir
-2. Hukuki terminolojiyi doğru kullan
-3. Türkçe dilbilgisi kurallarına uy
-4. Profesyonel ve resmi bir ton kullan
-5. Eksik bilgileri [Köşeli parantez] ile belirt
+GÖREVLERİN:
+1. Form verilerini şablon içeriğine profesyonelce yerleştir
+2. Türk hukuk sistemine uygun terminoloji kullan
+3. Resmi ve profesyonel dil kullan
+4. Eksik bilgileri [Köşeli parantez] ile işaretle
+5. Dilekçe formatını koru
+6. Hukuki dayanakları doğru kullan
+7. Mahkeme adresini uygun şekilde düzenle
 
-Sadece dilekçe içeriğini döndür, açıklama ekleme.
+ÖNEMLİ: Sadece dilekçe içeriğini döndür, açıklama veya yorum ekleme. Dilekçe tamamen hazır ve kullanıma uygun olmalı.
       `;
 
       const response = await geminiService.analyzeText(prompt);
