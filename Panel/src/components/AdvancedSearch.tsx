@@ -326,76 +326,91 @@ const AdvancedSearch: React.FC = () => {
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-600 bg-clip-text text-transparent mb-2">
                 İçtihat & Mevzuat
               </h1>
-              <p className="text-gray-600 mt-2">
-                Gerçek Yargıtay, UYAP Emsal ve Mevzuat verilerine erişim
+              <p className="text-slate-600 text-lg font-medium">
+                Türkiye'nin En Kapsamlı Hukuki Veri Merkezi
               </p>
+              <div className="absolute -bottom-2 left-0 w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${
-                backendStatus === 'ok' ? 'bg-green-500' : 
-                backendStatus === 'degraded' ? 'bg-yellow-500' : 
-                backendStatus === 'down' ? 'bg-red-500' : 'bg-gray-400'
-              }`}></div>
-              <span className="text-sm text-gray-600">
-                {backendStatus === 'ok' ? 'Sistem Aktif' : 
-                 backendStatus === 'degraded' ? 'Kısmi Hizmet' : 
-                 backendStatus === 'down' ? 'Sistem Kapalı' : 'Durum Bilinmiyor'}
-              </span>
+            <div className="flex items-center space-x-3">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    backendStatus === 'ok' ? 'bg-emerald-500 animate-pulse' : 
+                    backendStatus === 'degraded' ? 'bg-amber-500 animate-pulse' : 
+                    backendStatus === 'down' ? 'bg-red-500 animate-pulse' : 'bg-slate-400'
+                  }`}></div>
+                  <span className="text-sm font-medium text-slate-700">
+                    {backendStatus === 'ok' ? 'Sistem Aktif' : 
+                     backendStatus === 'degraded' ? 'Kısmi Hizmet' : 
+                     backendStatus === 'down' ? 'Sistem Kapalı' : 'Durum Bilinmiyor'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'search', label: '🔍 Akıllı Arama', icon: Search },
-              { id: 'timeline', label: '📅 Hukuki Zaman Çizelgesi', icon: Calendar },
-              { id: 'analytics', label: '📊 Analitik', icon: BarChart3 },
-              { id: 'emotion', label: '🧠 AI Duygu Analizi', icon: Brain },
-              { id: 'voice', label: '🎤 Sesli Komutlar', icon: Mic }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
+        <div className="mb-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-white/20">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'search', label: 'Akıllı Arama', icon: Search, color: 'blue' },
+                { id: 'timeline', label: 'Hukuki Zaman Çizelgesi', icon: Calendar, color: 'emerald' },
+                { id: 'analytics', label: 'Analitik', icon: BarChart3, color: 'purple' },
+                { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' },
+                { id: 'voice', label: 'Sesli Komutlar', icon: Mic, color: 'indigo' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`group flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? `bg-gradient-to-r from-${tab.color}-500 to-${tab.color}-600 text-white shadow-lg transform scale-105`
+                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 hover:shadow-md'
+                  }`}
+                >
+                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'}`} />
+                  <span className="hidden sm:inline font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Search Tab */}
         {activeTab === 'search' && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 mb-8">
             {/* Search Form */}
-            <div className="mb-6">
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="mb-8">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Hukuki Veri Arama</h2>
+                <p className="text-slate-600">Yargıtay, UYAP Emsal ve Mevzuat verilerinde arama yapın</p>
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Arama terimi girin..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Arama terimi girin... (örn: velayet, iş hukuku, boşanma)"
+                      className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 placeholder-slate-400 font-medium"
+                    />
+                  </div>
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1">
+                    <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl shadow-2xl z-10 mt-2 overflow-hidden">
                       {searchSuggestions.map((suggestion, index) => (
                         <button
                           key={index}
@@ -403,8 +418,9 @@ const AdvancedSearch: React.FC = () => {
                             setQuery(suggestion);
                             setShowSuggestions(false);
                           }}
-                          className="w-full px-4 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-slate-100 last:border-b-0 transition-colors duration-200 text-slate-700 font-medium"
                         >
+                          <Search className="inline w-4 h-4 mr-2 text-blue-500" />
                           {suggestion}
                         </button>
                       ))}
@@ -414,77 +430,141 @@ const AdvancedSearch: React.FC = () => {
                 <button
                   onClick={handleSearch}
                   disabled={isLoading || !query.trim()}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-                  <Search className="w-4 h-4" />
-                  <span>{isLoading ? 'Aranıyor...' : 'Ara'}</span>
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Aranıyor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-5 h-5" />
+                      <span>Ara</span>
+                    </>
+                  )}
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-4">
-                <select
-                  value={searchType}
-                  onChange={(e) => setSearchType(e.target.value as any)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="ictihat">İçtihat</option>
-                  <option value="mevzuat">Mevzuat</option>
-                  <option value="uyap">UYAP Emsal</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Veri Kaynağı</label>
+                  <select
+                    value={searchType}
+                    onChange={(e) => setSearchType(e.target.value as any)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                  >
+                    <option value="ictihat">🏛️ İçtihat (Yargıtay)</option>
+                    <option value="mevzuat">📜 Mevzuat</option>
+                    <option value="uyap">⚖️ UYAP Emsal</option>
+                  </select>
+                </div>
 
-                <select
-                  value={selectedCourt}
-                  onChange={(e) => setSelectedCourt(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Tüm Mahkemeler</option>
-                  <option value="yargitay">Yargıtay</option>
-                  <option value="danistay">Danıştay</option>
-                  <option value="uyap">UYAP Emsal</option>
-                </select>
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Mahkeme</label>
+                  <select
+                    value={selectedCourt}
+                    onChange={(e) => setSelectedCourt(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                  >
+                    <option value="">Tüm Mahkemeler</option>
+                    <option value="yargitay">Yargıtay</option>
+                    <option value="danistay">Danıştay</option>
+                    <option value="uyap">UYAP Emsal</option>
+                  </select>
+                </div>
 
-                <input
-                  type="date"
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tarih</label>
+                  <input
+                    type="date"
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Arama Sonuçları ({searchResults.length})
-                </h3>
-                {searchResults.map((result) => (
-                  <div
-                    key={result.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => {
-                      setSelectedResult(result);
-                      setShowResultDetail(true);
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-gray-800">{result.subject}</h4>
-                      <span className="text-sm text-gray-500">{result.decisionDate}</span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-2">{result.courtName}</p>
-                    <p className="text-gray-700 text-sm">{result.content.substring(0, 200)}...</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {result.legalAreas.map((area, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                        >
-                          {area}
-                        </span>
-                      ))}
-                    </div>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    Arama Sonuçları
+                  </h3>
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-full font-semibold">
+                    {searchResults.length} Sonuç
                   </div>
-                ))}
+                </div>
+                
+                <div className="grid gap-6">
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={result.id}
+                      className="group bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+                      onClick={() => {
+                        setSelectedResult(result);
+                        setShowResultDetail(true);
+                      }}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-800 text-lg mb-2 group-hover:text-blue-700 transition-colors">
+                            {result.subject}
+                          </h4>
+                          <div className="flex items-center space-x-4 text-sm text-slate-600">
+                            <div className="flex items-center space-x-1">
+                              <Scale className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium">{result.courtName}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="w-4 h-4 text-emerald-500" />
+                              <span>{result.decisionDate}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <FileText className="w-4 h-4 text-purple-500" />
+                              <span>{result.caseNumber}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                          %{Math.round(result.relevanceScore * 100)}
+                        </div>
+                      </div>
+                      
+                      <p className="text-slate-700 leading-relaxed mb-4 line-clamp-3">
+                        {result.content.substring(0, 300)}...
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {result.legalAreas.map((area, areaIndex) => (
+                          <span
+                            key={areaIndex}
+                            className="px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-sm rounded-full font-medium border border-blue-200"
+                          >
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-slate-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 text-slate-500">
+                            <Clock className="w-4 h-4" />
+                            <span className="text-sm">Detayları görüntülemek için tıklayın</span>
+                          </div>
+                          <div className="flex items-center space-x-1 text-blue-600 group-hover:text-blue-700">
+                            <span className="text-sm font-medium">Detay</span>
+                            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -492,56 +572,156 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Hukuki Zaman Çizelgesi</h3>
-            <div className="space-y-4">
-              {timelineData.map((item, index) => (
-                <div key={index} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
-                  <div className={`w-3 h-3 rounded-full mt-2 ${
-                    item.importance === 'high' ? 'bg-red-500' :
-                    item.importance === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                  }`}></div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-gray-800">{item.title}</h4>
-                      <span className="text-sm text-gray-500">{item.date}</span>
-                    </div>
-                    <p className="text-gray-600 text-sm">{item.description}</p>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
-                      item.type === 'law' ? 'bg-blue-100 text-blue-800' :
-                      item.type === 'court' ? 'bg-green-100 text-green-800' :
-                      item.type === 'legislation' ? 'bg-purple-100 text-purple-800' :
-                      'bg-orange-100 text-orange-800'
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-800 mb-2">Hukuki Zaman Çizelgesi</h2>
+              <p className="text-slate-600 text-lg">Türk hukukundaki önemli gelişmeleri kronolojik sırayla takip edin</p>
+            </div>
+            
+            <div className="relative">
+              {/* Timeline Line */}
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500"></div>
+              
+              <div className="space-y-8">
+                {timelineData.map((item, index) => (
+                  <div key={index} className="relative flex items-start space-x-6">
+                    {/* Timeline Dot */}
+                    <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+                      item.importance === 'high' ? 'bg-gradient-to-r from-red-500 to-pink-500' :
+                      item.importance === 'medium' ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 
+                      'bg-gradient-to-r from-emerald-500 to-teal-500'
                     }`}>
-                      {item.type === 'law' ? 'Kanun' :
-                       item.type === 'court' ? 'Mahkeme' :
-                       item.type === 'legislation' ? 'Mevzuat' : 'İçtihat'}
-                    </span>
+                      {item.type === 'law' ? <BookOpen className="w-8 h-8 text-white" /> :
+                       item.type === 'court' ? <Gavel className="w-8 h-8 text-white" /> :
+                       item.type === 'legislation' ? <FileText className="w-8 h-8 text-white" /> :
+                       <Scale className="w-8 h-8 text-white" />}
+                    </div>
+                    
+                    {/* Content Card */}
+                    <div className="flex-1 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-xl font-bold text-slate-800">{item.title}</h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-slate-500 font-medium">{item.date}</span>
+                          <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
+                            item.importance === 'high' ? 'bg-red-100 text-red-800' :
+                            item.importance === 'medium' ? 'bg-amber-100 text-amber-800' :
+                            'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {item.importance === 'high' ? 'Yüksek Önem' :
+                             item.importance === 'medium' ? 'Orta Önem' : 'Düşük Önem'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-slate-700 leading-relaxed mb-4">{item.description}</p>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+                          item.type === 'law' ? 'bg-blue-100 text-blue-800' :
+                          item.type === 'court' ? 'bg-green-100 text-green-800' :
+                          item.type === 'legislation' ? 'bg-purple-100 text-purple-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          {item.type === 'law' ? '📜 Kanun' :
+                           item.type === 'court' ? '⚖️ Mahkeme' :
+                           item.type === 'legislation' ? '📋 Mevzuat' : '🏛️ İçtihat'}
+                        </span>
+                        
+                        <div className="flex items-center space-x-2 text-slate-500">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-sm">Hukuki Gelişme</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Analitik</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">Toplam Arama</h4>
-                <p className="text-2xl font-bold text-blue-600">{searchHistory.length}</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-800 mb-2">Analitik Dashboard</h2>
+              <p className="text-slate-600 text-lg">Sistem kullanım istatistikleri ve performans metrikleri</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-white/20 rounded-xl p-3">
+                    <Search className="w-8 h-8" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-blue-100 text-sm font-medium">Toplam Arama</p>
+                    <p className="text-3xl font-bold">{searchHistory.length}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-sm text-blue-100">Bu ay</span>
+                </div>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-800 mb-2">Başarılı Sonuç</h4>
-                <p className="text-2xl font-bold text-green-600">
-                  {searchHistory.reduce((sum, item) => sum + item.results, 0)}
-                </p>
+
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-white/20 rounded-xl p-3">
+                    <CheckCircle className="w-8 h-8" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-emerald-100 text-sm font-medium">Başarılı Sonuç</p>
+                    <p className="text-3xl font-bold">
+                      {searchHistory.reduce((sum, item) => sum + item.results, 0)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Target className="w-4 h-4" />
+                  <span className="text-sm text-emerald-100">Toplam bulunan</span>
+                </div>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-purple-800 mb-2">Aktif Kullanıcı</h4>
-                <p className="text-2xl font-bold text-purple-600">1</p>
+
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-white/20 rounded-xl p-3">
+                    <Users className="w-8 h-8" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-purple-100 text-sm font-medium">Aktif Kullanıcı</p>
+                    <p className="text-3xl font-bold">1</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Heart className="w-4 h-4" />
+                  <span className="text-sm text-purple-100">Şu anda</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Searches */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+              <h3 className="text-xl font-bold text-slate-800 mb-6">Son Aramalar</h3>
+              <div className="space-y-4">
+                {searchHistory.slice(0, 5).map((search, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">{search.query}</p>
+                        <p className="text-sm text-slate-600">{search.type} • {search.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-emerald-600">{search.results}</p>
+                      <p className="text-xs text-slate-500">sonuç</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -549,57 +729,88 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Emotion Analysis Tab */}
         {activeTab === 'emotion' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">AI Duygu Analizi</h3>
-            <div className="mb-4">
-              <textarea
-                value={emotionText}
-                onChange={(e) => setEmotionText(e.target.value)}
-                placeholder="Analiz edilecek metni girin..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32"
-              />
-              <button
-                onClick={analyzeEmotion}
-                disabled={isAnalyzingEmotion || !emotionText.trim()}
-                className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-              >
-                <Brain className="w-4 h-4" />
-                <span>{isAnalyzingEmotion ? 'Analiz Ediliyor...' : 'Analiz Et'}</span>
-              </button>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-800 mb-2">AI Duygu Analizi</h2>
+              <p className="text-slate-600 text-lg">Metinlerin duygusal içeriğini analiz edin ve sentiment tespiti yapın</p>
+            </div>
+            
+            <div className="mb-8">
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+                <label className="block text-lg font-semibold text-slate-700 mb-4">Analiz Edilecek Metin</label>
+                <textarea
+                  value={emotionText}
+                  onChange={(e) => setEmotionText(e.target.value)}
+                  placeholder="Analiz edilecek metni buraya girin... (örn: mahkeme kararı, dilekçe, sözleşme metni)"
+                  className="w-full px-6 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 placeholder-slate-400 font-medium h-32 resize-none"
+                />
+                <button
+                  onClick={analyzeEmotion}
+                  disabled={isAnalyzingEmotion || !emotionText.trim()}
+                  className="mt-6 px-8 py-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:from-rose-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  {isAnalyzingEmotion ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Analiz Ediliyor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-5 h-5" />
+                      <span>Duygu Analizi Yap</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {emotionResults && (
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-2">Genel Sentiment</h4>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      emotionResults.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
-                      emotionResults.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {emotionResults.sentiment === 'positive' ? 'Pozitif' :
-                       emotionResults.sentiment === 'negative' ? 'Negatif' : 'Nötr'}
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      Güven: %{Math.round(emotionResults.confidence * 100)}
-                    </span>
+              <div className="space-y-8">
+                {/* Sentiment Overview */}
+                <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-800 mb-4">Genel Sentiment</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                        emotionResults.sentiment === 'positive' ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
+                        emotionResults.sentiment === 'negative' ? 'bg-gradient-to-r from-red-500 to-pink-500' :
+                        'bg-gradient-to-r from-slate-500 to-gray-500'
+                      }`}>
+                        {emotionResults.sentiment === 'positive' ? <Heart className="w-8 h-8 text-white" /> :
+                         emotionResults.sentiment === 'negative' ? <AlertCircle className="w-8 h-8 text-white" /> :
+                         <Target className="w-8 h-8 text-white" />}
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-slate-800">
+                          {emotionResults.sentiment === 'positive' ? 'Pozitif' :
+                           emotionResults.sentiment === 'negative' ? 'Negatif' : 'Nötr'}
+                        </h4>
+                        <p className="text-slate-600">Genel duygusal ton</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-slate-800">%{Math.round(emotionResults.confidence * 100)}</p>
+                      <p className="text-sm text-slate-600">Güven Skoru</p>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Duygu Dağılımı</h4>
-                  <div className="space-y-2">
+                {/* Emotion Distribution */}
+                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-800 mb-6">Duygu Dağılımı</h3>
+                  <div className="space-y-4">
                     {emotionResults.emotions.map((emotion, index) => (
-                      <div key={index} className="flex items-center space-x-3">
-                        <span className="w-20 text-sm text-gray-600">{emotion.emotion}</span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div key={index} className="flex items-center space-x-4">
+                        <div className="w-24 text-sm font-semibold text-slate-700">{emotion.emotion}</div>
+                        <div className="flex-1 bg-slate-200 rounded-full h-3 overflow-hidden">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${emotion.score * 100}%` }}
                           ></div>
                         </div>
-                        <span className="w-12 text-sm text-gray-600">%{Math.round(emotion.score * 100)}</span>
+                        <div className="w-16 text-right">
+                          <span className="text-sm font-bold text-slate-800">%{Math.round(emotion.score * 100)}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -611,55 +822,83 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Voice Commands Tab */}
         {activeTab === 'voice' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Akıllı Sesli Komutlar</h3>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-800 mb-2">Akıllı Sesli Komutlar</h2>
+              <p className="text-slate-600 text-lg">Sesli komutlarla sistemi kontrol edin ve hızlı arama yapın</p>
+            </div>
             
-            <div className="mb-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <button
-                  onClick={isVoiceListening ? stopVoiceCommand : startVoiceCommand}
-                  className={`px-6 py-3 rounded-lg font-medium flex items-center space-x-2 ${
-                    isVoiceListening
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {isVoiceListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                  <span>{isVoiceListening ? 'Durdur' : 'Başlat'}</span>
-                </button>
-                
-                <div className={`px-3 py-1 rounded-full text-sm ${
-                  voiceStatus === 'listening' ? 'bg-green-100 text-green-800' :
-                  voiceStatus === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                  voiceStatus === 'success' ? 'bg-blue-100 text-blue-800' :
-                  voiceStatus === 'error' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
+            {/* Voice Control */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 mb-8">
+              <div className="text-center mb-6">
+                <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 shadow-lg ${
+                  isVoiceListening 
+                    ? 'bg-gradient-to-r from-red-500 to-pink-500 animate-pulse' 
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-500'
                 }`}>
-                  {voiceStatus === 'listening' ? 'Dinleniyor...' :
-                   voiceStatus === 'processing' ? 'İşleniyor...' :
-                   voiceStatus === 'success' ? 'Başarılı' :
-                   voiceStatus === 'error' ? 'Hata' : 'Hazır'}
+                  {isVoiceListening ? <MicOff className="w-12 h-12 text-white" /> : <Mic className="w-12 h-12 text-white" />}
                 </div>
-              </div>
+                
+                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                  {isVoiceListening ? 'Dinleniyor...' : 'Sesli Komut Hazır'}
+                </h3>
+                <p className="text-slate-600 mb-6">
+                  {isVoiceListening ? 'Komutunuzu söyleyin' : 'Başlat butonuna basarak sesli komutları kullanabilirsiniz'}
+                </p>
+                
+                <div className="flex items-center justify-center space-x-4 mb-6">
+                  <button
+                    onClick={isVoiceListening ? stopVoiceCommand : startVoiceCommand}
+                    className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                      isVoiceListening
+                        ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700'
+                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
+                    }`}
+                  >
+                    {isVoiceListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    <span>{isVoiceListening ? 'Durdur' : 'Başlat'}</span>
+                  </button>
+                  
+                  <div className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                    voiceStatus === 'listening' ? 'bg-emerald-100 text-emerald-800' :
+                    voiceStatus === 'processing' ? 'bg-amber-100 text-amber-800' :
+                    voiceStatus === 'success' ? 'bg-blue-100 text-blue-800' :
+                    voiceStatus === 'error' ? 'bg-red-100 text-red-800' :
+                    'bg-slate-100 text-slate-800'
+                  }`}>
+                    {voiceStatus === 'listening' ? '🎤 Dinleniyor' :
+                     voiceStatus === 'processing' ? '⚙️ İşleniyor' :
+                     voiceStatus === 'success' ? '✅ Başarılı' :
+                     voiceStatus === 'error' ? '❌ Hata' : '🔘 Hazır'}
+                  </div>
+                </div>
 
-              {recognizedText && (
-                <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                  <p className="text-sm text-gray-600">Tanınan Metin:</p>
-                  <p className="font-medium">{recognizedText}</p>
-                </div>
-              )}
+                {recognizedText && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                    <p className="text-sm text-blue-600 font-medium mb-2">Tanınan Metin:</p>
+                    <p className="font-semibold text-slate-800">{recognizedText}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Mevcut Komutlar</h4>
-                <div className="space-y-2">
+            {/* Commands and History */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Available Commands */}
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+                <h3 className="text-xl font-bold text-slate-800 mb-6">Mevcut Komutlar</h3>
+                <div className="space-y-3">
                   {voiceCommands.map((cmd, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm font-medium">{cmd.command}</span>
+                    <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                          {index + 1}
+                        </div>
+                        <span className="font-semibold text-slate-800">{cmd.command}</span>
+                      </div>
                       <button
                         onClick={() => processVoiceCommand(cmd.command)}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full hover:bg-blue-200"
+                        className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105"
                       >
                         Test Et
                       </button>
@@ -668,22 +907,34 @@ const AdvancedSearch: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Komut Geçmişi</h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {voiceCommandHistory.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium">{item.command}</p>
-                        <p className="text-xs text-gray-500">{item.time}</p>
-                      </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        item.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {item.status === 'success' ? 'Başarılı' : 'Hata'}
-                      </span>
+              {/* Command History */}
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
+                <h3 className="text-xl font-bold text-slate-800 mb-6">Komut Geçmişi</h3>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {voiceCommandHistory.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Mic className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                      <p>Henüz komut geçmişi yok</p>
+                      <p className="text-sm">Sesli komutları kullanmaya başlayın</p>
                     </div>
-                  ))}
+                  ) : (
+                    voiceCommandHistory.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200">
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-800">{item.command}</p>
+                          <p className="text-sm text-slate-600">{item.time}</p>
+                          {item.result && (
+                            <p className="text-xs text-slate-500 mt-1">{item.result}</p>
+                          )}
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          item.status === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {item.status === 'success' ? '✅' : '❌'}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -692,51 +943,69 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Result Detail Modal */}
         {showResultDetail && selectedResult && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800">{selectedResult.subject}</h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-slate-800 mb-2">{selectedResult.subject}</h3>
+                    <div className="flex items-center space-x-4 text-sm text-slate-600">
+                      <div className="flex items-center space-x-1">
+                        <Scale className="w-4 h-4 text-blue-500" />
+                        <span className="font-medium">{selectedResult.courtName}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4 text-emerald-500" />
+                        <span>{selectedResult.decisionDate}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <FileText className="w-4 h-4 text-purple-500" />
+                        <span>{selectedResult.caseNumber}</span>
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setShowResultDetail(false)}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-slate-500 hover:text-slate-700 p-2 hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Mahkeme</p>
-                      <p className="font-medium">{selectedResult.courtName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Karar Tarihi</p>
-                      <p className="font-medium">{selectedResult.decisionDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Karar Numarası</p>
-                      <p className="font-medium">{selectedResult.caseNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Relevans Skoru</p>
-                      <p className="font-medium">%{Math.round(selectedResult.relevanceScore * 100)}</p>
+                <div className="space-y-6">
+                  {/* Relevans Skoru */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-slate-800">Relevans Skoru</h4>
+                        <p className="text-sm text-slate-600">Arama terimiyle uyumluluk</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-emerald-600">%{Math.round(selectedResult.relevanceScore * 100)}</p>
+                        <div className="w-24 bg-slate-200 rounded-full h-2 mt-2">
+                          <div
+                            className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full"
+                            style={{ width: `${selectedResult.relevanceScore * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">İçerik</p>
-                    <p className="text-gray-700 leading-relaxed">{selectedResult.content}</p>
+                  {/* İçerik */}
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-slate-200">
+                    <h4 className="text-lg font-bold text-slate-800 mb-4">İçerik</h4>
+                    <p className="text-slate-700 leading-relaxed text-base">{selectedResult.content}</p>
                   </div>
                   
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Hukuki Alanlar</p>
-                    <div className="flex flex-wrap gap-2">
+                  {/* Hukuki Alanlar */}
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-slate-200">
+                    <h4 className="text-lg font-bold text-slate-800 mb-4">Hukuki Alanlar</h4>
+                    <div className="flex flex-wrap gap-3">
                       {selectedResult.legalAreas.map((area, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                          className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-sm rounded-full font-medium border border-blue-200"
                         >
                           {area}
                         </span>
@@ -744,14 +1013,15 @@ const AdvancedSearch: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex space-x-3 pt-4">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-                      <Download className="w-4 h-4" />
-                      <span>İndir</span>
+                  {/* Aksiyon Butonları */}
+                  <div className="flex space-x-4 pt-6 border-t border-slate-200">
+                    <button className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 flex items-center justify-center space-x-2 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                      <Download className="w-5 h-5" />
+                      <span>PDF Olarak İndir</span>
                     </button>
-                    <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center space-x-2">
-                      <Copy className="w-4 h-4" />
-                      <span>Kopyala</span>
+                    <button className="flex-1 px-6 py-3 bg-gradient-to-r from-slate-600 to-gray-600 text-white rounded-xl hover:from-slate-700 hover:to-gray-700 flex items-center justify-center space-x-2 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                      <Copy className="w-5 h-5" />
+                      <span>Panoya Kopyala</span>
                     </button>
                   </div>
                 </div>
