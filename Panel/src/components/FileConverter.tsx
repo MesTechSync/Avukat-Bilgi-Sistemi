@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 const FileConverter: React.FC = () => {
   type UiState = 'idle' | 'uploading' | 'converting' | 'ready' | 'error';
@@ -52,24 +53,67 @@ const FileConverter: React.FC = () => {
     return result.value;
   };
 
-  // Metni Word formatına dönüştürme
-  const createWordDocument = (text: string, filename: string): Blob => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${filename}</title>
-      </head>
-      <body>
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; margin: 20px;">
+  // Metni gerçek Word formatına dönüştürme
+  const createWordDocument = async (text: string, filename: string): Promise<Blob> => {
+    try {
+      // Metni paragraflara böl
+      const paragraphs = text.split('\n').filter(line => line.trim() !== '');
+      
+      // Word belgesi oluştur
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: paragraphs.map((paragraph, index) => {
+            // İlk paragraf başlık olarak ayarla
+            if (index === 0) {
+              return new Paragraph({
+                children: [new TextRun({
+                  text: paragraph,
+                  bold: true,
+                  size: 32, // 16pt
+                })],
+                heading: HeadingLevel.HEADING_1,
+              });
+            }
+            
+            // Diğer paragraflar normal metin
+            return new Paragraph({
+              children: [new TextRun({
+                text: paragraph,
+                size: 24, // 12pt
+              })],
+            });
+          }),
+        }],
+      });
+
+      // Word belgesini blob olarak oluştur
+      const buffer = await Packer.toBuffer(doc);
+      return new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+    } catch (error) {
+      console.error('Word belgesi oluşturma hatası:', error);
+      // Hata durumunda basit HTML formatı döndür
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${filename}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+            p { margin-bottom: 10px; }
+          </style>
+        </head>
+        <body>
           ${text.split('\n').map(line => `<p>${line}</p>`).join('')}
-        </div>
-      </body>
-      </html>
-    `;
-    
-    return new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        </body>
+        </html>
+      `;
+      
+      return new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    }
   };
 
   // Metni PDF formatına dönüştürme
@@ -319,7 +363,7 @@ TECHNICAL INFO:
           outputName = `${baseName}.udf`;
           break;
         case 'pdf-to-word':
-          outputBlob = createWordDocument(extractedText, baseName);
+          outputBlob = await createWordDocument(extractedText, baseName);
           outputName = `${baseName}.docx`;
           break;
         case 'word-to-pdf':

@@ -17,6 +17,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.57.4",
+    "docx": "^9.5.1",
     "docx-pdf": "^0.0.1",
     "dotenv": "^17.2.2",
     "fastest-levenshtein": "^1.0.16",
