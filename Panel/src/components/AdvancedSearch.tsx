@@ -28,6 +28,9 @@ const AdvancedSearch: React.FC = () => {
   const [dateRange, setDateRange] = useState('');
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
   
+  // 🌙 Gece Modu State'i
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  
   // 📁 Dosya Yükleme State'leri
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadedFileContent, setUploadedFileContent] = useState<string | null>(null);
@@ -68,17 +71,9 @@ const AdvancedSearch: React.FC = () => {
     confidence: number;
   } | null>(null);
   
-  // 🎤 Akıllı Sesli Komutlar State'leri
+  // 🎤 Sesli Arama State'leri
   const [isVoiceListening, setIsVoiceListening] = useState(false);
-  const [voiceCommandHistory, setVoiceCommandHistory] = useState<Array<{
-    command: string;
-    time: string;
-    status: 'success' | 'error';
-    result?: string;
-  }>>([]);
-  const [currentVoiceCommand, setCurrentVoiceCommand] = useState('');
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'processing' | 'success' | 'error'>('idle');
-  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [recognizedText, setRecognizedText] = useState('');
 
   const { isListening, startDictation, stopDictation, interimText, error: dictationError } = useDictation();
@@ -198,59 +193,29 @@ const AdvancedSearch: React.FC = () => {
     }
   };
 
-  // Sesli komut işleme
-  const processVoiceCommand = (text: string) => {
-    const normalizedText = text.toLowerCase().trim();
-    
-    for (const cmd of voiceCommands) {
-      if (normalizedText.includes(cmd.command.toLowerCase())) {
-        if (cmd.action === 'search') {
-          setQuery(cmd.params.query);
-          setSearchType(cmd.params.type as any);
-          handleSearch();
-        } else if (cmd.action === 'navigate') {
-          setActiveTab(cmd.params.tab as any);
-        }
-        
-        setVoiceCommandHistory(prev => [{
-          command: cmd.command,
-          time: new Date().toLocaleTimeString(),
-          status: 'success',
-          result: `${cmd.action} işlemi gerçekleştirildi`
-        }, ...prev.slice(0, 9)]);
-        
-        return;
-      }
-    }
-    
-    setVoiceCommandHistory(prev => [{
-      command: text,
-      time: new Date().toLocaleTimeString(),
-      status: 'error',
-      result: 'Komut tanınmadı'
-    }, ...prev.slice(0, 9)]);
-  };
-
-  // Sesli komut başlatma
-  const startVoiceCommand = () => {
+  // Sesli arama başlatma
+  const startVoiceSearch = () => {
     setIsVoiceListening(true);
     setVoiceStatus('listening');
     startDictation();
   };
 
-  // Sesli komut durdurma
-  const stopVoiceCommand = () => {
+  // Sesli arama durdurma
+  const stopVoiceSearch = () => {
     setIsVoiceListening(false);
     setVoiceStatus('processing');
     stopDictation();
     
     if (interimText) {
       setRecognizedText(interimText);
-      processVoiceCommand(interimText);
+      setQuery(interimText);
       setVoiceStatus('success');
+      // Otomatik arama yap
+      setTimeout(() => {
+        handleSearch();
+      }, 500);
     } else {
       setVoiceStatus('error');
-      setVoiceError('Ses algılanamadı');
     }
   };
 
@@ -326,29 +291,61 @@ const AdvancedSearch: React.FC = () => {
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6">
+    <div className={`min-h-screen p-4 md:p-6 transition-all duration-500 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black' 
+        : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
+    }`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="relative">
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-600 bg-clip-text text-transparent mb-2">
+              <h1 className={`text-4xl md:text-5xl font-bold bg-clip-text text-transparent mb-2 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600' 
+                  : 'bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-600'
+              }`}>
                 İçtihat & Mevzuat
               </h1>
-              <p className="text-slate-600 text-lg font-medium">
+              <p className={`text-lg font-medium ${
+                isDarkMode ? 'text-gray-300' : 'text-slate-600'
+              }`}>
                 Türkiye'nin En Kapsamlı Hukuki Veri Merkezi
               </p>
-              <div className="absolute -bottom-2 left-0 w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+              <div className={`absolute -bottom-2 left-0 w-24 h-1 rounded-full ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-cyan-400 to-blue-500' 
+                  : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+              }`}></div>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-white/20">
+              {/* Gece Modu Toggle */}
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className={`p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400' 
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
+                }`}
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              
+              <div className={`backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border ${
+                isDarkMode 
+                  ? 'bg-gray-800/80 border-gray-700/50' 
+                  : 'bg-white/80 border-white/20'
+              }`}>
                 <div className="flex items-center space-x-2">
                   <div className={`w-3 h-3 rounded-full ${
                     backendStatus === 'ok' ? 'bg-emerald-500 animate-pulse' : 
                     backendStatus === 'degraded' ? 'bg-amber-500 animate-pulse' : 
                     backendStatus === 'down' ? 'bg-red-500 animate-pulse' : 'bg-slate-400'
                   }`}></div>
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className={`text-sm font-medium ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>
                     {backendStatus === 'ok' ? 'Sistem Aktif' : 
                      backendStatus === 'degraded' ? 'Kısmi Hizmet' : 
                      backendStatus === 'down' ? 'Sistem Kapalı' : 'Durum Bilinmiyor'}
@@ -361,25 +358,38 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Tab Navigation */}
         <div className="mb-8">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-white/20">
+          <div className={`backdrop-blur-sm rounded-2xl p-2 shadow-xl border ${
+            isDarkMode 
+              ? 'bg-gray-800/70 border-gray-700/50' 
+              : 'bg-white/70 border-white/20'
+          }`}>
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'search', label: 'Akıllı Arama', icon: Search, color: 'blue' },
                 { id: 'timeline', label: 'Hukuki Zaman Çizelgesi', icon: Calendar, color: 'emerald' },
                 { id: 'analytics', label: 'Analitik', icon: BarChart3, color: 'purple' },
-                { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' },
-                { id: 'voice', label: 'Sesli Komutlar', icon: Mic, color: 'indigo' }
+                { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' }
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`group flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                     activeTab === tab.id
-                      ? `bg-gradient-to-r from-${tab.color}-500 to-${tab.color}-600 text-white shadow-lg transform scale-105`
-                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 hover:shadow-md'
+                      ? `bg-gradient-to-r from-${tab.color}-500 to-${tab.color}-600 text-white shadow-lg transform scale-105 ${
+                          isDarkMode ? 'shadow-cyan-500/25' : ''
+                        }`
+                      : isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md' 
+                        : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 hover:shadow-md'
                   }`}
                 >
-                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'}`} />
+                  <tab.icon className={`w-5 h-5 ${
+                    activeTab === tab.id 
+                      ? 'text-white' 
+                      : isDarkMode 
+                        ? 'text-gray-400 group-hover:text-gray-200' 
+                        : 'text-slate-500 group-hover:text-slate-700'
+                  }`} />
                   <span className="hidden sm:inline font-medium">{tab.label}</span>
                 </button>
               ))}
@@ -389,28 +399,46 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Search Tab */}
         {activeTab === 'search' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 mb-8">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 mb-8 ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700/50' 
+              : 'bg-white/80 border-white/20'
+          }`}>
             {/* Search Form */}
             <div className="mb-8">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Hukuki Veri Arama</h2>
-                <p className="text-slate-600">Yargıtay, UYAP Emsal ve Mevzuat verilerinde arama yapın</p>
+                <h2 className={`text-2xl font-bold mb-2 ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>Hukuki Veri Arama</h2>
+                <p className={`${
+                  isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                }`}>Yargıtay, UYAP Emsal ve Mevzuat verilerinde arama yapın</p>
               </div>
               
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                      isDarkMode ? 'text-gray-400' : 'text-slate-400'
+                    }`} />
                     <input
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Arama terimi girin... (örn: velayet, iş hukuku, boşanma)"
-                      className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 placeholder-slate-400 font-medium"
+                      className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                        isDarkMode 
+                          ? 'border-gray-600 focus:ring-cyan-500/20 focus:border-cyan-500 bg-gray-700/50 text-white placeholder-gray-400' 
+                          : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800 placeholder-slate-400'
+                      }`}
                     />
                   </div>
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl shadow-2xl z-10 mt-2 overflow-hidden">
+                    <div className={`absolute top-full left-0 right-0 backdrop-blur-sm border rounded-xl shadow-2xl z-10 mt-2 overflow-hidden ${
+                      isDarkMode 
+                        ? 'bg-gray-800/95 border-gray-600' 
+                        : 'bg-white/95 border-slate-200'
+                    }`}>
                       {searchSuggestions.map((suggestion, index) => (
                         <button
                           key={index}
@@ -418,19 +446,47 @@ const AdvancedSearch: React.FC = () => {
                             setQuery(suggestion);
                             setShowSuggestions(false);
                           }}
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-slate-100 last:border-b-0 transition-colors duration-200 text-slate-700 font-medium"
+                          className={`w-full px-4 py-3 text-left border-b last:border-b-0 transition-colors duration-200 font-medium ${
+                            isDarkMode 
+                              ? 'hover:bg-gray-700 text-gray-300 border-gray-600' 
+                              : 'hover:bg-blue-50 text-slate-700 border-slate-100'
+                          }`}
                         >
-                          <Search className="inline w-4 h-4 mr-2 text-blue-500" />
+                          <Search className={`inline w-4 h-4 mr-2 ${
+                            isDarkMode ? 'text-cyan-500' : 'text-blue-500'
+                          }`} />
                           {suggestion}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
+                
+                {/* Sesli Arama Butonu */}
+                <button
+                  onClick={isVoiceListening ? stopVoiceSearch : startVoiceSearch}
+                  className={`px-4 py-4 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                    isVoiceListening 
+                      ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700' 
+                      : isDarkMode
+                        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                  }`}
+                >
+                  {isVoiceListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  <span className="hidden sm:inline">
+                    {isVoiceListening ? 'Durdur' : 'Sesli Ara'}
+                  </span>
+                </button>
+                
                 <button
                   onClick={handleSearch}
                   disabled={isLoading || !query.trim()}
-                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                  }`}
                 >
                   {isLoading ? (
                     <>
@@ -446,13 +502,35 @@ const AdvancedSearch: React.FC = () => {
                 </button>
               </div>
 
+              {/* Sesli Arama Durumu */}
+              {recognizedText && (
+                <div className={`mb-4 p-4 rounded-xl border ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/30' 
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                }`}>
+                  <p className={`text-sm font-medium mb-2 ${
+                    isDarkMode ? 'text-cyan-400' : 'text-blue-600'
+                  }`}>Tanınan Metin:</p>
+                  <p className={`font-semibold ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}>{recognizedText}</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Veri Kaynağı</label>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>Veri Kaynağı</label>
                   <select
                     value={searchType}
                     onChange={(e) => setSearchType(e.target.value as any)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                      isDarkMode 
+                        ? 'border-gray-600 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-700/50 text-white' 
+                        : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800'
+                    }`}
                   >
                     <option value="ictihat">🏛️ İçtihat (Yargıtay)</option>
                     <option value="mevzuat">📜 Mevzuat</option>
@@ -461,11 +539,17 @@ const AdvancedSearch: React.FC = () => {
                 </div>
 
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Mahkeme</label>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>Mahkeme</label>
                   <select
                     value={selectedCourt}
                     onChange={(e) => setSelectedCourt(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                      isDarkMode 
+                        ? 'border-gray-600 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-700/50 text-white' 
+                        : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800'
+                    }`}
                   >
                     <option value="">Tüm Mahkemeler</option>
                     <option value="yargitay">Yargıtay</option>
@@ -475,12 +559,18 @@ const AdvancedSearch: React.FC = () => {
                 </div>
 
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tarih</label>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>Tarih</label>
                   <input
                     type="date"
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 font-medium"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                      isDarkMode 
+                        ? 'border-gray-600 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-700/50 text-white' 
+                        : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800'
+                    }`}
                   />
                 </div>
               </div>
@@ -502,7 +592,11 @@ const AdvancedSearch: React.FC = () => {
                   {searchResults.map((result, index) => (
                     <div
                       key={result.id}
-                      className="group bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+                      className={`group backdrop-blur-sm border rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] ${
+                        isDarkMode 
+                          ? 'bg-gray-700/60 border-gray-600 hover:border-cyan-400 hover:shadow-cyan-500/25' 
+                          : 'bg-white/60 border-slate-200 hover:border-blue-300'
+                      }`}
                       onClick={() => {
                         setSelectedResult(result);
                         setShowResultDetail(true);
@@ -510,20 +604,32 @@ const AdvancedSearch: React.FC = () => {
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          <h4 className="font-bold text-slate-800 text-lg mb-2 group-hover:text-blue-700 transition-colors">
+                          <h4 className={`font-bold text-lg mb-2 transition-colors ${
+                            isDarkMode 
+                              ? 'text-white group-hover:text-cyan-400' 
+                              : 'text-slate-800 group-hover:text-blue-700'
+                          }`}>
                             {result.subject}
                           </h4>
-                          <div className="flex items-center space-x-4 text-sm text-slate-600">
+                          <div className={`flex items-center space-x-4 text-sm ${
+                            isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                          }`}>
                             <div className="flex items-center space-x-1">
-                              <Scale className="w-4 h-4 text-blue-500" />
+                              <Scale className={`w-4 h-4 ${
+                                isDarkMode ? 'text-cyan-500' : 'text-blue-500'
+                              }`} />
                               <span className="font-medium">{result.courtName}</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <Calendar className="w-4 h-4 text-emerald-500" />
+                              <Calendar className={`w-4 h-4 ${
+                                isDarkMode ? 'text-emerald-400' : 'text-emerald-500'
+                              }`} />
                               <span>{result.decisionDate}</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <FileText className="w-4 h-4 text-purple-500" />
+                              <FileText className={`w-4 h-4 ${
+                                isDarkMode ? 'text-purple-400' : 'text-purple-500'
+                              }`} />
                               <span>{result.caseNumber}</span>
                             </div>
                           </div>
@@ -533,28 +639,42 @@ const AdvancedSearch: React.FC = () => {
                         </div>
                       </div>
                       
-                      <p className="text-slate-700 leading-relaxed mb-4 line-clamp-3">
-                        {result.content.substring(0, 300)}...
+                      <p className={`leading-relaxed mb-4 ${
+                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                      }`}>
+                        {result.content.length > 800 ? result.content.substring(0, 800) + '...' : result.content}
                       </p>
                       
                       <div className="flex flex-wrap gap-2">
                         {result.legalAreas.map((area, areaIndex) => (
                           <span
                             key={areaIndex}
-                            className="px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-sm rounded-full font-medium border border-blue-200"
+                            className={`px-3 py-1 text-sm rounded-full font-medium border ${
+                              isDarkMode 
+                                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/30' 
+                                : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-blue-200'
+                            }`}
                           >
                             {area}
                           </span>
                         ))}
                       </div>
                       
-                      <div className="mt-4 pt-4 border-t border-slate-200">
+                      <div className={`mt-4 pt-4 border-t ${
+                        isDarkMode ? 'border-gray-600' : 'border-slate-200'
+                      }`}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2 text-slate-500">
+                          <div className={`flex items-center space-x-2 ${
+                            isDarkMode ? 'text-gray-500' : 'text-slate-500'
+                          }`}>
                             <Clock className="w-4 h-4" />
                             <span className="text-sm">Detayları görüntülemek için tıklayın</span>
                           </div>
-                          <div className="flex items-center space-x-1 text-blue-600 group-hover:text-blue-700">
+                          <div className={`flex items-center space-x-1 group-hover:transition-colors ${
+                            isDarkMode 
+                              ? 'text-cyan-400 group-hover:text-cyan-300' 
+                              : 'text-blue-600 group-hover:text-blue-700'
+                          }`}>
                             <span className="text-sm font-medium">Detay</span>
                             <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

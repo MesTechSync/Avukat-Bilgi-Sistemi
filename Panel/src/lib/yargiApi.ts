@@ -110,7 +110,15 @@ function generateSimulatedUyapResults(query: string, filters?: IctihatFilters): 
       courtType: 'uyap',
       decisionDate: decisionDate.toISOString().split('T')[0],
       subject: `${query} ile ilgili ${court} kararı`,
-      content: `${query} konusunda ${court} tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.`,
+      content: `${query} konusunda ${court} tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.
+
+Mahkeme kararının detaylı analizi: ${court} tarafından verilen bu karar, ${query} konusunda hukuki uygulamada önemli bir yer tutmaktadır. Mahkeme, olayın hukuki boyutlarını titizlikle incelemiş ve mevcut mevzuat çerçevesinde adil bir çözüm üretmiştir.
+
+Kararın hukuki gerekçeleri: Mahkeme, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, yüksek mahkeme içtihatları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+
+Uygulama sonuçları: Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Mahkeme, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+
+Sonuç: Bu karar, ${query} ile ilgili hukuki uygulamada temel referans kaynağı olarak kullanılmaktadır ve hukuk sisteminin gelişimine katkı sağlamaktadır.`,
       relevanceScore: Math.random() * 0.3 + 0.7,
       legalAreas: [query, 'UYAP Emsal'],
       keywords: [query, 'UYAP', 'Karar'],
@@ -224,7 +232,15 @@ function generateSimulatedMevzuatResults(query: string, filters?: MevzuatFilters
       courtType: 'mevzuat',
       decisionDate: decisionDate.toISOString().split('T')[0],
       subject: `${query} ile ilgili ${mevzuatType}`,
-      content: `${query} konusunda düzenlenen ${mevzuatType}. Bu mevzuat ${query} ile ilgili hukuki düzenlemeleri içermektedir.`,
+      content: `${query} konusunda düzenlenen ${mevzuatType}. Bu mevzuat ${query} ile ilgili hukuki düzenlemeleri içermektedir. 
+
+Detaylı açıklama: Bu mevzuat metni, ${query} konusundaki hukuki düzenlemeleri kapsamlı bir şekilde ele almaktadır. Mevzuatın amacı, ${query} ile ilgili hak ve yükümlülükleri belirlemek, hukuki güvenliği sağlamak ve adil bir düzen oluşturmaktır.
+
+Mevzuatın temel ilkeleri şunlardır: Hukuki güvenlik, adalet, eşitlik ve kamu yararı. Bu ilkeler çerçevesinde, ${query} konusunda tarafların hak ve yükümlülükleri net bir şekilde tanımlanmıştır.
+
+Uygulama alanları: Bu mevzuat, ${query} ile ilgili tüm hukuki ilişkilerde uygulanır. Mevzuatın kapsamı geniş olup, hem özel hukuk hem de kamu hukuku alanlarında etkili olmaktadır.
+
+Sonuç: Bu mevzuat, ${query} konusunda hukuki düzenin sağlanması için önemli bir araçtır ve hukuk uygulamasında temel referans kaynağı olarak kullanılmaktadır.`,
       relevanceScore: Math.random() * 0.3 + 0.7,
       legalAreas: [query, mevzuatType],
       keywords: [query, mevzuatType, 'Mevzuat'],
@@ -336,7 +352,15 @@ function generateSimulatedYargitayResults(query: string, filters?: IctihatFilter
       courtType: 'yargitay',
       decisionDate: decisionDate.toISOString().split('T')[0],
       subject: `${query} ile ilgili Yargıtay ${i}. Hukuk Dairesi kararı`,
-      content: `${query} konusunda Yargıtay tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.`,
+      content: `${query} konusunda Yargıtay tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.
+
+Yargıtay kararının detaylı analizi: Yargıtay ${i}. Hukuk Dairesi tarafından verilen bu karar, ${query} konusunda hukuki uygulamada önemli bir yer tutmaktadır. Mahkeme, olayın hukuki boyutlarını titizlikle incelemiş ve mevcut mevzuat çerçevesinde adil bir çözüm üretmiştir.
+
+Kararın hukuki gerekçeleri: Yargıtay, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, alt mahkeme kararları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+
+Uygulama sonuçları: Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Yargıtay, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+
+Sonuç: Bu karar, ${query} ile ilgili hukuki uygulamada temel referans kaynağı olarak kullanılmaktadır ve hukuk sisteminin gelişimine katkı sağlamaktadır.`,
       relevanceScore: Math.random() * 0.3 + 0.7,
       legalAreas: [query, 'Yargıtay Kararı'],
       keywords: [query, 'Yargıtay', 'Karar'],
