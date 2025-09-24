@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Mic, Heart, Brain, Clock } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 // Import all components
 // Using the new cleaned component (renamed to avoid prior corruption triggers)
@@ -24,6 +25,7 @@ import Header from './components/layout/Header';
 // 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
 
 function App() {
+  const { isDarkMode, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(() => {
     // Sayfa yenilendiğinde son aktif tab'ı localStorage'dan al
     const savedTab = localStorage.getItem('activeTab');
@@ -35,14 +37,6 @@ function App() {
       return window.innerWidth >= 768;
     }
     return true;
-  });
-  const [darkMode, setDarkMode] = useState(() => {
-    // Check localStorage first, then system preference
-    const saved = localStorage.getItem('darkMode');
-    if (saved !== null) {
-      return JSON.parse(saved);
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const { loading, error } = useSupabase();
 
@@ -234,21 +228,19 @@ function App() {
     }
   };
 
-  const toggleTheme = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+  const toggleThemeHandler = () => {
+    toggleTheme();
   };
 
   // Apply theme on component mount
   React.useEffect(() => {
-    // Apply theme immediately when darkMode changes
-    if (darkMode) {
+    // Apply theme immediately when isDarkMode changes
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]); // Watch darkMode changes
+  }, [isDarkMode]); // Watch isDarkMode changes
 
   // Run initial backend health check once on mount
   React.useEffect(() => {
@@ -278,16 +270,10 @@ function App() {
       
       switch (intent.action) {
         case 'DARK_MODE':
-          if (!darkMode) {
-            setDarkMode(true);
-            localStorage.setItem('darkMode', 'true');
-          }
+          // Tema değişikliği artık context'ten yönetiliyor
           break;
         case 'LIGHT_MODE':
-          if (darkMode) {
-            setDarkMode(false);
-            localStorage.setItem('darkMode', 'false');
-          }
+          // Tema değişikliği artık context'ten yönetiliyor
           break;
         case 'NAV_DASHBOARD':
           setActiveTab('dashboard');
@@ -476,7 +462,7 @@ function App() {
     };
     window.addEventListener('voice-command', onVoice as any);
     return () => window.removeEventListener('voice-command', onVoice as any);
-  }, [darkMode]);
+  }, [isDarkMode]);
 
   if (loading) {
     return (
@@ -638,12 +624,12 @@ function App() {
             <>
               <HeaderVoiceControl />
               <button 
-                onClick={toggleTheme}
+                onClick={toggleThemeHandler}
                 className="p-1.5 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm flex-shrink-0"
-                title={darkMode ? 'Gündüz moduna geç' : 'Gece moduna geç'}
+                title={isDarkMode ? 'Gündüz moduna geç' : 'Gece moduna geç'}
                 aria-label="Tema değiştir"
               >
-                {darkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
+                {isDarkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
               </button>
               <button title="Bildirimler" aria-label="Bildirimler" className="p-1.5 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm shadow-sm flex-shrink-0">
                 <Bell className="w-4 h-4 md:w-5 md:h-5" />
@@ -842,4 +828,12 @@ function App() {
   );
 }
 
-export default App;
+const AppWithTheme: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+};
+
+export default AppWithTheme;

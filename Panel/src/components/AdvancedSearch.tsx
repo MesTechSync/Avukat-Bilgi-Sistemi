@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, Zap, Shield, Globe, BookOpen, Scale, Gavel } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat, searchYargitayReal, searchMevzuatReal, searchUyapEmsal, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
+import { geminiService } from '../services/geminiService';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SearchResult {
   id: string;
@@ -18,6 +20,8 @@ interface SearchResult {
 }
 
 const AdvancedSearch: React.FC = () => {
+  const { isDarkMode, toggleTheme } = useTheme();
+  
   // 🔍 Ana Arama State'leri
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -27,9 +31,6 @@ const AdvancedSearch: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState('');
   const [dateRange, setDateRange] = useState('');
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
-  
-  // 🌙 Gece Modu State'i
-  const [isDarkMode, setIsDarkMode] = useState(true);
   
   // 📁 Dosya Yükleme State'leri
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -197,6 +198,7 @@ const AdvancedSearch: React.FC = () => {
   const startVoiceSearch = () => {
     setIsVoiceListening(true);
     setVoiceStatus('listening');
+    setRecognizedText('');
     startDictation();
   };
 
@@ -205,19 +207,29 @@ const AdvancedSearch: React.FC = () => {
     setIsVoiceListening(false);
     setVoiceStatus('processing');
     stopDictation();
-    
-    if (interimText) {
+  };
+
+  // Sesli arama sonucu işleme
+  useEffect(() => {
+    if (interimText && interimText.trim()) {
       setRecognizedText(interimText);
       setQuery(interimText);
       setVoiceStatus('success');
+      
       // Otomatik arama yap
       setTimeout(() => {
-        handleSearch();
-      }, 500);
-    } else {
-      setVoiceStatus('error');
+        handleSearch(interimText);
+      }, 1000);
     }
-  };
+  }, [interimText]);
+
+  // Sesli arama hatası işleme
+  useEffect(() => {
+    if (dictationError) {
+      setVoiceStatus('error');
+      setIsVoiceListening(false);
+    }
+  }, [dictationError]);
 
   // Duygu analizi
   const analyzeEmotion = async () => {
@@ -322,7 +334,7 @@ const AdvancedSearch: React.FC = () => {
             <div className="flex items-center space-x-3">
               {/* Gece Modu Toggle */}
               <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={toggleTheme}
                 className={`p-3 rounded-xl transition-all duration-300 ${
                   isDarkMode 
                     ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400' 
