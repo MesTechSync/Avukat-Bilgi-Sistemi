@@ -1,9 +1,23 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { UploadCloud, FileText, X, Loader2, CheckCircle2, Copy, Download, Wand2, Sparkles, Key, Settings } from 'lucide-react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { UploadCloud, FileText, X, Loader2, CheckCircle2, Copy, Download, Wand2, Sparkles, Key, Settings, History, Star, Bookmark, Filter, Search, Calendar, Clock, User, Tag, Image, Layers, Zap } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import { fileProcessingService } from '../services/fileProcessingService';
 
 type ApiResult = { ok: boolean; result?: string; error?: string };
+
+interface AnalysisHistory {
+  id: string;
+  instruction: string;
+  textInput: string;
+  files: Array<{ name: string; size: number; type: string }>;
+  result: string;
+  timestamp: string;
+  category: string;
+  tags: string[];
+  isFavorite: boolean;
+  wordCount: number;
+  processingTime: number;
+}
 
 const MAX_FILES = 6;
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
@@ -27,6 +41,20 @@ export default function NotebookLLM() {
   const [apiKey, setApiKey] = useState<string>('AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk');
   const [showSettings, setShowSettings] = useState(false);
   const [useRealAI, setUseRealAI] = useState(true);
+  
+  // Yeni özellikler için state'ler
+  const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistory[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [processingStartTime, setProcessingStartTime] = useState<number>(0);
+  const [ocrEnabled, setOcrEnabled] = useState<boolean>(false);
+  const [batchMode, setBatchMode] = useState<boolean>(false);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchResults, setBatchResults] = useState<Array<{file: string, result: string, status: 'success' | 'error'}>>([]);
+  
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const presets = [
@@ -41,6 +69,64 @@ export default function NotebookLLM() {
     'Bu dava dosyasındaki delilleri analiz et',
     'Bu metni resmi hukuki dile çevir'
   ];
+
+  // Gelişmiş kategoriler ve şablonlar
+  const categories = {
+    'Sözleşme Analizi': [
+      'Bu sözleşmeyi analiz et ve riskleri belirle',
+      'Sözleşmedeki tarafların hak ve yükümlülüklerini listele',
+      'Bu sözleşmedeki eksik maddeleri tespit et',
+      'Sözleşme maddelerini hukuki açıdan değerlendir',
+      'Bu sözleşmenin fesih şartlarını analiz et'
+    ],
+    'Dava Dosyası': [
+      'Bu dava dosyasını özetle ve ana noktaları çıkar',
+      'Bu dava sürecindeki önemli tarihleri belirle',
+      'Bu dava dosyasındaki delilleri analiz et',
+      'Dava sürecindeki prosedür hatalarını tespit et',
+      'Bu dava için strateji önerileri sun'
+    ],
+    'Hukuki Değerlendirme': [
+      'Bu belgeyi hukuki açıdan değerlendir',
+      'Bu metindeki hukuki terimleri açıkla',
+      'Bu belgeyi mahkeme için hazırla',
+      'Hukuki dayanakları ve referansları belirle',
+      'Bu metni resmi hukuki dile çevir'
+    ],
+    'Mevzuat Analizi': [
+      'Bu mevzuat metnini analiz et',
+      'Mevzuattaki değişiklikleri tespit et',
+      'Bu mevzuatın uygulama alanlarını belirle',
+      'Mevzuat ile ilgili örnekleri ver',
+      'Bu mevzuatın etkilerini değerlendir'
+    ],
+    'İçtihat İncelemesi': [
+      'Bu içtihadı analiz et ve önemli noktaları çıkar',
+      'İçtihatın hukuki dayanaklarını belirle',
+      'Bu içtihatın uygulanabilirliğini değerlendir',
+      'İçtihat ile ilgili benzer kararları bul',
+      'Bu içtihatın etkilerini analiz et'
+    ]
+  };
+
+  // Analiz geçmişini localStorage'dan yükle
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('notebook-llm-history');
+    if (savedHistory) {
+      try {
+        setAnalysisHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        console.error('Geçmiş yüklenirken hata:', error);
+      }
+    }
+  }, []);
+
+  // Analiz geçmişini localStorage'a kaydet
+  useEffect(() => {
+    if (analysisHistory.length > 0) {
+      localStorage.setItem('notebook-llm-history', JSON.stringify(analysisHistory));
+    }
+  }, [analysisHistory]);
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     if (!e.target.files) return;
@@ -71,11 +157,131 @@ export default function NotebookLLM() {
     e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
   };
 
+  // Analiz geçmişine kaydetme fonksiyonu
+  const saveToHistory = (analysisResult: string, processingTime: number) => {
+    const newAnalysis: AnalysisHistory = {
+      id: Date.now().toString(),
+      instruction,
+      textInput,
+      files: files.map(f => ({ name: f.name, size: f.size, type: f.type })),
+      result: analysisResult,
+      timestamp: new Date().toISOString(),
+      category: selectedCategory || 'Genel',
+      tags: instruction.split(' ').slice(0, 3), // İlk 3 kelimeyi tag olarak al
+      isFavorite: false,
+      wordCount: analysisResult.split(' ').length,
+      processingTime
+    };
+    
+    setAnalysisHistory(prev => [newAnalysis, ...prev.slice(0, 49)]); // Son 50 analizi sakla
+    setCurrentAnalysisId(newAnalysis.id);
+  };
+
+  // Favorilere ekleme/çıkarma
+  const toggleFavorite = (id: string) => {
+    setAnalysisHistory(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
+      )
+    );
+  };
+
+  // Geçmişten analizi yükleme
+  const loadFromHistory = (analysis: AnalysisHistory) => {
+    setInstruction(analysis.instruction);
+    setTextInput(analysis.textInput);
+    setResult(analysis.result);
+    setCurrentAnalysisId(analysis.id);
+    setSelectedCategory(analysis.category);
+  };
+
+  // OCR ve gelişmiş dosya işleme fonksiyonları
+  const handleOcrUpload = async (file: File) => {
+    if (!ocrEnabled) return null;
+    
+    try {
+      // OCR işlemi simülasyonu (gerçek OCR için Tesseract.js kullanılabilir)
+      const ocrResult = await new Promise<string>((resolve) => {
+        setTimeout(() => {
+          resolve(`OCR ile çıkarılan metin:\n\n${file.name} dosyasından metin çıkarıldı.\n\nBu bir simülasyondur. Gerçek OCR için Tesseract.js entegrasyonu gerekir.`);
+        }, 2000);
+      });
+      
+      return ocrResult;
+    } catch (error) {
+      console.error('OCR hatası:', error);
+      return null;
+    }
+  };
+
+  const handleBatchUpload = async (files: File[]) => {
+    setBatchFiles(files);
+    setBatchResults([]);
+    
+    for (const file of files) {
+      try {
+        const content = await fileProcessingService.processFile(file);
+        const ocrContent = ocrEnabled ? await handleOcrUpload(file) : null;
+        const finalContent = ocrContent || content;
+        
+        setBatchResults(prev => [...prev, {
+          file: file.name,
+          result: finalContent,
+          status: 'success'
+        }]);
+      } catch (error) {
+        setBatchResults(prev => [...prev, {
+          file: file.name,
+          result: `Hata: ${error}`,
+          status: 'error'
+        }]);
+      }
+    }
+  };
+
+  const processBatchAnalysis = async () => {
+    if (batchResults.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const combinedContent = batchResults
+        .filter(r => r.status === 'success')
+        .map(r => `Dosya: ${r.file}\nİçerik: ${r.result}\n\n`)
+        .join('---\n\n');
+      
+      const result = await geminiService.analyzeText(instruction, combinedContent);
+      setResult(result);
+      setShowResult(true);
+      
+      // Batch analizi geçmişe kaydet
+      const batchAnalysis: AnalysisHistory = {
+        id: `batch-${Date.now()}`,
+        instruction: `[BATCH] ${instruction}`,
+        textInput: combinedContent,
+        files: batchFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
+        result: result,
+        timestamp: new Date().toISOString(),
+        category: 'Batch Analysis',
+        tags: ['batch', 'multiple-files'],
+        isFavorite: false,
+        wordCount: combinedContent.split(' ').length,
+        processingTime: Date.now() - processingStartTime
+      };
+      
+      setAnalysisHistory(prev => [batchAnalysis, ...prev.slice(0, 49)]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Batch analiz hatası');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setLoading(true); 
     setResult(''); 
     setErrorMsg(''); 
     setCopied(false);
+    setProcessingStartTime(Date.now());
     
     try {
       // Eğer ne metin ne de dosya yoksa hata ver
@@ -162,6 +368,10 @@ export default function NotebookLLM() {
       
       setResult(analysisResult);
       
+      // Analiz geçmişine kaydet
+      const processingTime = Date.now() - processingStartTime;
+      saveToHistory(analysisResult, processingTime);
+      
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setErrorMsg(msg);
@@ -204,7 +414,14 @@ export default function NotebookLLM() {
             <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl md:rounded-2xl shadow-lg">
               <Wand2 className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end gap-2">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="p-2 md:p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
+                title="Analiz Geçmişi"
+              >
+                <History className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+              </button>
               <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="p-2 md:p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50"
@@ -316,6 +533,122 @@ export default function NotebookLLM() {
           </div>
         )}
 
+        {/* Analysis History Panel */}
+        {showHistory && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3 text-gray-800 dark:text-gray-200">
+                <History className="w-5 h-5 text-purple-600" />
+                <span className="text-lg font-semibold">Analiz Geçmişi</span>
+                <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">
+                  {analysisHistory.length} analiz
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    showFavoritesOnly 
+                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-sm"
+                >
+                  <option value="">Tüm Kategoriler</option>
+                  {Object.keys(categories).map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Analiz geçmişinde ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* History List */}
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {analysisHistory
+                .filter(item => {
+                  if (showFavoritesOnly && !item.isFavorite) return false;
+                  if (selectedCategory && item.category !== selectedCategory) return false;
+                  if (searchQuery && !item.instruction.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                  return true;
+                })
+                .map((analysis) => (
+                  <div
+                    key={analysis.id}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-lg ${
+                      currentAnalysisId === analysis.id
+                        ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
+                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+                    }`}
+                    onClick={() => loadFromHistory(analysis)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm line-clamp-2">
+                          {analysis.instruction}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">
+                            {analysis.category}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(analysis.timestamp).toLocaleDateString('tr-TR')}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {analysis.wordCount} kelime
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(analysis.id);
+                        }}
+                        className={`p-1 rounded transition-colors ${
+                          analysis.isFavorite 
+                            ? 'text-yellow-500 hover:text-yellow-600' 
+                            : 'text-gray-400 hover:text-yellow-500'
+                        }`}
+                      >
+                        <Star className={`w-4 h-4 ${analysis.isFavorite ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {analysis.result.substring(0, 150)}...
+                    </div>
+                  </div>
+                ))}
+              
+              {analysisHistory.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Henüz analiz geçmişi yok</p>
+                  <p className="text-sm">İlk analizinizi yapın</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       {/* Instruction & Presets */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
           <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
@@ -371,10 +704,36 @@ export default function NotebookLLM() {
 
         {/* Files card with drag & drop */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-8">
-            <div className="flex items-center gap-3 mb-4 text-gray-800 dark:text-gray-200">
-              <UploadCloud className="w-5 h-5 text-teal-600" />
-              <span className="text-lg font-semibold">Dosya Yükle (PDF/DOCX/TXT)</span>
-          </div>
+            <div className="flex items-center justify-between mb-4 text-gray-800 dark:text-gray-200">
+              <div className="flex items-center gap-3">
+                <UploadCloud className="w-5 h-5 text-teal-600" />
+                <span className="text-lg font-semibold">Dosya Yükle (PDF/DOCX/TXT)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBatchMode(!batchMode)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    batchMode 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                  title="Toplu İşlem Modu"
+                >
+                  <Layers className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setOcrEnabled(!ocrEnabled)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    ocrEnabled 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                  title="OCR Aktif"
+                >
+                  <Image className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           <label
             htmlFor="nbllm-files"
             onDrop={onDrop}
@@ -406,7 +765,7 @@ export default function NotebookLLM() {
                 Dosya Seç
               </button>
           </div>
-          {files.length>0 && (
+          {files.length>0 && !batchMode && (
               <div className="mt-6 space-y-3">
                 <h4 className="font-semibold text-gray-700 dark:text-gray-300">Yüklenen Dosyalar:</h4>
                 <ul className="space-y-2">
@@ -427,6 +786,47 @@ export default function NotebookLLM() {
               ))}
             </ul>
               </div>
+          )}
+
+          {/* Batch Mode Results */}
+          {batchMode && batchResults.length > 0 && (
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300">Toplu İşlem Sonuçları</h4>
+                <button
+                  onClick={processBatchAnalysis}
+                  disabled={batchResults.filter(r => r.status === 'success').length === 0}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  Analiz Et
+                </button>
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {batchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border ${
+                      result.status === 'success' 
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {result.status === 'success' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-600" />
+                      )}
+                      <span className="font-medium text-sm">{result.file}</span>
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {result.result.substring(0, 100)}...
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
           {errorMsg && (
               <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
