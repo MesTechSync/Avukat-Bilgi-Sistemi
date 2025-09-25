@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Copy, ThumbsUp, ThumbsDown, Trash2, Zap, Scale, FileText, Search, BookOpen, Mic, Paperclip, ArrowUp, ChevronUp, Brain, Lightbulb, Target, Clock, Shield, Users, Gavel } from 'lucide-react';
+import { Bot, Send, Copy, ThumbsUp, ThumbsDown, Trash2, Zap, Scale, FileText, Search, BookOpen, Mic, Paperclip, ArrowUp, ChevronUp, Brain, Lightbulb, Target, Clock, Shield, Users, Gavel, ExternalLink } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { geminiService } from '../services/geminiService';
 import { useDictation } from '../hooks/useDictation';
+import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
+import { petitionTemplates, petitionCategories, searchPetitions } from '../data/petitions/petitionDatabase';
+import { contractTemplates, contractCategories, searchContracts } from '../data/contracts/contractDatabase';
 
 export type Model = 'gemini' | 'gpt-4' | 'auto';
 
@@ -16,6 +19,11 @@ interface ChatMessage {
   isError?: boolean;
   feedback?: 'positive' | 'negative';
   thinking?: string;
+  action?: {
+    type: 'search' | 'petition' | 'contract';
+    data?: any;
+    link?: string;
+  };
 }
 
 interface QuickStartOption {
@@ -161,21 +169,123 @@ const LegalAssistantChat: React.FC = () => {
     }, 800);
 
     try {
-      const response = await geminiService.analyzeText(
-        `Sen Türkiye'nin en deneyimli hukuk asistanısın. Kullanıcının sorusuna profesyonel, detaylı ve pratik bir yanıt ver. 
+      // Mesajı analiz et ve uygun aksiyonu belirle
+      const messageLower = messageToSend.toLowerCase();
+      let actionData = null;
+      let actionType: 'search' | 'petition' | 'contract' | null = null;
+      let panelResponse = '';
+
+      // İçtihat/Mevzuat arama kontrolü
+      if (messageLower.includes('içtihat') || messageLower.includes('yargıtay') || messageLower.includes('karar') || 
+          messageLower.includes('mevzuat') || messageLower.includes('kanun') || messageLower.includes('yönetmelik')) {
         
-        Soru: ${messageToSend}
+        actionType = 'search';
+        const searchQuery = messageToSend;
         
-        Yanıtında şunları dahil et:
-        1. Hukuki analiz ve değerlendirme
-        2. İlgili mevzuat referansları
-        3. Pratik çözüm önerileri
-        4. Dikkat edilmesi gereken noktalar
-        5. Sonraki adımlar
+        try {
+          // İçtihat arama
+          const ictihatResults = await searchIctihat(searchQuery, {});
+          // Mevzuat arama
+          const mevzuatResults = await searchMevzuat(searchQuery, {});
+          
+          actionData = {
+            ictihatResults: ictihatResults.slice(0, 3),
+            mevzuatResults: mevzuatResults.slice(0, 3),
+            searchQuery
+          };
+          
+          panelResponse = `🔍 **Arama Sonuçları Bulundu!**
+
+**İçtihat Sonuçları:** ${ictihatResults.length} karar
+**Mevzuat Sonuçları:** ${mevzuatResults.length} düzenleme
+
+En ilgili sonuçlar aşağıda gösteriliyor. Detaylı arama için "İçtihat & Mevzuat" bölümünü kullanabilirsiniz.
+
+`;
+        } catch (error) {
+          console.error('Arama hatası:', error);
+        }
+      }
+      
+      // Dilekçe yazımı kontrolü
+      else if (messageLower.includes('dilekçe') || messageLower.includes('dava') || messageLower.includes('mahkeme') || 
+               messageLower.includes('boşanma') || messageLower.includes('nafaka') || messageLower.includes('velayet')) {
         
-        Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`,
-        messageToSend
-      );
+        actionType = 'petition';
+        const searchQuery = messageToSend;
+        
+        try {
+          const petitionResults = searchPetitions(searchQuery);
+          const relevantPetitions = petitionResults.slice(0, 3);
+          
+          actionData = {
+            petitions: relevantPetitions,
+            searchQuery,
+            categories: petitionCategories
+          };
+          
+          panelResponse = `📄 **Dilekçe Şablonları Bulundu!**
+
+**Bulunan Şablonlar:** ${petitionResults.length} adet
+**En İlgili Şablonlar:** ${relevantPetitions.length} adet
+
+Aşağıda en uygun dilekçe şablonları gösteriliyor. Detaylı dilekçe yazımı için "Dilekçe Yazımı" bölümünü kullanabilirsiniz.
+
+`;
+        } catch (error) {
+          console.error('Dilekçe arama hatası:', error);
+        }
+      }
+      
+      // Sözleşme yazımı kontrolü
+      else if (messageLower.includes('sözleşme') || messageLower.includes('kontrat') || messageLower.includes('anlaşma') || 
+               messageLower.includes('iş sözleşmesi') || messageLower.includes('kira sözleşmesi') || messageLower.includes('satış sözleşmesi')) {
+        
+        actionType = 'contract';
+        const searchQuery = messageToSend;
+        
+        try {
+          const contractResults = searchContracts(searchQuery);
+          const relevantContracts = contractResults.slice(0, 3);
+          
+          actionData = {
+            contracts: relevantContracts,
+            searchQuery,
+            categories: contractCategories
+          };
+          
+          panelResponse = `📋 **Sözleşme Şablonları Bulundu!**
+
+**Bulunan Şablonlar:** ${contractResults.length} adet
+**En İlgili Şablonlar:** ${relevantContracts.length} adet
+
+Aşağıda en uygun sözleşme şablonları gösteriliyor. Detaylı sözleşme yazımı için "Sözleşme Oluşturucu" bölümünü kullanabilirsiniz.
+
+`;
+        } catch (error) {
+          console.error('Sözleşme arama hatası:', error);
+        }
+      }
+
+      // AI yanıtı al
+      const aiPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. Kullanıcının sorusuna profesyonel, detaylı ve pratik bir yanıt ver. 
+
+Soru: ${messageToSend}
+
+${actionData ? `Panel Entegrasyonu: ${panelResponse}` : ''}
+
+Yanıtında şunları dahil et:
+1. Hukuki analiz ve değerlendirme
+2. İlgili mevzuat referansları
+3. Pratik çözüm önerileri
+4. Dikkat edilmesi gereken noktalar
+5. Sonraki adımlar
+
+${actionData ? 'Panel entegrasyonu ile ilgili bilgileri de dahil et.' : ''}
+
+Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`;
+
+      const response = await geminiService.analyzeText(aiPrompt, messageToSend);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -184,7 +294,11 @@ const LegalAssistantChat: React.FC = () => {
         timestamp: new Date().toISOString(),
         model: selectedModel,
         confidence: 0.95,
-        thinking: thinkingProcess
+        thinking: thinkingProcess,
+        action: actionType ? {
+          type: actionType,
+          data: actionData
+        } : undefined
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -334,6 +448,144 @@ const LegalAssistantChat: React.FC = () => {
                   <div className="prose prose-sm max-w-none dark:prose-invert">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
+
+                  {/* Panel Entegrasyonu - Action Results */}
+                  {message.action && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <ExternalLink className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-blue-800 dark:text-blue-200">
+                          Panel Entegrasyonu
+                        </span>
+                      </div>
+                      
+                      {message.action.type === 'search' && message.action.data && (
+                        <div className="space-y-3">
+                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                            <strong>Arama Terimi:</strong> "{message.action.data.searchQuery}"
+                          </div>
+                          
+                          {message.action.data.ictihatResults && message.action.data.ictihatResults.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                🔍 İçtihat Sonuçları ({message.action.data.ictihatResults.length})
+                              </h4>
+                              <div className="space-y-2">
+                                {message.action.data.ictihatResults.map((result: any, index: number) => (
+                                  <div key={index} className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                    <div className="font-medium text-sm text-gray-900 dark:text-white">
+                                      {result.title}
+                                    </div>
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {result.content?.substring(0, 150)}...
+                                    </div>
+                                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                      {result.court} • {result.date}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {message.action.data.mevzuatResults && message.action.data.mevzuatResults.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                📚 Mevzuat Sonuçları ({message.action.data.mevzuatResults.length})
+                              </h4>
+                              <div className="space-y-2">
+                                {message.action.data.mevzuatResults.map((result: any, index: number) => (
+                                  <div key={index} className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                    <div className="font-medium text-sm text-gray-900 dark:text-white">
+                                      {result.title}
+                                    </div>
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {result.content?.substring(0, 150)}...
+                                    </div>
+                                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                      {result.type} • {result.date}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {message.action.type === 'petition' && message.action.data && (
+                        <div className="space-y-3">
+                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                            <strong>Arama Terimi:</strong> "{message.action.data.searchQuery}"
+                          </div>
+                          
+                          {message.action.data.petitions && message.action.data.petitions.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                📄 Dilekçe Şablonları ({message.action.data.petitions.length})
+                              </h4>
+                              <div className="space-y-2">
+                                {message.action.data.petitions.map((petition: any, index: number) => (
+                                  <div key={index} className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                    <div className="font-medium text-sm text-gray-900 dark:text-white">
+                                      {petition.title}
+                                    </div>
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {petition.description}
+                                    </div>
+                                    <div className="flex items-center space-x-2 mt-2">
+                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                        {petition.category}
+                                      </span>
+                                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                        {petition.subcategory}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {message.action.type === 'contract' && message.action.data && (
+                        <div className="space-y-3">
+                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                            <strong>Arama Terimi:</strong> "{message.action.data.searchQuery}"
+                          </div>
+                          
+                          {message.action.data.contracts && message.action.data.contracts.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                📋 Sözleşme Şablonları ({message.action.data.contracts.length})
+                              </h4>
+                              <div className="space-y-2">
+                                {message.action.data.contracts.map((contract: any, index: number) => (
+                                  <div key={index} className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                    <div className="font-medium text-sm text-gray-900 dark:text-white">
+                                      {contract.title}
+                                    </div>
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {contract.description}
+                                    </div>
+                                    <div className="flex items-center space-x-2 mt-2">
+                                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                        {contract.category}
+                                      </span>
+                                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                        {contract.subcategory}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {message.role === 'assistant' && (
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
