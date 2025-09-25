@@ -52,10 +52,22 @@ export default function PetitionWriter() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview' | 'ai-create'>('templates');
   const [sortBy, setSortBy] = useState<'popular' | 'recent' | 'rating' | 'alphabetical'>('popular');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  
+  // AI ile sıfırdan oluşturma için state'ler
+  const [aiCreateData, setAiCreateData] = useState({
+    petitionType: '',
+    description: '',
+    parties: '',
+    facts: '',
+    legalBasis: '',
+    request: '',
+    court: ''
+  });
+  const [isGeneratingFromScratch, setIsGeneratingFromScratch] = useState(false);
 
   // Filtrelenmiş şablonlar
   const filteredTemplates = useMemo(() => {
@@ -79,16 +91,16 @@ export default function PetitionWriter() {
     // Sıralama
     switch (sortBy) {
       case 'popular':
-        templates = templates.sort((a, b) => b.usageCount - a.usageCount);
+        templates = templates.sort((a: PetitionTemplate, b: PetitionTemplate) => b.usageCount - a.usageCount);
         break;
       case 'recent':
-        templates = templates.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+        templates = templates.sort((a: PetitionTemplate, b: PetitionTemplate) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
         break;
       case 'rating':
-        templates = templates.sort((a, b) => b.rating - a.rating);
+        templates = templates.sort((a: PetitionTemplate, b: PetitionTemplate) => b.rating - a.rating);
         break;
       case 'alphabetical':
-        templates = templates.sort((a, b) => a.title.localeCompare(b.title));
+        templates = templates.sort((a: PetitionTemplate, b: PetitionTemplate) => a.title.localeCompare(b.title));
         break;
     }
 
@@ -97,7 +109,7 @@ export default function PetitionWriter() {
 
   // Form alanlarını oluştur
   const createFormFields = (template: PetitionTemplate): FormField[] => {
-    return template.requiredFields.map((field, index) => ({
+    return template.requiredFields.map((field: string, index: number) => ({
       id: `field_${index}`,
       label: field,
       type: field.toLowerCase().includes('tarih') ? 'date' : 
@@ -124,6 +136,70 @@ export default function PetitionWriter() {
     setFormFields(prev => prev.map(field => 
       field.id === fieldId ? { ...field, value } : field
     ));
+  };
+
+  // AI ile sıfırdan dilekçe oluştur
+  const generatePetitionFromScratch = async () => {
+    if (!aiCreateData.petitionType || !aiCreateData.description || !aiCreateData.parties || !aiCreateData.facts || !aiCreateData.request) {
+      alert('Lütfen tüm gerekli alanları doldurun.');
+      return;
+    }
+
+    setIsGeneratingFromScratch(true);
+    try {
+      const prompt = `
+Sen Türkiye'de çalışan deneyimli bir avukatsın. Aşağıdaki bilgileri kullanarak profesyonel bir dilekçe oluştur:
+
+DİLEKÇE BİLGİLERİ:
+- Dilekçe Türü: ${aiCreateData.petitionType}
+- Açıklama: ${aiCreateData.description}
+- Taraflar: ${aiCreateData.parties}
+- Olaylar: ${aiCreateData.facts}
+- Hukuki Dayanak: ${aiCreateData.legalBasis || 'İlgili mevzuat hükümleri'}
+- Talep: ${aiCreateData.request}
+- Mahkeme: ${aiCreateData.court || 'İlgili mahkeme'}
+
+GÖREVLERİN:
+1. Profesyonel bir dilekçe formatı kullan
+2. Türk hukuk sistemine uygun terminoloji kullan
+3. Resmi ve profesyonel dil kullan
+4. Dilekçe başlığını uygun şekilde düzenle
+5. Mahkeme adresini doğru şekilde yaz
+6. Olayları kronolojik sırayla anlat
+7. Hukuki dayanakları doğru kullan
+8. Talep kısmını net ve açık şekilde belirt
+9. Dilekçeyi tam ve eksiksiz hale getir
+10. Hukuki açıdan güçlü argümanlar kullan
+
+ÖNEMLİ: 
+- Sadece dilekçe içeriğini döndür, açıklama veya yorum ekleme
+- Dilekçe tamamen hazır ve kullanıma uygun olmalı
+- Türk hukuk sistemine uygun format kullan
+- Profesyonel ve resmi dil kullan
+- Hukuki dayanakları doğru şekilde uygula
+- Dilekçe sonunda "Saygılarımla" ile bitir
+      `;
+
+      const response = await geminiService.analyzeText(prompt);
+      const content = response || 'Dilekçe oluşturulamadı. Lütfen tekrar deneyin.';
+
+      setGeneratedPetition({
+        content,
+        metadata: {
+          templateId: 'ai-generated',
+          generatedAt: new Date().toISOString(),
+          aiModel: 'gemini',
+          wordCount: content.split(' ').length
+        }
+      });
+
+      setActiveTab('preview');
+    } catch (error) {
+      console.error('Dilekçe oluşturma hatası:', error);
+      alert('Dilekçe oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsGeneratingFromScratch(false);
+    }
   };
 
   // AI ile dilekçe oluştur
@@ -260,7 +336,6 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto px-2 md:px-4 py-4 md:py-8">
@@ -276,13 +351,13 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
             <div className="flex items-center gap-1 md:gap-2">
               <div className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
                 AI Destekli
-          </div>
-        </div>
+              </div>
             </div>
+          </div>
           <p className="text-gray-600 dark:text-gray-300 text-sm md:text-lg">
             Profesyonel dilekçe şablonları ve AI destekli oluşturma
           </p>
-          </div>
+        </div>
 
         {/* Tab Navigation */}
         <div className="max-w-6xl mx-auto mb-6">
@@ -290,6 +365,7 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
             <div className="flex gap-2 overflow-x-auto">
               {[
                 { id: 'templates', label: 'Şablonlar', icon: BookOpen },
+                { id: 'ai-create', label: 'AI ile Oluştur', icon: Brain },
                 { id: 'create', label: 'Oluştur', icon: Edit3 },
                 { id: 'preview', label: 'Önizleme', icon: Eye }
               ].map((tab) => {
@@ -309,9 +385,9 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                   </button>
                 );
               })}
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Templates Tab */}
         {activeTab === 'templates' && (
@@ -321,33 +397,33 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Search */}
                 <div className="flex-1">
-              <div className="relative">
+                  <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
+                    <input
+                      type="text"
                       placeholder="Dilekçe ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
+                    />
+                  </div>
                 </div>
 
                 {/* Category Filter */}
                 <div className="flex gap-2">
-              <select
-                value={selectedCategory}
+                  <select
+                    value={selectedCategory}
                     onChange={(e) => {
                       setSelectedCategory(e.target.value);
                       setSelectedSubcategory('');
                     }}
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
-              >
-                <option value="">Tüm Kategoriler</option>
+                  >
+                    <option value="">Tüm Kategoriler</option>
                     {Object.keys(petitionCategories).map(category => (
                       <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
+                    ))}
+                  </select>
 
                   {selectedCategory && (
                     <select
@@ -379,7 +455,7 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
 
             {/* Templates Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {filteredTemplates.map((template) => (
+              {filteredTemplates.map((template: PetitionTemplate) => (
                 <div
                   key={template.id}
                   onClick={() => setSelectedTemplate(template)}
@@ -430,7 +506,7 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {template.keywords.slice(0, 3).map((keyword, index) => (
+                    {template.keywords.slice(0, 3).map((keyword: string, index: number) => (
                       <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs">
                         {keyword}
                       </span>
@@ -452,9 +528,151 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                   Farklı anahtar kelimeler deneyin veya filtreleri temizleyin
                 </p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+
+        {/* AI Create Tab */}
+        {activeTab === 'ai-create' && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    AI ile Sıfırdan Dilekçe Oluştur
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Yapay zeka ile özel dilekçenizi oluşturun
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">
+                    AI Destekli
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dilekçe Türü <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.petitionType}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, petitionType: e.target.value }))}
+                    placeholder="Örn: Boşanma Dilekçesi, Nafaka Artırım Dilekçesi..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Dilekçe Açıklaması <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.description}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Dilekçenizin genel açıklamasını yazın..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Taraflar <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.parties}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, parties: e.target.value }))}
+                    placeholder="Dilekçede yer alacak tarafları yazın (davacı, davalı, vs.)..."
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Olaylar ve Gerçekler <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.facts}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, facts: e.target.value }))}
+                    placeholder="Dilekçeye konu olan olayları ve gerçekleri detaylı şekilde yazın..."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Hukuki Dayanak
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.legalBasis}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, legalBasis: e.target.value }))}
+                    placeholder="Örn: TMK 166, İK 17, BK 125..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Talep <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.request}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, request: e.target.value }))}
+                    placeholder="Mahkemeden ne talep ettiğinizi yazın..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mahkeme
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.court}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, court: e.target.value }))}
+                    placeholder="Örn: İstanbul 1. Aile Mahkemesi..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <button
+                  onClick={generatePetitionFromScratch}
+                  disabled={isGeneratingFromScratch || !aiCreateData.petitionType || !aiCreateData.description || !aiCreateData.parties || !aiCreateData.facts || !aiCreateData.request}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isGeneratingFromScratch ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-4 h-4" />
+                      AI ile Oluştur
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('templates')}
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Geri
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Create Tab */}
@@ -462,29 +680,29 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
           <div className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
-            <div>
+                <div>
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     {selectedTemplate.title}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedTemplate.category} - {selectedTemplate.subcategory}
                   </p>
-            </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">
                     AI Destekli
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
               <div className="space-y-4">
-              {formFields.map((field) => (
+                {formFields.map((field) => (
                   <div key={field.id}>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {field.label}
+                      {field.label}
                       {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  {field.type === 'textarea' ? (
+                    </label>
+                    {field.type === 'textarea' ? (
                       <textarea
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
@@ -492,28 +710,28 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                       />
-                  ) : field.type === 'select' ? (
-                    <select
+                    ) : field.type === 'select' ? (
+                      <select
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
                         <option value="">Seçin...</option>
-                      {field.options?.map((option) => (
+                        {field.options?.map((option) => (
                           <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
-                      placeholder={field.placeholder}
+                        placeholder={field.placeholder}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  )}
-                </div>
-              ))}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
 
               {/* AI Önerileri */}
@@ -546,23 +764,23 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
               )}
 
               <div className="mt-8 flex gap-4">
-            <button
+                <button
                   onClick={generatePetition}
                   disabled={isGenerating || formFields.some(field => field.required && !field.value.trim())}
                   className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              {isGenerating ? (
-                <>
+                >
+                  {isGenerating ? (
+                    <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Oluşturuluyor...
-                </>
-              ) : (
-                <>
+                    </>
+                  ) : (
+                    <>
                       <Wand2 className="w-4 h-4" />
                       AI ile Oluştur
-                </>
-              )}
-            </button>
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={() => setActiveTab('templates')}
                   className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -570,9 +788,9 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                   Geri
                 </button>
               </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Preview Tab */}
         {activeTab === 'preview' && generatedPetition && (
@@ -588,28 +806,28 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                   </p>
                 </div>
                 <div className="flex gap-2">
-              <button
-                onClick={copyToClipboard}
+                  <button
+                    onClick={copyToClipboard}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-              >
+                  >
                     <Copy className="w-4 h-4" />
                     Kopyala
-              </button>
-              <button
-                onClick={downloadPetition}
+                  </button>
+                  <button
+                    onClick={downloadPetition}
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
                     İndir
-              </button>
-            </div>
-          </div>
+                  </button>
+                </div>
+              </div>
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedPetition.content}
                 </pre>
-            </div>
+              </div>
 
               <div className="mt-6 flex gap-4">
                 <button
@@ -624,9 +842,9 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
                 >
                   Yeni Şablon
                 </button>
-                </div>
               </div>
             </div>
+          </div>
         )}
 
         {/* Empty State */}
@@ -646,9 +864,9 @@ Bu dilekçe türü için 5 adet profesyonel öneri ver. Her öneri:
               >
                 Şablonları Görüntüle
               </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

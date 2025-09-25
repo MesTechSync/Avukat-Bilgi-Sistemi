@@ -52,10 +52,23 @@ export default function ContractGenerator() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'create' | 'preview' | 'ai-create'>('templates');
   const [sortBy, setSortBy] = useState<'popular' | 'recent' | 'rating' | 'alphabetical'>('popular');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  
+  // AI ile sıfırdan oluşturma için state'ler
+  const [aiCreateData, setAiCreateData] = useState({
+    contractType: '',
+    description: '',
+    parties: '',
+    terms: '',
+    legalBasis: '',
+    duration: '',
+    payment: '',
+    conditions: ''
+  });
+  const [isGeneratingFromScratch, setIsGeneratingFromScratch] = useState(false);
 
   // Filtrelenmiş şablonlar
   const filteredTemplates = useMemo(() => {
@@ -79,16 +92,16 @@ export default function ContractGenerator() {
     // Sıralama
     switch (sortBy) {
       case 'popular':
-        templates = templates.sort((a, b) => b.usageCount - a.usageCount);
+        templates = templates.sort((a: ContractTemplate, b: ContractTemplate) => b.usageCount - a.usageCount);
         break;
       case 'recent':
-        templates = templates.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+        templates = templates.sort((a: ContractTemplate, b: ContractTemplate) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
         break;
       case 'rating':
-        templates = templates.sort((a, b) => b.rating - a.rating);
+        templates = templates.sort((a: ContractTemplate, b: ContractTemplate) => b.rating - a.rating);
         break;
       case 'alphabetical':
-        templates = templates.sort((a, b) => a.title.localeCompare(b.title));
+        templates = templates.sort((a: ContractTemplate, b: ContractTemplate) => a.title.localeCompare(b.title));
         break;
     }
 
@@ -97,7 +110,7 @@ export default function ContractGenerator() {
 
   // Form alanlarını oluştur
   const createFormFields = (template: ContractTemplate): FormField[] => {
-    return template.requiredFields.map((field, index) => ({
+    return template.requiredFields.map((field: string, index: number) => ({
       id: `field_${index}`,
       label: field,
       type: field.toLowerCase().includes('tarih') ? 'date' : 
@@ -124,6 +137,73 @@ export default function ContractGenerator() {
     setFormFields(prev => prev.map(field => 
       field.id === fieldId ? { ...field, value } : field
     ));
+  };
+
+  // AI ile sıfırdan sözleşme oluştur
+  const generateContractFromScratch = async () => {
+    if (!aiCreateData.contractType || !aiCreateData.description || !aiCreateData.parties || !aiCreateData.terms) {
+      alert('Lütfen tüm gerekli alanları doldurun.');
+      return;
+    }
+
+    setIsGeneratingFromScratch(true);
+    try {
+      const prompt = `
+Sen Türkiye'de çalışan deneyimli bir avukatsın. Aşağıdaki bilgileri kullanarak profesyonel bir sözleşme oluştur:
+
+SÖZLEŞME BİLGİLERİ:
+- Sözleşme Türü: ${aiCreateData.contractType}
+- Açıklama: ${aiCreateData.description}
+- Taraflar: ${aiCreateData.parties}
+- Şartlar: ${aiCreateData.terms}
+- Hukuki Dayanak: ${aiCreateData.legalBasis || 'İlgili mevzuat hükümleri'}
+- Süre: ${aiCreateData.duration || 'Belirtilmemiş'}
+- Ödeme: ${aiCreateData.payment || 'Belirtilmemiş'}
+- Özel Şartlar: ${aiCreateData.conditions || 'Yok'}
+
+GÖREVLERİN:
+1. Profesyonel bir sözleşme formatı kullan
+2. Türk hukuk sistemine uygun terminoloji kullan
+3. Resmi ve profesyonel dil kullan
+4. Sözleşme başlığını uygun şekilde düzenle
+5. Tarafları net şekilde tanımla
+6. Sözleşme maddelerini numaralı ve düzenli şekilde organize et
+7. Hukuki dayanakları doğru kullan
+8. Sözleşme şartlarını detaylı şekilde belirt
+9. Sözleşmeyi tam ve eksiksiz hale getir
+10. Hukuki açıdan güçlü maddeler ekle
+11. İmza kısmını net şekilde belirt
+
+ÖNEMLİ: 
+- Sadece sözleşme içeriğini döndür, açıklama veya yorum ekleme
+- Sözleşme tamamen hazır ve kullanıma uygun olmalı
+- Türk hukuk sistemine uygun format kullan
+- Profesyonel ve resmi dil kullan
+- Hukuki dayanakları doğru şekilde uygula
+- Sözleşme maddelerini numaralı ve düzenli şekilde organize et
+- Sözleşme sonunda imza kısmını ekle
+      `;
+
+      const response = await geminiService.analyzeText(prompt);
+      const content = response || 'Sözleşme oluşturulamadı. Lütfen tekrar deneyin.';
+
+      setGeneratedContract({
+        content,
+        metadata: {
+          templateId: 'ai-generated',
+          generatedAt: new Date().toISOString(),
+          aiModel: 'gemini',
+          wordCount: content.split(' ').length
+        }
+      });
+
+      setActiveTab('preview');
+    } catch (error) {
+      console.error('Sözleşme oluşturma hatası:', error);
+      alert('Sözleşme oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsGeneratingFromScratch(false);
+    }
   };
 
   // AI ile sözleşme oluştur
@@ -290,6 +370,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
             <div className="flex gap-2 overflow-x-auto">
               {[
                 { id: 'templates', label: 'Şablonlar', icon: BookOpen },
+                { id: 'ai-create', label: 'AI ile Oluştur', icon: Brain },
                 { id: 'create', label: 'Oluştur', icon: Edit3 },
                 { id: 'preview', label: 'Önizleme', icon: Eye }
               ].map((tab) => {
@@ -378,7 +459,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
 
             {/* Templates Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {filteredTemplates.map((template) => (
+              {filteredTemplates.map((template: ContractTemplate) => (
                 <div
                   key={template.id}
                   onClick={() => setSelectedTemplate(template)}
@@ -429,7 +510,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {template.keywords.slice(0, 3).map((keyword, index) => (
+                    {template.keywords.slice(0, 3).map((keyword: string, index: number) => (
                       <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs">
                         {keyword}
                       </span>
@@ -453,6 +534,161 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* AI Create Tab */}
+        {activeTab === 'ai-create' && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    AI ile Sıfırdan Sözleşme Oluştur
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Yapay zeka ile özel sözleşmenizi oluşturun
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">
+                    AI Destekli
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sözleşme Türü <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.contractType}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, contractType: e.target.value }))}
+                    placeholder="Örn: İş Sözleşmesi, Kira Sözleşmesi, Satış Sözleşmesi..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sözleşme Açıklaması <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.description}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Sözleşmenizin genel açıklamasını yazın..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Taraflar <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.parties}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, parties: e.target.value }))}
+                    placeholder="Sözleşmede yer alacak tarafları yazın (taraf 1, taraf 2, vs.)..."
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sözleşme Şartları <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={aiCreateData.terms}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, terms: e.target.value }))}
+                    placeholder="Sözleşmenin temel şartlarını ve koşullarını yazın..."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Hukuki Dayanak
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.legalBasis}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, legalBasis: e.target.value }))}
+                    placeholder="Örn: BK 125, TMK 166, İK 17..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sözleşme Süresi
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.duration}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, duration: e.target.value }))}
+                    placeholder="Örn: 1 yıl, 6 ay, belirsiz süreli..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Ödeme Şartları
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCreateData.payment}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, payment: e.target.value }))}
+                    placeholder="Örn: Aylık 5000 TL, Peşin ödeme, Taksitli..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Özel Şartlar
+                  </label>
+                  <textarea
+                    value={aiCreateData.conditions}
+                    onChange={(e) => setAiCreateData(prev => ({ ...prev, conditions: e.target.value }))}
+                    placeholder="Özel şartlar, koşullar veya ek maddeler varsa yazın..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <button
+                  onClick={generateContractFromScratch}
+                  disabled={isGeneratingFromScratch || !aiCreateData.contractType || !aiCreateData.description || !aiCreateData.parties || !aiCreateData.terms}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isGeneratingFromScratch ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-4 h-4" />
+                      AI ile Oluştur
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('templates')}
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Geri
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
