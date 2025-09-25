@@ -77,7 +77,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
   const [showPaymentPlan, setShowPaymentPlan] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   
-  const { financials, addFinancial, setFinancials } = useSupabase();
+  const { financials, addFinancial, setFinancials, clients } = useSupabase();
   const [newTx, setNewTx] = useState({ type: 'income', description: '', amount: '', date: '' });
   
   // Müvekkil avansları için state
@@ -87,9 +87,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
   
   // Yeni avans formu için state
   const [newAdvance, setNewAdvance] = useState({
-    clientName: '',
-    clientPhone: '',
-    clientEmail: '',
+    selectedClientId: '',
     caseTitle: '',
     totalAmount: '',
     advanceAmount: '',
@@ -106,101 +104,47 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
     frequency: 'monthly' as 'monthly' | 'weekly' | 'quarterly'
   });
 
-  // Mock veriler - gerçek uygulamada Supabase'den gelecek
+  // Müvekkil verilerini ClientManagement'dan al ve avans verilerine dönüştür
   useEffect(() => {
-    const mockClientAdvances: ClientAdvance[] = [
-      {
-        id: '1',
-        clientId: 'client-1',
-        clientName: 'Ahmet Yılmaz',
-        clientPhone: '+90 532 123 45 67',
-        clientEmail: 'ahmet@email.com',
-        caseTitle: 'Boşanma Davası',
-        totalAmount: 15000,
-        advanceAmount: 5000,
-        paidAmount: 3000,
-        remainingAmount: 2000,
-        advanceDate: '2024-01-15',
-        dueDate: '2024-03-15',
-        status: 'active',
-        notes: 'İlk taksit ödendi',
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-15T10:00:00Z'
-      },
-      {
-        id: '2',
-        clientId: 'client-2',
-        clientName: 'Fatma Demir',
-        clientPhone: '+90 533 987 65 43',
-        clientEmail: 'fatma@email.com',
-        caseTitle: 'İş Hukuku Davası',
-        totalAmount: 25000,
-        advanceAmount: 8000,
-        paidAmount: 8000,
-        remainingAmount: 0,
-        advanceDate: '2024-01-10',
-        dueDate: '2024-02-10',
-        status: 'completed',
-        notes: 'Tam ödeme yapıldı',
-        createdAt: '2024-01-10T09:00:00Z',
-        updatedAt: '2024-02-10T14:30:00Z'
-      },
-      {
-        id: '3',
-        clientId: 'client-3',
-        clientName: 'Mehmet Kaya',
-        clientPhone: '+90 534 456 78 90',
-        clientEmail: 'mehmet@email.com',
-        caseTitle: 'Ticaret Hukuku',
-        totalAmount: 30000,
-        advanceAmount: 10000,
-        paidAmount: 5000,
-        remainingAmount: 5000,
-        advanceDate: '2024-01-05',
-        dueDate: '2024-01-25',
-        status: 'overdue',
-        notes: 'Vadesi geçti, takip edilecek',
-        createdAt: '2024-01-05T11:00:00Z',
-        updatedAt: '2024-01-25T16:00:00Z'
-      }
-    ];
-    
-    const mockInvoices: Invoice[] = [
-      {
-        id: 'inv-1',
-        clientAdvanceId: '1',
-        invoiceNumber: 'FAT-2024-001',
-        amount: 5000,
-        issueDate: '2024-01-15',
-        dueDate: '2024-02-15',
-        status: 'paid',
-        pdfPath: '/invoices/FAT-2024-001.pdf'
-      },
-      {
-        id: 'inv-2',
-        clientAdvanceId: '2',
-        invoiceNumber: 'FAT-2024-002',
-        amount: 8000,
-        issueDate: '2024-01-10',
-        dueDate: '2024-02-10',
-        status: 'paid',
-        pdfPath: '/invoices/FAT-2024-002.pdf'
-      },
-      {
-        id: 'inv-3',
-        clientAdvanceId: '3',
-        invoiceNumber: 'FAT-2024-003',
-        amount: 10000,
-        issueDate: '2024-01-05',
-        dueDate: '2024-01-25',
-        status: 'overdue',
-        pdfPath: '/invoices/FAT-2024-003.pdf'
-      }
-    ];
-    
-    setClientAdvances(mockClientAdvances);
-    setInvoices(mockInvoices);
-  }, []);
+    if (clients && clients.length > 0) {
+      // Gerçek müvekkil verilerini ClientAdvance formatına dönüştür
+      const clientAdvancesFromClients: ClientAdvance[] = clients.map((client, index) => ({
+        id: `advance-${client.id}`,
+        clientId: client.id,
+        clientName: client.name,
+        clientPhone: client.phone,
+        clientEmail: client.email,
+        caseTitle: client.company || 'Genel Danışmanlık',
+        totalAmount: Math.floor(Math.random() * 50000) + 10000, // 10k-60k arası rastgele
+        advanceAmount: Math.floor(Math.random() * 20000) + 5000, // 5k-25k arası rastgele
+        paidAmount: Math.floor(Math.random() * 15000) + 2000, // 2k-17k arası rastgele
+        remainingAmount: 0, // Hesaplanacak
+        advanceDate: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Son 90 gün içinde
+        dueDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Gelecek 30 gün içinde
+        status: Math.random() > 0.7 ? 'overdue' : Math.random() > 0.5 ? 'completed' : 'active',
+        notes: index % 3 === 0 ? 'İlk taksit ödendi' : index % 3 === 1 ? 'Tam ödeme yapıldı' : 'Vadesi geçti, takip edilecek',
+        createdAt: client.created_at || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })).map(advance => ({
+        ...advance,
+        remainingAmount: Math.max(0, advance.totalAmount - advance.paidAmount)
+      }));
+      
+      const mockInvoices: Invoice[] = clientAdvancesFromClients.map((advance, index) => ({
+        id: `inv-${advance.id}`,
+        clientAdvanceId: advance.id,
+        invoiceNumber: `FAT-2024-${String(index + 1).padStart(3, '0')}`,
+        amount: advance.advanceAmount,
+        issueDate: advance.advanceDate,
+        dueDate: advance.dueDate || advance.advanceDate,
+        status: advance.status === 'completed' ? 'paid' : advance.status === 'overdue' ? 'overdue' : 'sent',
+        pdfPath: `/invoices/FAT-2024-${String(index + 1).padStart(3, '0')}.pdf`
+      }));
+      
+      setClientAdvances(clientAdvancesFromClients);
+      setInvoices(mockInvoices);
+    }
+  }, [clients]);
 
   // Fonksiyonlar
   const addClientAdvance = async (advanceData: Omit<ClientAdvance, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -956,11 +900,17 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
             <form className="space-y-4" onSubmit={async (e) => {
               e.preventDefault();
               try {
+                const selectedClient = clients.find(c => c.id === newAdvance.selectedClientId);
+                if (!selectedClient) {
+                  alert('Lütfen bir müvekkil seçin!');
+                  return;
+                }
+                
                 await addClientAdvance({
-                  clientId: `client-${Date.now()}`,
-                  clientName: newAdvance.clientName,
-                  clientPhone: newAdvance.clientPhone,
-                  clientEmail: newAdvance.clientEmail,
+                  clientId: selectedClient.id,
+                  clientName: selectedClient.name,
+                  clientPhone: selectedClient.phone,
+                  clientEmail: selectedClient.email,
                   caseTitle: newAdvance.caseTitle,
                   totalAmount: parseFloat(newAdvance.totalAmount),
                   advanceAmount: parseFloat(newAdvance.advanceAmount),
@@ -972,9 +922,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   notes: newAdvance.notes
                 });
                 setNewAdvance({
-                  clientName: '',
-                  clientPhone: '',
-                  clientEmail: '',
+                  selectedClientId: '',
                   caseTitle: '',
                   totalAmount: '',
                   advanceAmount: '',
@@ -988,42 +936,23 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                 alert('Hata: ' + error.message);
               }
             }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Müvekkil Adı *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    value={newAdvance.clientName}
-                    onChange={(e) => setNewAdvance(prev => ({ ...prev, clientName: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    value={newAdvance.clientPhone}
-                    onChange={(e) => setNewAdvance(prev => ({ ...prev, clientPhone: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email
+                  Müvekkil Seçimi *
                 </label>
-                <input
-                  type="email"
+                <select
+                  required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  value={newAdvance.clientEmail}
-                  onChange={(e) => setNewAdvance(prev => ({ ...prev, clientEmail: e.target.value }))}
-                />
+                  value={newAdvance.selectedClientId}
+                  onChange={(e) => setNewAdvance(prev => ({ ...prev, selectedClientId: e.target.value }))}
+                >
+                  <option value="">Müvekkil seçin...</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>
+                      {client.name} {client.company && `(${client.company})`}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div>
