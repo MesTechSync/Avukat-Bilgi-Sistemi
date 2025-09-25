@@ -710,7 +710,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                     AI Destekli
                   </div>
                 </div>
-              </div>
+            </div>
 
               <div className="space-y-4">
                 {formFields.map((field) => (

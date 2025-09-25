@@ -357,44 +357,6 @@ Sonuç: Bu mevzuat, ${query} konusunda hukuki düzenin sağlanması için öneml
   
   return simulatedResults.sort((a, b) => b.relevanceScore! - a.relevanceScore!);
 }
-const YARGITAY_BASE_URL = 'https://karararama.yargitay.gov.tr';
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-
-// Yargıtay sitesinden gerçek veri çekme
-export async function searchYargitayReal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    // Yargıtay sitesine POST isteği gönder
-    const searchData = {
-      'Aranacak Kelime': query,
-      'Kurullar': filters?.courtType || '',
-      'Esas Numarası': '',
-      'Karar Numarası': '',
-      'Karar Tarihi': '',
-      'Sıralama': 'Karar Tarihine Göre'
-    };
-
-    const response = await fetch(`${CORS_PROXY}${encodeURIComponent(YARGITAY_BASE_URL)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      body: new URLSearchParams(searchData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Yargıtay API hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    return parseYargitayResults(html, query);
-  } catch (error) {
-    console.error('Yargıtay gerçek API hatası:', error);
-    // Fallback olarak simüle edilmiş veri döndür
-    return generateSimulatedYargitayResults(query, filters);
-  }
-}
 
 // Yargıtay HTML sonuçlarını parse etme
 function parseYargitayResults(html: string, query: string): IctihatResultItem[] {
@@ -467,7 +429,7 @@ T Ü R K M İ L L E T İ A D I N A
 K A S S A S Y O N K A R A R I
 
 İNCELENEN KARARIN
-MAHKEMESİ: ${court}
+MAHKEMESİ: Yargıtay ${i}. Hukuk Dairesi
 TARİHİ: ${decisionDate.toLocaleDateString('tr-TR')}
 NUMARASI: ${caseNumber}
 
