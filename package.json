@@ -2,8 +2,8 @@
   "name": "avukat-bilgi-sistemi",
   "private": true,
   "engines": {
-    "node": ">=20.19.0",
-    "npm": ">=10.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
     "dev": "cd Panel && npm run dev",

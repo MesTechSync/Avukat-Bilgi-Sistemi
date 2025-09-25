@@ -1,50 +1,25 @@
-# Multi-stage build: build React (Vite) frontend, then run FastAPI backend serving built SPA
+# Node.js 18 base image
+FROM node:18-alpine
 
-# 1) Frontend build stage
-FROM node:20-alpine AS frontend-builder
+# Set working directory
 WORKDIR /app
 
-# Copy only Panel assets necessary for build
-COPY Panel/package*.json Panel/
-WORKDIR /app/Panel
-RUN npm ci
+# Copy package files
+COPY package*.json ./
+COPY Panel/package*.json ./Panel/
 
-COPY Panel/ /app/Panel/
-RUN npm run build
+# Install dependencies
+RUN npm install
+RUN cd Panel && npm install
 
-# 2) Python backend stage
-FROM python:3.11-slim AS backend
+# Copy source code
+COPY . .
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+# Build the application
+RUN cd Panel && npm run build
 
-WORKDIR /app
+# Expose port
+EXPOSE 3000
 
-# System deps for lxml (and build tools in case wheels not available)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       build-essential \
-       libxml2-dev \
-       libxslt1-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Python requirements and install
-COPY Panel/requirements.txt /app/Panel/requirements.txt
-RUN pip install --upgrade pip \
-    && pip install -r /app/Panel/requirements.txt
-
-# Copy repository (only what we need at runtime)
-COPY Panel/ /app/Panel/
-COPY mevzuat-gov-scraper/ /app/mevzuat-gov-scraper/
-
-
-# Copy built frontend from builder
-COPY --from=frontend-builder /app/Panel/dist/ /app/Panel/dist/
-
-EXPOSE 9001
-
-WORKDIR /app/Panel
-
-# Default command: run uvicorn with the production app
-CMD ["uvicorn", "panel_backend_production:app", "--host", "0.0.0.0", "--port", "9001", "--workers", "1"]
+# Start the application
+CMD ["cd", "Panel", "&&", "npm", "run", "preview", "--", "--port", "3000", "--host", "0.0.0.0"]
