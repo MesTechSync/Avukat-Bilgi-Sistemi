@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Mic, Heart, Brain, Clock } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
-// Import all components
-// Using the new cleaned component (renamed to avoid prior corruption triggers)
-import LegalAssistantChat from './components/LegalAssistantChat';
-import AdvancedSearch from './components/AdvancedSearch';
-import PetitionWriter from './components/PetitionWriter';
-import ContractGenerator from './components/ContractGenerator';
-import FileConverter from './components/FileConverter';
-import NotebookLLM from './components/NotebookLLM';
-import EnhancedDashboard from './components/EnhancedDashboard';
-import CaseManagement from './components/CaseManagement';
-import ClientManagement from './components/ClientManagement';
-import EnhancedAppointmentManagement from './components/EnhancedAppointmentManagement';
-import FinancialManagement from './components/FinancialManagement';
-import Settings from './components/Settings';
-import Profile from './components/Profile';
-import HeaderVoiceControl from './components/HeaderVoiceControl';
+// Lazy load components for better performance
+const LegalAssistantChat = lazy(() => import('./components/LegalAssistantChat'));
+const AdvancedSearch = lazy(() => import('./components/AdvancedSearch'));
+const PetitionWriter = lazy(() => import('./components/PetitionWriter'));
+const ContractGenerator = lazy(() => import('./components/ContractGenerator'));
+const FileConverter = lazy(() => import('./components/FileConverter'));
+const NotebookLLM = lazy(() => import('./components/NotebookLLM'));
+const EnhancedDashboard = lazy(() => import('./components/EnhancedDashboard'));
+const CaseManagement = lazy(() => import('./components/CaseManagement'));
+const ClientManagement = lazy(() => import('./components/ClientManagement'));
+const EnhancedAppointmentManagement = lazy(() => import('./components/EnhancedAppointmentManagement'));
+const FinancialManagement = lazy(() => import('./components/FinancialManagement'));
+const Settings = lazy(() => import('./components/Settings'));
+const Profile = lazy(() => import('./components/Profile'));
+const HeaderVoiceControl = lazy(() => import('./components/HeaderVoiceControl'));
+const Header = lazy(() => import('./components/layout/Header'));
+
 import { COMMIT_SHA, BUILD_TIME } from './lib/version';
-import Header from './components/layout/Header';
 
 // 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
 
@@ -199,15 +199,35 @@ function App() {
         return <LegalAssistantChat />;
       
       case 'search':
-        return <AdvancedSearch />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+            <AdvancedSearch />
+          </Suspense>
+        );
       case 'petition-writer':
-        return <PetitionWriter />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+            <PetitionWriter />
+          </Suspense>
+        );
       case 'contract-generator':
-        return <ContractGenerator />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+            <ContractGenerator />
+          </Suspense>
+        );
       case 'file-converter':
-        return <FileConverter />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+            <FileConverter />
+          </Suspense>
+        );
       case 'notebook-llm':
-        return <NotebookLLM />;
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+            <NotebookLLM />
+          </Suspense>
+        );
       
       // 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
       
