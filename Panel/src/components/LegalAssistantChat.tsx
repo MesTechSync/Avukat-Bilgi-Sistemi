@@ -62,9 +62,9 @@ const LegalAssistantChat: React.FC = () => {
 
   // Sistem kayıtlı kullanıcı bilgileri
   const userInfo = {
-    name: 'Muhammed Tosun',
-    title: 'Avukat',
-    initials: 'MT'
+    name: 'Av. Mehmet Zeki Alagöz',
+    title: 'Kıdemli Avukat',
+    initials: 'MZ'
   };
 
   // Hızlı başlat seçenekleri - Neon gradient'lerle
