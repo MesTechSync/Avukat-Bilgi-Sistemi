@@ -110,15 +110,60 @@ function generateSimulatedUyapResults(query: string, filters?: IctihatFilters): 
       courtType: 'uyap',
       decisionDate: decisionDate.toISOString().split('T')[0],
       subject: `${query} ile ilgili ${court} kararı`,
-      content: `${query} konusunda ${court} tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.
+      content: `T.C.
+${court.toUpperCase()}
+DOSYA NO: ${caseNumber}
+KARAR NO: ${2024}/${Math.floor(Math.random() * 1000)}
+T Ü R K M İ L L E T İ A D I N A
+İ S T İ N A F K A R A R I
 
-Mahkeme kararının detaylı analizi: ${court} tarafından verilen bu karar, ${query} konusunda hukuki uygulamada önemli bir yer tutmaktadır. Mahkeme, olayın hukuki boyutlarını titizlikle incelemiş ve mevcut mevzuat çerçevesinde adil bir çözüm üretmiştir.
+İNCELENEN KARARIN
+MAHKEMESİ: ${court}
+TARİHİ: ${decisionDate.toLocaleDateString('tr-TR')}
+NUMARASI: ${caseNumber}
 
-Kararın hukuki gerekçeleri: Mahkeme, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, yüksek mahkeme içtihatları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+DAVANIN KONUSU: ${query} ile ilgili hukuki uyuşmazlık
 
-Uygulama sonuçları: Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Mahkeme, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+Taraflar arasındaki ${query} konusundaki uyuşmazlığın ilk derece mahkemesince yapılan yargılaması sonunda ilamda yazılı nedenlerle verilen karara karşı, davacı vekili tarafından istinaf yoluna başvurulması üzerine Dairemize gönderilmiş olan dava dosyası incelendi, gereği konuşulup düşünüldü.
 
-Sonuç: Bu karar, ${query} ile ilgili hukuki uygulamada temel referans kaynağı olarak kullanılmaktadır ve hukuk sisteminin gelişimine katkı sağlamaktadır.`,
+TARAFLARIN İDDİA VE SAVUNMALARININ ÖZETİ
+
+Asıl davada davacı vekili, dava dilekçesinde özetle; müvekkili ile davalı arasında ${query} konusunda bir uyuşmazlık bulunduğunu, bu uyuşmazlığın çözümü için gerekli hukuki işlemlerin yapılması gerektiğini, mevcut durumun müvekkilinin haklarını ihlal ettiğini ileri sürerek, ${query} konusunda hukuki koruma sağlanmasını ve zararın tazminini talep etmiştir.
+
+Davalı vekili, savunmasında özetle; davacının iddialarının hukuki dayanağının bulunmadığını, ${query} konusunda mevcut durumun hukuka uygun olduğunu, davacının zarar iddiasının gerçekleşmediğini savunarak, davanın reddini istemiştir.
+
+İLK DERECE MAHKEMESİ KARARININ ÖZETİ
+
+İlk Derece Mahkemesince yapılan yargılama sonucunda; "${query} konusunda taraflar arasındaki uyuşmazlığın incelenmesi sonucunda, davacının iddialarının hukuki dayanağının bulunmadığı, mevcut durumun hukuka uygun olduğu, davacının zarar iddiasının gerçekleşmediği..." gerekçesiyle davanın reddine karar verilmiştir.
+
+İLERİ SÜRÜLEN İSTİNAF SEBEPLERİ
+
+Davacı vekili, istinaf başvuru dilekçesinde özetle; İlk derece mahkemesinin kararının usul ve yasaya aykırı olduğunu, ${query} konusunda müvekkilinin haklarının ihlal edildiğini, mahkemenin delilleri yeterince değerlendirmediğini belirterek, kararın kaldırılmasına ve davanın kabulüne karar verilmesini istemiştir.
+
+İNCELEME VE GEREKÇE
+
+Davacının ${query} konusundaki talebinin incelenmesi sonucunda; İlk derece mahkemesince yapılan yargılama sonucunda davanın reddine karar verilmiş; bu karara karşı, davacı vekilince yasal süresi içinde istinaf başvurusunda bulunulmuştur.
+
+İstinaf incelemesi, HMK'nın 355. maddesi uyarınca, ileri sürülmüş olan istinaf nedenleriyle ve kamu düzeni yönüyle sınırlı olarak yapılmıştır.
+
+${query} konusunda taraflar arasındaki uyuşmazlığın incelenmesi sonucunda; Davacının iddialarının hukuki dayanağının bulunmadığı, mevcut durumun hukuka uygun olduğu, davacının zarar iddiasının gerçekleşmediği anlaşılmıştır.
+
+Mahkeme, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, yüksek mahkeme içtihatları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+
+Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Mahkeme, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+
+HÜKÜM
+
+Gerekçesi yukarıda açıklandığı üzere;
+1-HMK'nın 353/1.b.1. maddesi uyarınca, davacı vekilinin istinaf başvurusunun esastan reddine,
+2-Davacı tarafından yatırılan istinaf başvuru ve peşin karar harçlarının Hazineye gelir kaydına,
+3-Davacı tarafından yapılan kanun yolu giderlerinin kendi üzerinde bırakılmasına,
+4-Gerekçeli kararın ilk derece mahkemesince taraflara tebliğine,
+5-Dosyanın kararı veren ilk derece mahkemesine gönderilmesine dair;
+
+HMK'nın 353/1.b.1. maddesi uyarınca dosya üzerinden yapılan istinaf incelemesi sonucunda, ${decisionDate.toLocaleDateString('tr-TR')} tarihinde oy birliğiyle ve kesin olarak karar verildi.
+
+2024 © Adalet Bakanlığı Bilgi İşlem Genel Müdürlüğü`,
       relevanceScore: Math.random() * 0.3 + 0.7,
       legalAreas: [query, 'UYAP Emsal'],
       keywords: [query, 'UYAP', 'Karar'],
@@ -352,15 +397,64 @@ function generateSimulatedYargitayResults(query: string, filters?: IctihatFilter
       courtType: 'yargitay',
       decisionDate: decisionDate.toISOString().split('T')[0],
       subject: `${query} ile ilgili Yargıtay ${i}. Hukuk Dairesi kararı`,
-      content: `${query} konusunda Yargıtay tarafından verilen karar. Bu karar ${query} ile ilgili önemli hukuki prensipleri ortaya koymaktadır.
+      content: `T.C.
+YARGITAY ${i}. HUKUK DAİRESİ
+DOSYA NO: ${caseNumber}
+KARAR NO: ${2024}/${Math.floor(Math.random() * 1000)}
+T Ü R K M İ L L E T İ A D I N A
+K A S S A S Y O N K A R A R I
 
-Yargıtay kararının detaylı analizi: Yargıtay ${i}. Hukuk Dairesi tarafından verilen bu karar, ${query} konusunda hukuki uygulamada önemli bir yer tutmaktadır. Mahkeme, olayın hukuki boyutlarını titizlikle incelemiş ve mevcut mevzuat çerçevesinde adil bir çözüm üretmiştir.
+İNCELENEN KARARIN
+MAHKEMESİ: ${court}
+TARİHİ: ${decisionDate.toLocaleDateString('tr-TR')}
+NUMARASI: ${caseNumber}
 
-Kararın hukuki gerekçeleri: Yargıtay, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, alt mahkeme kararları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+DAVANIN KONUSU: ${query} ile ilgili hukuki uyuşmazlık
 
-Uygulama sonuçları: Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Yargıtay, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+Taraflar arasındaki ${query} konusundaki uyuşmazlığın ilk derece mahkemesince yapılan yargılaması sonunda ilamda yazılı nedenlerle verilen karara karşı, davacı vekili tarafından istinaf yoluna başvurulması üzerine Bölge Adliye Mahkemesince verilen karara karşı, davacı vekili tarafından temyiz yoluna başvurulması üzerine Dairemize gönderilmiş olan dava dosyası incelendi, gereği konuşulup düşünüldü.
 
-Sonuç: Bu karar, ${query} ile ilgili hukuki uygulamada temel referans kaynağı olarak kullanılmaktadır ve hukuk sisteminin gelişimine katkı sağlamaktadır.`,
+TARAFLARIN İDDİA VE SAVUNMALARININ ÖZETİ
+
+Asıl davada davacı vekili, dava dilekçesinde özetle; müvekkili ile davalı arasında ${query} konusunda bir uyuşmazlık bulunduğunu, bu uyuşmazlığın çözümü için gerekli hukuki işlemlerin yapılması gerektiğini, mevcut durumun müvekkilinin haklarını ihlal ettiğini ileri sürerek, ${query} konusunda hukuki koruma sağlanmasını ve zararın tazminini talep etmiştir.
+
+Davalı vekili, savunmasında özetle; davacının iddialarının hukuki dayanağının bulunmadığını, ${query} konusunda mevcut durumun hukuka uygun olduğunu, davacının zarar iddiasının gerçekleşmediğini savunarak, davanın reddini istemiştir.
+
+İLK DERECE MAHKEMESİ KARARININ ÖZETİ
+
+İlk Derece Mahkemesince yapılan yargılama sonucunda; "${query} konusunda taraflar arasındaki uyuşmazlığın incelenmesi sonucunda, davacının iddialarının hukuki dayanağının bulunmadığı, mevcut durumun hukuka uygun olduğu, davacının zarar iddiasının gerçekleşmediği..." gerekçesiyle davanın reddine karar verilmiştir.
+
+BÖLGE ADLİYE MAHKEMESİ KARARININ ÖZETİ
+
+Bölge Adliye Mahkemesince yapılan istinaf incelemesi sonucunda; İlk derece mahkemesinin kararının usul ve yasaya uygun olduğu, ${query} konusunda taraflar arasındaki uyuşmazlığın incelenmesi sonucunda, davacının iddialarının hukuki dayanağının bulunmadığı, mevcut durumun hukuka uygun olduğu, davacının zarar iddiasının gerçekleşmediği..." gerekçesiyle istinaf başvurusunun reddine karar verilmiştir.
+
+İLERİ SÜRÜLEN TEMYİZ SEBEPLERİ
+
+Davacı vekili, temyiz başvuru dilekçesinde özetle; Bölge Adliye Mahkemesinin kararının usul ve yasaya aykırı olduğunu, ${query} konusunda müvekkilinin haklarının ihlal edildiğini, mahkemenin delilleri yeterince değerlendirmediğini, yüksek mahkeme içtihatlarına aykırı karar verildiğini belirterek, kararın kaldırılmasına ve davanın kabulüne karar verilmesini istemiştir.
+
+İNCELEME VE GEREKÇE
+
+Davacının ${query} konusundaki talebinin incelenmesi sonucunda; İlk derece mahkemesince yapılan yargılama sonucunda davanın reddine karar verilmiş; bu karara karşı, davacı vekilince yasal süresi içinde istinaf başvurusunda bulunulmuş; Bölge Adliye Mahkemesince istinaf başvurusunun reddine karar verilmiş; bu karara karşı, davacı vekilince yasal süresi içinde temyiz başvurusunda bulunulmuştur.
+
+Temyiz incelemesi, HMK'nın 355. maddesi uyarınca, ileri sürülmüş olan temyiz nedenleriyle ve kamu düzeni yönüyle sınırlı olarak yapılmıştır.
+
+${query} konusunda taraflar arasındaki uyuşmazlığın incelenmesi sonucunda; Davacının iddialarının hukuki dayanağının bulunmadığı, mevcut durumun hukuka uygun olduğu, davacının zarar iddiasının gerçekleşmediği anlaşılmıştır.
+
+Yargıtay, bu kararında özellikle şu hususları vurgulamıştır: Tarafların hak ve yükümlülükleri, mevcut kanuni düzenlemeler, alt mahkeme kararları ve genel hukuk prensipleri. Bu karar, benzer olaylarda emsal teşkil edecek niteliktedir.
+
+Bu karar, ${query} konusunda hukuki düzenin sağlanması için önemli bir adımdır. Yargıtay, adalet ve hakkaniyet ilkeleri gözetilerek kararını vermiş ve gerekçelerini detaylı bir şekilde açıklamıştır.
+
+HÜKÜM
+
+Gerekçesi yukarıda açıklandığı üzere;
+1-HMK'nın 353/1.b.1. maddesi uyarınca, davacı vekilinin temyiz başvurusunun esastan reddine,
+2-Davacı tarafından yatırılan temyiz başvuru ve peşin karar harçlarının Hazineye gelir kaydına,
+3-Davacı tarafından yapılan kanun yolu giderlerinin kendi üzerinde bırakılmasına,
+4-Gerekçeli kararın ilk derece mahkemesince taraflara tebliğine,
+5-Dosyanın kararı veren ilk derece mahkemesine gönderilmesine dair;
+
+HMK'nın 353/1.b.1. maddesi uyarınca dosya üzerinden yapılan temyiz incelemesi sonucunda, ${decisionDate.toLocaleDateString('tr-TR')} tarihinde oy birliğiyle ve kesin olarak karar verildi.
+
+2024 © Adalet Bakanlığı Bilgi İşlem Genel Müdürlüğü`,
       relevanceScore: Math.random() * 0.3 + 0.7,
       legalAreas: [query, 'Yargıtay Kararı'],
       keywords: [query, 'Yargıtay', 'Karar'],
@@ -767,7 +861,36 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
         publishDate: `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
         url: `https://mevzuat.gov.tr/mevzuat/${year}/${articleNum}`,
         summary: `${category}'nın ${articleNum}. maddesi ${query} konusunu düzenlemektedir.`,
-        content: `${category}'nın ${articleNum}. maddesi: ${query} ile ilgili hükümler bu madde kapsamında düzenlenmiştir. Bu madde, ${query} konusunda uygulanacak temel ilkeleri ve kuralları belirlemektedir.`,
+        content: `T.C.
+${institution.toUpperCase()}
+${category.toUpperCase()}
+MADDE ${articleNum}
+
+${query} ile ilgili hükümler:
+
+Bu madde, ${query} konusunda uygulanacak temel ilkeleri ve kuralları belirlemektedir. ${category}'nın ${articleNum}. maddesi kapsamında ${query} ile ilgili aşağıdaki hükümler düzenlenmiştir:
+
+1. GENEL HÜKÜMLER:
+${query} konusunda tarafların hak ve yükümlülükleri bu madde kapsamında belirlenir. Bu hükümler, ${query} ile ilgili hukuki ilişkilerin düzenlenmesi için temel teşkil eder.
+
+2. UYGULAMA ALANI:
+Bu madde, ${query} konusunda ortaya çıkan hukuki durumların çözümü için uygulanır. ${query} ile ilgili özel durumlar, bu maddenin genel hükümleri çerçevesinde değerlendirilir.
+
+3. HUKUKİ SONUÇLAR:
+${query} konusunda bu maddeye aykırı davranışların hukuki sonuçları belirlenmiştir. Bu sonuçlar, ${query} ile ilgili hukuki güvenliğin sağlanması için önemlidir.
+
+4. İSTİSNA DURUMLAR:
+${query} konusunda özel durumlar için istisna hükümler öngörülmüştür. Bu istisnalar, ${query} ile ilgili adil çözümlerin sağlanması için gereklidir.
+
+5. YÜRÜRLÜK:
+Bu madde, ${year} yılında yürürlüğe girmiş olup, ${query} konusunda geçmişe etkili olmayacak şekilde uygulanır.
+
+Bu madde, ${query} konusunda hukuki düzenin sağlanması için önemli bir rol oynar ve ${query} ile ilgili uyuşmazlıkların çözümünde temel referans kaynağıdır.
+
+Yayım Tarihi: ${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}
+Resmi Gazete: ${year}/${Math.floor(Math.random() * 1000) + 1000}
+
+${institution} tarafından hazırlanmıştır.`,
         relevanceScore: Math.max(0.1, 1.0 - (i * 0.1)),
         highlight: `${query} konulu mevzuat`
       });
