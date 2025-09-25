@@ -60,6 +60,13 @@ const LegalAssistantChat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { isListening, startDictation, stopDictation, interimText } = useDictation();
 
+  // Sistem kayıtlı kullanıcı bilgileri
+  const userInfo = {
+    name: 'Muhammed Tosun',
+    title: 'Avukat',
+    initials: 'MT'
+  };
+
   // Hızlı başlat seçenekleri - Neon gradient'lerle
   const quickStartOptions: QuickStartOption[] = [
     {
@@ -172,6 +179,10 @@ const LegalAssistantChat: React.FC = () => {
 
     setChatSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
+    
+    // Sohbet oturumunu localStorage'a kaydet
+    const updatedSessions = [newSession, ...chatSessions];
+    localStorage.setItem('chatSessions', JSON.stringify(updatedSessions));
   };
 
   // Sohbet oturumunu yükle
@@ -186,17 +197,24 @@ const LegalAssistantChat: React.FC = () => {
 
   // Sohbet oturumunu sil
   const deleteChatSession = (sessionId: string) => {
-    setChatSessions(prev => prev.filter(s => s.id !== sessionId));
+    const updatedSessions = chatSessions.filter(s => s.id !== sessionId);
+    setChatSessions(updatedSessions);
+    localStorage.setItem('chatSessions', JSON.stringify(updatedSessions));
+    
     if (currentSessionId === sessionId) {
       startNewChat();
     }
   };
 
-  // Sohbet oturumunu favorilere ekle/çıkar
-  const toggleFavorite = (sessionId: string) => {
-    setChatSessions(prev => prev.map(s => 
-      s.id === sessionId ? { ...s, isFavorite: !s.isFavorite } : s
-    ));
+  // Sohbet oturumunu güncelle
+  const updateChatSession = (sessionId: string, newMessages: ChatMessage[]) => {
+    const updatedSessions = chatSessions.map(s => 
+      s.id === sessionId 
+        ? { ...s, messages: newMessages, updatedAt: new Date().toISOString() }
+        : s
+    );
+    setChatSessions(updatedSessions);
+    localStorage.setItem('chatSessions', JSON.stringify(updatedSessions));
   };
 
   const scrollToBottom = () => {
@@ -355,7 +373,7 @@ Aşağıda en uygun sözleşme şablonları gösteriliyor. Detaylı sözleşme y
       }
 
       // AI yanıtı al
-      const aiPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. Kullanıcının sorusuna profesyonel, detaylı ve pratik bir yanıt ver. 
+      const aiPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver. 
 
 Soru: ${messageToSend}
 
@@ -370,7 +388,7 @@ Yanıtında şunları dahil et:
 
 ${actionData ? 'Panel entegrasyonu ile ilgili bilgileri de dahil et.' : ''}
 
-Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`;
+Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name} için özelleştirilmiş öneriler sun.`;
 
       const response = await geminiService.analyzeText(aiPrompt, messageToSend);
 
@@ -390,8 +408,11 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`;
 
       setMessages(prev => [...prev, assistantMessage]);
       
-      // İlk mesajda sohbet oturumunu kaydet
-      if (messages.length === 0) {
+      // Sohbet oturumunu güncelle
+      if (currentSessionId) {
+        updateChatSession(currentSessionId, [...messages, userMessage, assistantMessage]);
+      } else if (messages.length === 0) {
+        // İlk mesajda sohbet oturumunu kaydet
         const title = messageToSend.length > 50 ? messageToSend.substring(0, 50) + '...' : messageToSend;
         saveChatSession(title);
       }
@@ -534,11 +555,11 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`;
           <div className="p-4 border-t border-gray-700/50">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold">MT</span>
+                <span className="text-sm font-bold">{userInfo.initials}</span>
               </div>
               <div>
-                <p className="text-sm font-medium">Muhammed Tosun</p>
-                <p className="text-xs text-gray-400">Avukat</p>
+                <p className="text-sm font-medium">{userInfo.name}</p>
+                <p className="text-xs text-gray-400">{userInfo.title}</p>
               </div>
             </div>
           </div>
@@ -595,7 +616,7 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver.`;
                   <Brain className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  İyi günler, Muhammed Tosun
+                  İyi günler, {userInfo.name}
                 </h2>
                 <p className="text-gray-400 mb-6">
                   Size nasıl yardımcı olabilirim? Hukuki sorularınızı sorabilir veya aşağıdaki hızlı başlat seçeneklerini kullanabilirsiniz.
