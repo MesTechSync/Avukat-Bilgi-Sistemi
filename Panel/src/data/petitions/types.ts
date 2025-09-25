@@ -18,39 +18,39 @@ export interface PetitionTemplate {
 
 export const petitionCategories = {
   'Aile Hukuku': {
-    'Boşanma': ['anlasmali-bosanma', 'haysiyetsizlik-bosanma', 'ayrilik-istemli', 'evliligin-butlani', 'evlenmenin-men-i', 'gaiplik-nedeni-ile-evliligin-feshi'],
-    'Velayet': ['velayet-degisikligi', 'cocukla-kisisel-iliskinin-yeniden-duzenlenmesi', 'velayet-kaldirma'],
-    'Nafaka': ['nafaka-artirimi', 'istirak-nafakasi-arttirimi', 'tedbir-nafakasi', 'nafaka-kesme'],
-    'Evlilik': ['evliligin-butlani', 'evlenmenin-men-i', 'gaiplik-nedeni-ile-evliligin-feshi', 'evlilik-oncesi-sozlesme']
+    'Boşanma': ['anlasmali-bosanma', 'haysiyetsizlik-bosanma', 'ayrilik-istemli', 'evliligin-butlani', 'evlenmenin-men-i', 'gaiplik-nedeni-ile-evliligin-feshi', 'bosanma-tazminat', 'bosanma-mal-rejimi'],
+    'Velayet': ['velayet-degisikligi', 'cocukla-kisisel-iliskinin-yeniden-duzenlenmesi', 'velayet-kaldirma', 'velayet-teslim', 'velayet-ziyaret', 'velayet-koruma'],
+    'Nafaka': ['nafaka-artirimi', 'istirak-nafakasi-arttirimi', 'tedbir-nafakasi', 'nafaka-kesme', 'nafaka-tazminat', 'nafaka-koruma'],
+    'Evlilik': ['evliligin-butlani', 'evlenmenin-men-i', 'gaiplik-nedeni-ile-evliligin-feshi', 'evlilik-oncesi-sozlesme', 'evlilik-tazminat', 'evlilik-koruma']
   },
   'Medeni Hukuk': {
-    'Miras': ['veraset-ilaminin-iptali', 'veraset-ilaminin-duzeltilmesi', 'veraset-belgesi-verilmesi', 'mirasin-reddinin-tescili', 'olumun-tesbiti', 'miras-payi-artirimi'],
-    'Tapu': ['tapu-iptali-ve-tescil', 'kat-mulkiyetinin-devri', 'kat-irtifakinin-devri', 'tapu-düzeltme'],
-    'Mülkiyet': ['ortak-yere-ayrilan-arsa-payinin-iptali', 'ortak-yere-yapilan-mudahalenin-onlenmesi', 'fuzuli-isgal', 'mulkiyet-tescil']
+    'Miras': ['veraset-ilaminin-iptali', 'veraset-ilaminin-duzeltilmesi', 'veraset-belgesi-verilmesi', 'mirasin-reddinin-tescili', 'olumun-tesbiti', 'miras-payi-artirimi', 'miras-tazminat', 'miras-koruma'],
+    'Tapu': ['tapu-iptali', 'kat-mulkiyetinin-devri', 'kat-irtifakinin-devri', 'tapu-düzeltme', 'tapu-tescil', 'tapu-koruma'],
+    'Mülkiyet': ['ortak-yere-ayrilan-arsa-payinin-iptali', 'ortak-yere-yapilan-mudahalenin-onlenmesi', 'fuzuli-isgal', 'mulkiyet-tescil', 'mulkiyet-tazminat', 'mulkiyet-koruma']
   },
   'Borçlar Hukuku': {
-    'Alacak': ['alacak-davasi', 'temerrut-nedeni-ile-alacak-davasi', 'alacak-takibi', 'borc-odeme'],
-    'Sözleşme': ['kira-bedelinin-attirilmasi', 'kiranin-yeni-kosullara-uyarlanmasi', 'sozlesme-iptali', 'sozlesme-feshi'],
-    'Tazminat': ['maddi-tazminat', 'maddi-ve-manevi-tazminat', 'trafik-kazasi-nedeniyle-maddi-tazminat', 'manevi-tazminat']
+    'Alacak': ['alacak-davasi', 'temerrut-nedeni-ile-alacak-davasi', 'alacak-takibi', 'borc-odeme', 'alacak-tazminat', 'alacak-koruma'],
+    'Sözleşme': ['kira-bedelinin-attirilmasi', 'kiranin-yeni-kosullara-uyarlanmasi', 'sozlesme-iptali', 'sozlesme-feshi', 'sozlesme-tazminat', 'sozlesme-koruma'],
+    'Tazminat': ['maddi-tazminat', 'maddi-ve-manevi-tazminat', 'trafik-kazasi-nedeniyle-maddi-tazminat', 'manevi-tazminat', 'tazminat-artirimi', 'tazminat-koruma']
   },
   'İş Hukuku': {
-    'İş Sözleşmesi': ['calisma-izni-talebi', 'is-sozlesmesi-iptali', 'is-sozlesmesi-feshi', 'is-sozlesmesi-degisiklik'],
-    'İşçi Hakları': ['mazeret-dilekcesi', 'isci-haklari-talebi', 'isci-tazminati', 'isci-kidemi'],
-    'İş Güvenliği': ['is-guvenligi-talebi', 'is-kazasi-tazminati', 'meslek-hastaligi', 'is-yeri-kapatma']
+    'İş Sözleşmesi': ['is-sozlesmesi-iptali', 'is-sozlesmesi-feshi', 'is-sozlesmesi-yenileme', 'is-sozlesmesi-degisiklik', 'is-sozlesmesi-tazminat', 'is-sozlesmesi-koruma'],
+    'İşçi Hakları': ['isci-haklari-tazminat', 'isci-haklari-ihlal', 'isci-haklari-koruma', 'isci-haklari-dava', 'isci-haklari-tazminat', 'isci-haklari-koruma'],
+    'İş Güvenliği': ['is-guvenligi-tazminat', 'is-kazasi-tazminat', 'meslek-hastaligi-tazminat', 'is-yeri-kapatma', 'is-guvenligi-koruma', 'is-kazasi-koruma']
   },
   'İcra ve İflas': {
-    'İcra': ['cek-iptali', 'cek-odeme-yasagi', 'menfi-tesbit-ve-icra-takibinin-durdurulmasi', 'icra-takibi'],
-    'İflas': ['konkordatonun-feshi', 'iflas-talebi', 'iflas-iptali', 'konkordato-talebi'],
-    'Rehin': ['rehin-iptali', 'rehin-tescil', 'rehin-devri', 'rehin-kaldirma']
+    'İcra': ['cek-iptali', 'cek-odeme-yasagi', 'menfi-tesbit-ve-icra-takibinin-durdurulmasi', 'icra-takibi', 'icra-tazminat', 'icra-koruma'],
+    'İflas': ['konkordatonun-feshi', 'iflas-talebi', 'iflas-iptali', 'konkordato-talebi', 'iflas-tazminat', 'iflas-koruma'],
+    'Rehin': ['rehin-iptali', 'rehin-tescil', 'rehin-devri', 'rehin-kaldirma', 'rehin-tazminat', 'rehin-koruma']
   },
   'Ceza Hukuku': {
-    'Şikayet': ['savciliga-sikayet-dilekcesi', 'sikayet-iptali', 'sikayet-artirimi', 'sikayet-degisiklik'],
-    'Koruma': ['ailenin-korunmasi-icin-tedbir', 'valilik-koruma-talebi', 'koruma-karari', 'koruma-genisleme'],
-    'Suç': ['suç-duyurusu', 'suç-tanimi', 'suç-delili', 'suç-ittifaki']
+    'Şikayet': ['suç-duyurusu', 'suç-sikayet', 'suç-tazminat', 'suç-koruma', 'suç-duyuru-tazminat', 'suç-duyuru-koruma'],
+    'Tazminat': ['suç-tazminat', 'haksiz-fiil-tazminat', 'zarar-tazminat', 'manevi-tazminat', 'tazminat-artirimi', 'tazminat-koruma'],
+    'Koruma': ['ailenin-korunmasi-icin-tedbir', 'valilik-koruma-talebi', 'koruma-karari', 'koruma-genisleme', 'koruma-tazminat', 'koruma-koruma']
   },
   'Ticaret Hukuku': {
-    'Şirket': ['anonim-sirket-kurulusu', 'limited-sirket-kurulusu', 'sirket-birlesmesi', 'sirket-bolunmesi'],
-    'Çek': ['cek-iptali', 'cek-odeme-yasagi', 'cek-takibi', 'cek-protestosu'],
-    'Senet': ['senet-iptali', 'senet-odeme-yasagi', 'senet-takibi', 'senet-protestosu']
+    'Şirket': ['sirket-feshi', 'sirket-birlesme', 'sirket-bolunme', 'sirket-devir', 'sirket-tazminat', 'sirket-koruma'],
+    'Ticari İşlem': ['ticari-islem-tazminat', 'ticari-sozlesme-iptal', 'ticari-ortaklik-feshi', 'ticari-vekalet-iptal', 'ticari-islem-koruma', 'ticari-sozlesme-koruma'],
+    'Rekabet': ['rekabet-tazminat', 'haksiz-rekabet-tazminat', 'rekabet-yasagi-iptal', 'rekabet-düzeltme', 'rekabet-koruma', 'haksiz-rekabet-koruma']
   }
 };
