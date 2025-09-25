@@ -2,8 +2,10 @@
   "name": "avukat-bilgi-sistemi",
   "private": true,
   "version": "1.0.0",
-  "description": "AI-Powered Legal Management System",
-  "type": "module",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

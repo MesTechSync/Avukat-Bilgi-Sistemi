@@ -18,11 +18,8 @@ const FileConverter: React.FC = () => {
   const [conversionType, setConversionType] = useState<'pdf-to-word' | 'word-to-pdf' | 'pdf-to-image' | 'word-to-html' | 'to-udf'>('to-udf');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // PDF.js worker'ı ayarla - local worker kullan
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.js',
-    import.meta.url
-  ).toString();
+  // PDF.js worker'ı ayarla - CDN worker kullan
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.js`;
 
   // PDF'den metin çıkarma - worker olmadan da çalışır
   const extractTextFromPDF = async (file: File): Promise<string> => {
