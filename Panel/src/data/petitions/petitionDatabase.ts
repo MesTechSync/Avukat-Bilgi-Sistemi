@@ -1,5 +1,8 @@
 import { PetitionTemplate, petitionCategories } from './types';
 
+// Re-export petitionCategories for compatibility
+export { petitionCategories };
+
 // Temel dilekçe şablonları - performans için sadece en önemli olanlar
 export const petitionTemplates: PetitionTemplate[] = [
   // Aile Hukuku - Boşanma
