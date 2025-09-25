@@ -157,3 +157,9 @@ Analizi maddeler halinde, açık ve anlaşılır bir şekilde sun.
 }
 
 export const openaiService = new OpenAIService();
+
+// API key ile başlat
+const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+if (openaiApiKey) {
+  openaiService.initialize(openaiApiKey);
+}
