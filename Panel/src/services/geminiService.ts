@@ -132,7 +132,7 @@ Lütfen talimatı takip ederek tüm dosyaları birlikte detaylı hukuki analiz e
 export const geminiService = new GeminiService();
 
 // API key ile başlat
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDeNAudg6oWG3JLwTXYXGhdspVDrDPGAyk';
 if (apiKey) {
   geminiService.initialize(apiKey);
 }

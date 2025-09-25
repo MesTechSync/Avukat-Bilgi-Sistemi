@@ -4,7 +4,7 @@ const UYAP_SEARCH_URL = 'https://emsal.uyap.gov.tr/karar-arama';
 
 // Yargıtay API entegrasyonu  
 const YARGITAY_BASE_URL = 'https://karararama.yargitay.gov.tr';
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 
 // UYAP Emsal sitesinden gerçek veri çekme
 export async function searchUyapEmsal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
@@ -21,7 +21,7 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters): 
       'Sıralama': 'Karar Tarihine Göre'
     };
 
-    const response = await fetch(`${CORS_PROXY}${encodeURIComponent(UYAP_SEARCH_URL)}`, {
+    const response = await fetch(`${CORS_PROXY}${UYAP_SEARCH_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -68,7 +68,7 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
       'Sıralama': 'Karar Tarihine Göre'
     };
 
-    const response = await fetch(`${CORS_PROXY}${encodeURIComponent(YARGITAY_BASE_URL)}`, {
+    const response = await fetch(`${CORS_PROXY}${YARGITAY_BASE_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -249,7 +249,7 @@ export async function searchMevzuatReal(query: string, filters?: MevzuatFilters)
       'dateTo': filters?.dateRange?.to || ''
     };
 
-    const response = await fetch(`${CORS_PROXY}${encodeURIComponent(MEVZUAT_SEARCH_URL)}`, {
+    const response = await fetch(`${CORS_PROXY}${MEVZUAT_SEARCH_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
