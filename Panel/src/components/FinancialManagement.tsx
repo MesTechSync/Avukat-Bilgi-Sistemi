@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye, User, FileText, Clock, AlertCircle, CheckCircle, DollarSign, BarChart3, Target, Zap, Users, Building, Phone, Mail, MapPin, Edit, Trash2, Save, X } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
@@ -9,11 +9,279 @@ interface FinancialManagementProps {
   onNavigate?: (tab: string) => void;
 }
 
+// Müvekkil bazlı avans ve ödeme takibi için interface'ler
+interface ClientAdvance {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  caseTitle: string;
+  totalAmount: number;
+  advanceAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  advanceDate: string;
+  dueDate?: string;
+  status: 'active' | 'completed' | 'overdue' | 'cancelled';
+  paymentPlan?: PaymentPlan;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PaymentPlan {
+  id: string;
+  clientAdvanceId: string;
+  installments: PaymentInstallment[];
+  totalInstallments: number;
+  completedInstallments: number;
+  status: 'active' | 'completed' | 'cancelled';
+}
+
+interface PaymentInstallment {
+  id: string;
+  amount: number;
+  dueDate: string;
+  paidDate?: string;
+  status: 'pending' | 'paid' | 'overdue';
+  notes?: string;
+}
+
+interface Invoice {
+  id: string;
+  clientAdvanceId: string;
+  invoiceNumber: string;
+  amount: number;
+  issueDate: string;
+  dueDate: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  pdfPath?: string;
+}
+
+interface FinancialReport {
+  id: string;
+  title: string;
+  type: 'client' | 'monthly' | 'yearly' | 'custom';
+  period: string;
+  data: any;
+  generatedAt: string;
+}
+
 const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [showAddAdvance, setShowAddAdvance] = useState(false);
+  const [showClientReport, setShowClientReport] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientAdvance | null>(null);
+  const [showPaymentPlan, setShowPaymentPlan] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  
   const { financials, addFinancial, setFinancials } = useSupabase();
   const [newTx, setNewTx] = useState({ type: 'income', description: '', amount: '', date: '' });
+  
+  // Müvekkil avansları için state
+  const [clientAdvances, setClientAdvances] = useState<ClientAdvance[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [reports, setReports] = useState<FinancialReport[]>([]);
+  
+  // Yeni avans formu için state
+  const [newAdvance, setNewAdvance] = useState({
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    caseTitle: '',
+    totalAmount: '',
+    advanceAmount: '',
+    advanceDate: '',
+    dueDate: '',
+    notes: ''
+  });
+  
+  // Ödeme planı için state
+  const [newPaymentPlan, setNewPaymentPlan] = useState({
+    totalInstallments: 3,
+    installmentAmount: '',
+    startDate: '',
+    frequency: 'monthly' as 'monthly' | 'weekly' | 'quarterly'
+  });
+
+  // Mock veriler - gerçek uygulamada Supabase'den gelecek
+  useEffect(() => {
+    const mockClientAdvances: ClientAdvance[] = [
+      {
+        id: '1',
+        clientId: 'client-1',
+        clientName: 'Ahmet Yılmaz',
+        clientPhone: '+90 532 123 45 67',
+        clientEmail: 'ahmet@email.com',
+        caseTitle: 'Boşanma Davası',
+        totalAmount: 15000,
+        advanceAmount: 5000,
+        paidAmount: 3000,
+        remainingAmount: 2000,
+        advanceDate: '2024-01-15',
+        dueDate: '2024-03-15',
+        status: 'active',
+        notes: 'İlk taksit ödendi',
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z'
+      },
+      {
+        id: '2',
+        clientId: 'client-2',
+        clientName: 'Fatma Demir',
+        clientPhone: '+90 533 987 65 43',
+        clientEmail: 'fatma@email.com',
+        caseTitle: 'İş Hukuku Davası',
+        totalAmount: 25000,
+        advanceAmount: 8000,
+        paidAmount: 8000,
+        remainingAmount: 0,
+        advanceDate: '2024-01-10',
+        dueDate: '2024-02-10',
+        status: 'completed',
+        notes: 'Tam ödeme yapıldı',
+        createdAt: '2024-01-10T09:00:00Z',
+        updatedAt: '2024-02-10T14:30:00Z'
+      },
+      {
+        id: '3',
+        clientId: 'client-3',
+        clientName: 'Mehmet Kaya',
+        clientPhone: '+90 534 456 78 90',
+        clientEmail: 'mehmet@email.com',
+        caseTitle: 'Ticaret Hukuku',
+        totalAmount: 30000,
+        advanceAmount: 10000,
+        paidAmount: 5000,
+        remainingAmount: 5000,
+        advanceDate: '2024-01-05',
+        dueDate: '2024-01-25',
+        status: 'overdue',
+        notes: 'Vadesi geçti, takip edilecek',
+        createdAt: '2024-01-05T11:00:00Z',
+        updatedAt: '2024-01-25T16:00:00Z'
+      }
+    ];
+    
+    const mockInvoices: Invoice[] = [
+      {
+        id: 'inv-1',
+        clientAdvanceId: '1',
+        invoiceNumber: 'FAT-2024-001',
+        amount: 5000,
+        issueDate: '2024-01-15',
+        dueDate: '2024-02-15',
+        status: 'paid',
+        pdfPath: '/invoices/FAT-2024-001.pdf'
+      },
+      {
+        id: 'inv-2',
+        clientAdvanceId: '2',
+        invoiceNumber: 'FAT-2024-002',
+        amount: 8000,
+        issueDate: '2024-01-10',
+        dueDate: '2024-02-10',
+        status: 'paid',
+        pdfPath: '/invoices/FAT-2024-002.pdf'
+      },
+      {
+        id: 'inv-3',
+        clientAdvanceId: '3',
+        invoiceNumber: 'FAT-2024-003',
+        amount: 10000,
+        issueDate: '2024-01-05',
+        dueDate: '2024-01-25',
+        status: 'overdue',
+        pdfPath: '/invoices/FAT-2024-003.pdf'
+      }
+    ];
+    
+    setClientAdvances(mockClientAdvances);
+    setInvoices(mockInvoices);
+  }, []);
+
+  // Fonksiyonlar
+  const addClientAdvance = async (advanceData: Omit<ClientAdvance, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newAdvance: ClientAdvance = {
+      ...advanceData,
+      id: `advance-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setClientAdvances(prev => [newAdvance, ...prev]);
+    return newAdvance;
+  };
+
+  const updateClientAdvance = (id: string, updates: Partial<ClientAdvance>) => {
+    setClientAdvances(prev => prev.map(advance => 
+      advance.id === id 
+        ? { ...advance, ...updates, updatedAt: new Date().toISOString() }
+        : advance
+    ));
+  };
+
+  const generateClientReport = (clientAdvance: ClientAdvance) => {
+    const report: FinancialReport = {
+      id: `report-${Date.now()}`,
+      title: `${clientAdvance.clientName} - Mali Durum Raporu`,
+      type: 'client',
+      period: `${clientAdvance.advanceDate} - ${new Date().toISOString().split('T')[0]}`,
+      data: {
+        client: clientAdvance,
+        payments: invoices.filter(inv => inv.clientAdvanceId === clientAdvance.id),
+        summary: {
+          totalAmount: clientAdvance.totalAmount,
+          advanceAmount: clientAdvance.advanceAmount,
+          paidAmount: clientAdvance.paidAmount,
+          remainingAmount: clientAdvance.remainingAmount,
+          paymentPercentage: (clientAdvance.paidAmount / clientAdvance.totalAmount) * 100
+        }
+      },
+      generatedAt: new Date().toISOString()
+    };
+    setReports(prev => [report, ...prev]);
+    return report;
+  };
+
+  const generatePDFReport = (report: FinancialReport) => {
+    // PDF oluşturma simülasyonu
+    const pdfContent = `
+      MALİ DURUM RAPORU
+      ==================
+      
+      Müvekkil: ${report.data.client.clientName}
+      Dava: ${report.data.client.caseTitle}
+      Telefon: ${report.data.client.clientPhone}
+      Email: ${report.data.client.clientEmail}
+      
+      MALİ DURUM
+      ==========
+      Toplam Tutar: ₺${report.data.summary.totalAmount.toLocaleString()}
+      Avans Tutarı: ₺${report.data.summary.advanceAmount.toLocaleString()}
+      Ödenen Tutar: ₺${report.data.summary.paidAmount.toLocaleString()}
+      Kalan Tutar: ₺${report.data.summary.remainingAmount.toLocaleString()}
+      Ödeme Oranı: %${report.data.summary.paymentPercentage.toFixed(1)}
+      
+      Durum: ${report.data.client.status === 'active' ? 'Aktif' : 
+                report.data.client.status === 'completed' ? 'Tamamlandı' : 
+                report.data.client.status === 'overdue' ? 'Vadesi Geçti' : 'İptal'}
+      
+      Rapor Tarihi: ${new Date(report.generatedAt).toLocaleDateString('tr-TR')}
+    `;
+    
+    // PDF indirme simülasyonu
+    const blob = new Blob([pdfContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${report.data.client.clientName}_Mali_Rapor_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   // Dikte: Yeni işlem açıklaması için
   const {
@@ -268,11 +536,14 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex space-x-8 px-6 overflow-x-auto">
             {[
               { id: 'overview', label: 'Genel Bakış', icon: PieChart },
+              { id: 'clients', label: 'Müvekkil Avansları', icon: Users },
               { id: 'transactions', label: 'İşlemler', icon: Receipt },
-              { id: 'reports', label: 'Raporlar', icon: TrendingUp }
+              { id: 'invoices', label: 'Faturalar', icon: FileText },
+              { id: 'reports', label: 'Raporlar', icon: TrendingUp },
+              { id: 'analytics', label: 'Analitik', icon: BarChart3 }
             ].map((tab) => {
               const IconComponent = tab.icon;
               return (
@@ -294,6 +565,126 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
         </div>
 
         <div className="p-6">
+          {activeTab === 'clients' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Müvekkil Avans Takibi
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAddAdvance(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Yeni Avans
+                  </button>
+                </div>
+              </div>
+
+              {/* Müvekkil Avansları Listesi */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {clientAdvances.map((advance) => (
+                  <div key={advance.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">{advance.clientName}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{advance.caseTitle}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        advance.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        advance.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        advance.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                      }`}>
+                        {advance.status === 'active' ? 'Aktif' :
+                         advance.status === 'completed' ? 'Tamamlandı' :
+                         advance.status === 'overdue' ? 'Vadesi Geçti' : 'İptal'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Toplam Tutar:</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">₺{advance.totalAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Avans:</span>
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">₺{advance.advanceAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Ödenen:</span>
+                        <span className="text-sm font-medium text-green-600 dark:text-green-400">₺{advance.paidAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">Kalan:</span>
+                        <span className={`text-sm font-medium ${advance.remainingAmount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                          ₺{advance.remainingAmount.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                        <span>Ödeme Oranı</span>
+                        <span>%{((advance.paidAmount / advance.totalAmount) * 100).toFixed(1)}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(advance.paidAmount / advance.totalAmount) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedClient(advance);
+                          setShowClientReport(true);
+                        }}
+                        className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 flex items-center justify-center gap-1"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Rapor
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedClient(advance);
+                          setShowPaymentPlan(true);
+                        }}
+                        className="flex-1 px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 flex items-center justify-center gap-1"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Plan
+                      </button>
+                      <button
+                        onClick={() => {
+                          const report = generateClientReport(advance);
+                          generatePDFReport(report);
+                        }}
+                        className="px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {advance.notes && (
+                      <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">{advance.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Monthly Chart */}
@@ -545,6 +936,197 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
           )}
         </div>
       </div>
+
+      {/* Add Client Advance Modal */}
+      {showAddAdvance && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Yeni Müvekkil Avansı
+              </h3>
+              <button
+                onClick={() => setShowAddAdvance(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form className="space-y-4" onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await addClientAdvance({
+                  clientId: `client-${Date.now()}`,
+                  clientName: newAdvance.clientName,
+                  clientPhone: newAdvance.clientPhone,
+                  clientEmail: newAdvance.clientEmail,
+                  caseTitle: newAdvance.caseTitle,
+                  totalAmount: parseFloat(newAdvance.totalAmount),
+                  advanceAmount: parseFloat(newAdvance.advanceAmount),
+                  paidAmount: 0,
+                  remainingAmount: parseFloat(newAdvance.advanceAmount),
+                  advanceDate: newAdvance.advanceDate,
+                  dueDate: newAdvance.dueDate,
+                  status: 'active',
+                  notes: newAdvance.notes
+                });
+                setNewAdvance({
+                  clientName: '',
+                  clientPhone: '',
+                  clientEmail: '',
+                  caseTitle: '',
+                  totalAmount: '',
+                  advanceAmount: '',
+                  advanceDate: '',
+                  dueDate: '',
+                  notes: ''
+                });
+                setShowAddAdvance(false);
+                alert('Müvekkil avansı başarıyla eklendi!');
+              } catch (error) {
+                alert('Hata: ' + error.message);
+              }
+            }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Müvekkil Adı *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.clientName}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, clientName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.clientPhone}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, clientPhone: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={newAdvance.clientEmail}
+                  onChange={(e) => setNewAdvance(prev => ({ ...prev, clientEmail: e.target.value }))}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Dava Başlığı *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={newAdvance.caseTitle}
+                  onChange={(e) => setNewAdvance(prev => ({ ...prev, caseTitle: e.target.value }))}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Toplam Tutar *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.totalAmount}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, totalAmount: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Avans Tutarı *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.advanceAmount}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, advanceAmount: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Avans Tarihi *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.advanceDate}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, advanceDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vade Tarihi
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={newAdvance.dueDate}
+                    onChange={(e) => setNewAdvance(prev => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notlar
+                </label>
+                <textarea
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={newAdvance.notes}
+                  onChange={(e) => setNewAdvance(prev => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAdvance(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add Transaction Modal */}
       {showAddTransaction && (
