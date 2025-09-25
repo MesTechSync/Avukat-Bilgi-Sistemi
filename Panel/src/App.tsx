@@ -2,6 +2,7 @@ import React, { useState, Suspense, lazy } from 'react';
 import { Scale, Search, FileText, Users, Calendar, DollarSign, Settings as SettingsIcon, Bot, Building, Gavel, BarChart3, Bell, Menu, X, Sun, Moon, User, CheckCircle, Loader2, Mic, Heart, Brain, Clock } from 'lucide-react';
 import { useSupabase } from './hooks/useSupabase';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // Lazy load components for better performance
 const LegalAssistantChat = lazy(() => import('./components/LegalAssistantChat'));
@@ -193,38 +194,46 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <EnhancedDashboard onNavigate={setActiveTab} />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Ana Sayfa Yükleniyor..." />}>
+            <EnhancedDashboard onNavigate={setActiveTab} />
+          </Suspense>
+        );
       
       case 'ai-chat':
-        return <LegalAssistantChat />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Hukuk Asistanı Yükleniyor..." />}>
+            <LegalAssistantChat />
+          </Suspense>
+        );
       
       case 'search':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+          <Suspense fallback={<LoadingSpinner text="İçtihat & Mevzuat Yükleniyor..." />}>
             <AdvancedSearch />
           </Suspense>
         );
       case 'petition-writer':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+          <Suspense fallback={<LoadingSpinner text="Dilekçe Yazımı Yükleniyor..." />}>
             <PetitionWriter />
           </Suspense>
         );
       case 'contract-generator':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+          <Suspense fallback={<LoadingSpinner text="Sözleşme Oluşturucu Yükleniyor..." />}>
             <ContractGenerator />
           </Suspense>
         );
       case 'file-converter':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+          <Suspense fallback={<LoadingSpinner text="Dosya Dönüştürücü Yükleniyor..." />}>
             <FileConverter />
           </Suspense>
         );
       case 'notebook-llm':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+          <Suspense fallback={<LoadingSpinner text="Notebook LLM Yükleniyor..." />}>
             <NotebookLLM />
           </Suspense>
         );
@@ -232,19 +241,47 @@ function App() {
       // 🚀 Benzersiz Özellikler - Artık İçtihat & Mevzuat içinde
       
       case 'cases':
-        return <CaseManagement />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Dava Yönetimi Yükleniyor..." />}>
+            <CaseManagement />
+          </Suspense>
+        );
       case 'clients':
-        return <ClientManagement />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Müvekkil Yönetimi Yükleniyor..." />}>
+            <ClientManagement />
+          </Suspense>
+        );
       case 'appointments':
-        return <EnhancedAppointmentManagement onNavigate={handleTabChange} />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Randevu Yönetimi Yükleniyor..." />}>
+            <EnhancedAppointmentManagement onNavigate={handleTabChange} />
+          </Suspense>
+        );
       case 'financials':
-        return <FinancialManagement />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Mali İşler Yükleniyor..." />}>
+            <FinancialManagement />
+          </Suspense>
+        );
       case 'settings':
-        return <Settings />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Ayarlar Yükleniyor..." />}>
+            <Settings />
+          </Suspense>
+        );
       case 'profile':
-        return <Profile />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Hesabım Yükleniyor..." />}>
+            <Profile />
+          </Suspense>
+        );
       default:
-        return <EnhancedDashboard onNavigate={handleTabChange} />;
+        return (
+          <Suspense fallback={<LoadingSpinner text="Ana Sayfa Yükleniyor..." />}>
+            <EnhancedDashboard onNavigate={handleTabChange} />
+          </Suspense>
+        );
     }
   };
 
