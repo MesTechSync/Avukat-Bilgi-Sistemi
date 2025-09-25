@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, MicOff, FileUp, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, Zap, Shield, Globe, BookOpen, Scale, Gavel } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Mic, MicOff, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
-import { searchIctihat, searchMevzuat, searchYargitayReal, searchMevzuatReal, searchUyapEmsal, type IctihatFilters, type MevzuatFilters } from '../lib/yargiApi';
-import { geminiService } from '../services/geminiService';
+import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface SearchResult {
@@ -21,21 +20,21 @@ interface SearchResult {
 
 const AdvancedSearch: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
-  
+
   // 🔍 Ana Arama State'leri
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchType, setSearchType] = useState<'ictihat' | 'mevzuat' | 'uyap'>('ictihat');
   const [selectedCourt, setSelectedCourt] = useState('');
-  const [selectedArea, setSelectedArea] = useState('');
+  const [selectedArea] = useState('');
   const [dateRange, setDateRange] = useState('');
-  const [backendStatus, setBackendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
-  
-  // 📁 Dosya Yükleme State'leri
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [uploadedFileContent, setUploadedFileContent] = useState<string | null>(null);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [backendStatus] = useState<'unknown' | 'ok' | 'degraded' | 'down'>('unknown');
+
+  // 📁 Dosya Yükleme State'leri (Kullanılmıyor)
+  // const [uploadedFileName] = useState<string | null>(null);
+  // const [uploadedFileContent] = useState<string | null>(null);
+  // const [isProcessingFile] = useState(false);
   
   // 📋 Sonuç Detay State'leri
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
@@ -44,11 +43,11 @@ const AdvancedSearch: React.FC = () => {
   // 🚀 Gelişmiş Özellikler
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [favoriteCourts, setFavoriteCourts] = useState<string[]>([]);
+  // const [favoriteCourts] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<Array<{query: string, type: string, date: string, results: number}>>([]);
-  const [trendAnalysis, setTrendAnalysis] = useState<{trend: string, count: number}[]>([]);
-  const [aiSummary, setAiSummary] = useState<string>('');
-  const [showAiSummary, setShowAiSummary] = useState(false);
+  // const [trendAnalysis] = useState<{trend: string, count: number}[]>([]);
+  // const [aiSummary] = useState<string>('');
+  // const [showAiSummary] = useState(false);
 
   // 🚀 Yeni Özellikler
   const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics' | 'emotion' | 'voice'>('search');
@@ -61,7 +60,7 @@ const AdvancedSearch: React.FC = () => {
     type: 'law' | 'court' | 'legislation' | 'precedent';
     importance: 'high' | 'medium' | 'low';
   }>>([]);
-  const [selectedTimelinePeriod, setSelectedTimelinePeriod] = useState('all');
+  // const [selectedTimelinePeriod] = useState('all');
   
   // 🧠 AI Duygu Analizi State'leri
   const [emotionText, setEmotionText] = useState('');
@@ -70,15 +69,21 @@ const AdvancedSearch: React.FC = () => {
     emotions: Array<{emotion: string, score: number}>;
     sentiment: 'positive' | 'negative' | 'neutral';
     confidence: number;
+    insights?: string;
   } | null>(null);
   
   // 🎤 Sesli Arama State'leri
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'processing' | 'success' | 'error'>('idle');
   const [recognizedText, setRecognizedText] = useState('');
+  const [voiceCommandHistory, setVoiceCommandHistory] = useState<Array<{
+    command: string;
+    time: string;
+    status: 'success' | 'error';
+    result?: string;
+  }>>([]);
 
-  const { isListening, startDictation, stopDictation, interimText, error: dictationError } = useDictation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { startDictation, stopDictation, interimText, error: dictationError } = useDictation();
 
   // 🎤 Akıllı Sesli Komutlar
   const voiceCommands = [
@@ -131,15 +136,16 @@ const AdvancedSearch: React.FC = () => {
   };
 
   // Arama fonksiyonu
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = async (searchQuery?: string) => {
+    const searchTerm = searchQuery || query;
+    if (!searchTerm.trim()) return;
     
     setIsLoading(true);
     try {
       let results: SearchResult[] = [];
       
       if (searchType === 'ictihat') {
-        const ictihatResults = await searchIctihat(query, {
+        const ictihatResults = await searchIctihat(searchTerm, {
           courtType: selectedCourt as any,
           dateRange: dateRange ? { from: dateRange, to: dateRange } : undefined,
           legalArea: selectedArea
@@ -158,7 +164,7 @@ const AdvancedSearch: React.FC = () => {
           highlight: result.highlight || ''
         }));
       } else if (searchType === 'mevzuat') {
-        const mevzuatResults = await searchMevzuat(query, {
+        const mevzuatResults = await searchMevzuat(searchTerm, {
           category: selectedArea,
           dateRange: dateRange ? { from: dateRange, to: dateRange } : undefined
         });
@@ -172,7 +178,7 @@ const AdvancedSearch: React.FC = () => {
           content: result.content || '',
           relevanceScore: result.relevanceScore || 0,
           legalAreas: [result.category || ''],
-          keywords: [query],
+          keywords: [searchTerm],
           highlight: result.highlight || ''
         }));
       }
@@ -181,7 +187,7 @@ const AdvancedSearch: React.FC = () => {
       
       // Arama geçmişine ekle
       setSearchHistory(prev => [{
-        query,
+        query: searchTerm,
         type: searchType,
         date: new Date().toISOString(),
         results: results.length
@@ -207,6 +213,38 @@ const AdvancedSearch: React.FC = () => {
     setIsVoiceListening(false);
     setVoiceStatus('processing');
     stopDictation();
+  };
+
+  // Sesli komut başlatma
+  const startVoiceCommand = () => {
+    setIsVoiceListening(true);
+    setVoiceStatus('listening');
+    setRecognizedText('');
+    startDictation();
+  };
+
+  // Sesli komut durdurma
+  const stopVoiceCommand = () => {
+    setIsVoiceListening(false);
+    setVoiceStatus('processing');
+    stopDictation();
+  };
+
+  // Sesli komut işleme
+  const processVoiceCommand = (command: string) => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('tr-TR');
+    
+    // Komut geçmişine ekle
+    setVoiceCommandHistory(prev => [...prev, {
+      command,
+      time: timeString,
+      status: 'success',
+      result: 'Komut başarıyla işlendi'
+    }]);
+    
+    // Komut işleme mantığı burada olacak
+    console.log('Processing voice command:', command);
   };
 
   // Sesli arama sonucu işleme
@@ -238,7 +276,7 @@ const AdvancedSearch: React.FC = () => {
     setIsAnalyzingEmotion(true);
     try {
       // Simüle edilmiş duygu analizi
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise<void>(resolve => setTimeout(resolve, 2000));
       
       const emotions = [
         { emotion: 'Mutluluk', score: Math.random() * 0.8 + 0.2 },
@@ -254,7 +292,8 @@ const AdvancedSearch: React.FC = () => {
       setEmotionResults({
         emotions: emotions.sort((a, b) => b.score - a.score),
         sentiment,
-        confidence
+        confidence,
+        insights: 'Bu metin genel olarak nötr bir duygusal ton taşımaktadır. Hukuki terminoloji kullanımı profesyonel bir yaklaşım sergilemektedir.'
       });
     } catch (error) {
       console.error('Duygu analizi hatası:', error);
@@ -330,10 +369,10 @@ const AdvancedSearch: React.FC = () => {
                   ? 'bg-gradient-to-r from-cyan-400 to-blue-500' 
                   : 'bg-gradient-to-r from-blue-500 to-indigo-500'
               }`}></div>
-            </div>
+        </div>
             <div className="flex items-center space-x-3">
               {/* Gece Modu Toggle */}
-              <button
+                <button
                 onClick={toggleTheme}
                 className={`p-3 rounded-xl transition-all duration-300 ${
                   isDarkMode 
@@ -342,7 +381,7 @@ const AdvancedSearch: React.FC = () => {
                 }`}
               >
                 {isDarkMode ? '☀️' : '🌙'}
-              </button>
+                </button>
               
               <div className={`backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border ${
                 isDarkMode 
@@ -362,7 +401,7 @@ const AdvancedSearch: React.FC = () => {
                      backendStatus === 'degraded' ? 'Kısmi Hizmet' : 
                      backendStatus === 'down' ? 'Sistem Kapalı' : 'Durum Bilinmiyor'}
                   </span>
-                </div>
+              </div>
               </div>
             </div>
           </div>
@@ -382,7 +421,7 @@ const AdvancedSearch: React.FC = () => {
                 { id: 'analytics', label: 'Analitik', icon: BarChart3, color: 'purple' },
                 { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' }
               ].map(tab => (
-                <button
+                          <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`group flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
@@ -403,11 +442,11 @@ const AdvancedSearch: React.FC = () => {
                         : 'text-slate-500 group-hover:text-slate-700'
                   }`} />
                   <span className="hidden sm:inline font-medium">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
         {/* Search Tab */}
         {activeTab === 'search' && (
@@ -452,9 +491,9 @@ const AdvancedSearch: React.FC = () => {
                         : 'bg-white/95 border-slate-200'
                     }`}>
                       {searchSuggestions.map((suggestion, index) => (
-                        <button
+                          <button
                           key={index}
-                          onClick={() => {
+                            onClick={() => { 
                             setQuery(suggestion);
                             setShowSuggestions(false);
                           }}
@@ -468,14 +507,14 @@ const AdvancedSearch: React.FC = () => {
                             isDarkMode ? 'text-cyan-500' : 'text-blue-500'
                           }`} />
                           {suggestion}
-                        </button>
-                      ))}
-                    </div>
+                          </button>
+                        ))}
+                      </div>
                   )}
-                </div>
-                
+                  </div>
+
                 {/* Sesli Arama Butonu */}
-                <button
+                          <button
                   onClick={isVoiceListening ? stopVoiceSearch : startVoiceSearch}
                   className={`px-4 py-4 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
                     isVoiceListening 
@@ -489,10 +528,10 @@ const AdvancedSearch: React.FC = () => {
                   <span className="hidden sm:inline">
                     {isVoiceListening ? 'Durdur' : 'Sesli Ara'}
                   </span>
-                </button>
+                          </button>
                 
-                <button
-                  onClick={handleSearch}
+                          <button
+                  onClick={() => handleSearch()}
                   disabled={isLoading || !query.trim()}
                   className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isDarkMode
@@ -511,8 +550,8 @@ const AdvancedSearch: React.FC = () => {
                       <span>Ara</span>
                     </>
                   )}
-                </button>
-              </div>
+                          </button>
+                      </div>
 
               {/* Sesli Arama Durumu */}
               {recognizedText && (
@@ -527,7 +566,7 @@ const AdvancedSearch: React.FC = () => {
                   <p className={`font-semibold ${
                     isDarkMode ? 'text-white' : 'text-slate-800'
                   }`}>{recognizedText}</p>
-                </div>
+                    </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -548,7 +587,7 @@ const AdvancedSearch: React.FC = () => {
                     <option value="mevzuat">📜 Mevzuat</option>
                     <option value="uyap">⚖️ UYAP Emsal</option>
                   </select>
-                </div>
+                      </div>
 
                 <div className="relative">
                   <label className={`block text-sm font-semibold mb-2 ${
@@ -568,7 +607,7 @@ const AdvancedSearch: React.FC = () => {
                     <option value="danistay">Danıştay</option>
                     <option value="uyap">UYAP Emsal</option>
                   </select>
-                </div>
+                    </div>
 
                 <div className="relative">
                   <label className={`block text-sm font-semibold mb-2 ${
@@ -584,9 +623,9 @@ const AdvancedSearch: React.FC = () => {
                         : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800'
                     }`}
                   />
-                </div>
-              </div>
-            </div>
+                      </div>
+                    </div>
+                  </div>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
@@ -597,11 +636,11 @@ const AdvancedSearch: React.FC = () => {
                   </h3>
                   <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-full font-semibold">
                     {searchResults.length} Sonuç
-                  </div>
                 </div>
+            </div>
                 
                 <div className="grid gap-6">
-                  {searchResults.map((result, index) => (
+                  {searchResults.map((result) => (
                     <div
                       key={result.id}
                       className={`group backdrop-blur-sm border rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] ${
@@ -631,7 +670,7 @@ const AdvancedSearch: React.FC = () => {
                                 isDarkMode ? 'text-cyan-500' : 'text-blue-500'
                               }`} />
                               <span className="font-medium">{result.courtName}</span>
-                            </div>
+          </div>
                             <div className="flex items-center space-x-1">
                               <Calendar className={`w-4 h-4 ${
                                 isDarkMode ? 'text-emerald-400' : 'text-emerald-500'
@@ -649,8 +688,8 @@ const AdvancedSearch: React.FC = () => {
                         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                           %{Math.round(result.relevanceScore * 100)}
                         </div>
-                      </div>
-                      
+      </div>
+
                       <p className={`leading-relaxed mb-4 ${
                         isDarkMode ? 'text-gray-300' : 'text-slate-700'
                       }`}>
@@ -670,8 +709,8 @@ const AdvancedSearch: React.FC = () => {
                             {area}
                           </span>
                         ))}
-                      </div>
-                      
+          </div>
+
                       <div className={`mt-4 pt-4 border-t ${
                         isDarkMode ? 'border-gray-600' : 'border-slate-200'
                       }`}>
@@ -704,15 +743,27 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700/50' 
+              : 'bg-white/80 border-white/20'
+          }`}>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">Hukuki Zaman Çizelgesi</h2>
-              <p className="text-slate-600 text-lg">Türk hukukundaki önemli gelişmeleri kronolojik sırayla takip edin</p>
+              <h2 className={`text-3xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>Hukuki Zaman Çizelgesi</h2>
+              <p className={`text-lg ${
+                isDarkMode ? 'text-gray-300' : 'text-slate-600'
+              }`}>Türk hukukundaki önemli gelişmeleri kronolojik sırayla takip edin</p>
             </div>
             
             <div className="relative">
               {/* Timeline Line */}
-              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500"></div>
+              <div className={`absolute left-8 top-0 bottom-0 w-0.5 rounded-full ${
+                isDarkMode 
+                  ? 'bg-gradient-to-b from-cyan-500 via-blue-500 to-purple-500' 
+                  : 'bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500'
+              }`}></div>
               
               <div className="space-y-8">
                 {timelineData.map((item, index) => (
@@ -730,11 +781,19 @@ const AdvancedSearch: React.FC = () => {
                     </div>
                     
                     {/* Content Card */}
-                    <div className="flex-1 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                    <div className={`flex-1 backdrop-blur-sm border rounded-2xl p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                      isDarkMode 
+                        ? 'bg-gray-700/60 border-gray-600 hover:border-cyan-400 hover:shadow-cyan-500/25' 
+                        : 'bg-white/60 border-slate-200 hover:border-blue-300'
+                    }`}>
                       <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-bold text-slate-800">{item.title}</h3>
+                        <h3 className={`text-xl font-bold ${
+                          isDarkMode ? 'text-white' : 'text-slate-800'
+                        }`}>{item.title}</h3>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm text-slate-500 font-medium">{item.date}</span>
+                          <span className={`text-sm font-medium ${
+                            isDarkMode ? 'text-gray-400' : 'text-slate-500'
+                          }`}>{item.date}</span>
                           <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
                             item.importance === 'high' ? 'bg-red-100 text-red-800' :
                             item.importance === 'medium' ? 'bg-amber-100 text-amber-800' :
@@ -743,10 +802,12 @@ const AdvancedSearch: React.FC = () => {
                             {item.importance === 'high' ? 'Yüksek Önem' :
                              item.importance === 'medium' ? 'Orta Önem' : 'Düşük Önem'}
                           </span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-slate-700 leading-relaxed mb-4">{item.description}</p>
+          </div>
+        </div>
+
+                      <p className={`leading-relaxed mb-4 ${
+                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                      }`}>{item.description}</p>
                       
                       <div className="flex items-center justify-between">
                         <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
@@ -758,9 +819,11 @@ const AdvancedSearch: React.FC = () => {
                           {item.type === 'law' ? '📜 Kanun' :
                            item.type === 'court' ? '⚖️ Mahkeme' :
                            item.type === 'legislation' ? '📋 Mevzuat' : '🏛️ İçtihat'}
-                        </span>
+          </span>
                         
-                        <div className="flex items-center space-x-2 text-slate-500">
+                        <div className={`flex items-center space-x-2 ${
+                          isDarkMode ? 'text-gray-500' : 'text-slate-500'
+                        }`}>
                           <Calendar className="w-4 h-4" />
                           <span className="text-sm">Hukuki Gelişme</span>
                         </div>
@@ -775,12 +838,20 @@ const AdvancedSearch: React.FC = () => {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700/50' 
+              : 'bg-white/80 border-white/20'
+          }`}>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">Analitik Dashboard</h2>
-              <p className="text-slate-600 text-lg">Sistem kullanım istatistikleri ve performans metrikleri</p>
-            </div>
-            
+              <h2 className={`text-3xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>Analitik Dashboard</h2>
+              <p className={`text-lg ${
+                isDarkMode ? 'text-gray-300' : 'text-slate-600'
+              }`}>Sistem kullanım istatistikleri ve performans metrikleri</p>
+        </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
@@ -796,7 +867,7 @@ const AdvancedSearch: React.FC = () => {
                   <TrendingUp className="w-4 h-4" />
                   <span className="text-sm text-blue-100">Bu ay</span>
                 </div>
-              </div>
+          </div>
 
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
@@ -814,7 +885,7 @@ const AdvancedSearch: React.FC = () => {
                   <Target className="w-4 h-4" />
                   <span className="text-sm text-emerald-100">Toplam bulunan</span>
                 </div>
-              </div>
+          </div>
 
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
@@ -831,52 +902,86 @@ const AdvancedSearch: React.FC = () => {
                   <span className="text-sm text-purple-100">Şu anda</span>
                 </div>
               </div>
-            </div>
+          </div>
 
             {/* Recent Searches */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
-              <h3 className="text-xl font-bold text-slate-800 mb-6">Son Aramalar</h3>
+            <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+              isDarkMode 
+                ? 'bg-gray-700/60 border-gray-600' 
+                : 'bg-white/60 border-slate-200'
+            }`}>
+              <h3 className={`text-xl font-bold mb-6 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>Son Aramalar</h3>
               <div className="space-y-4">
                 {searchHistory.slice(0, 5).map((search, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
+                  <div key={index} className={`flex items-center justify-between p-4 rounded-xl border hover:shadow-md transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gray-600/50 border-gray-500' 
+                      : 'bg-white/50 border-slate-200'
+                  }`}>
                     <div className="flex items-center space-x-4">
                       <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
                         {index + 1}
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-800">{search.query}</p>
-                        <p className="text-sm text-slate-600">{search.type} • {search.date}</p>
-                      </div>
-                    </div>
+          <div>
+                        <p className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-800'
+                        }`}>{search.query}</p>
+                        <p className={`text-sm ${
+                          isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                        }`}>{search.type} • {search.date}</p>
+          </div>
+          </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-emerald-600">{search.results}</p>
-                      <p className="text-xs text-slate-500">sonuç</p>
-                    </div>
+                      <p className={`text-xs ${
+                        isDarkMode ? 'text-gray-400' : 'text-slate-500'
+                      }`}>sonuç</p>
+      </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Emotion Analysis Tab */}
         {activeTab === 'emotion' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700/50' 
+              : 'bg-white/80 border-white/20'
+          }`}>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">AI Duygu Analizi</h2>
-              <p className="text-slate-600 text-lg">Metinlerin duygusal içeriğini analiz edin ve sentiment tespiti yapın</p>
+              <h2 className={`text-3xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>AI Duygu Analizi</h2>
+              <p className={`text-lg ${
+                isDarkMode ? 'text-gray-300' : 'text-slate-600'
+              }`}>Metinlerin duygusal içeriğini analiz edin ve sentiment tespiti yapın</p>
             </div>
             
             <div className="mb-8">
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
-                <label className="block text-lg font-semibold text-slate-700 mb-4">Analiz Edilecek Metin</label>
+              <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+                isDarkMode 
+                  ? 'bg-gray-700/60 border-gray-600' 
+                  : 'bg-white/60 border-slate-200'
+              }`}>
+                <label className={`block text-lg font-semibold mb-4 ${
+                  isDarkMode ? 'text-white' : 'text-slate-700'
+                }`}>Analiz Edilecek Metin</label>
                 <textarea
                   value={emotionText}
                   onChange={(e) => setEmotionText(e.target.value)}
                   placeholder="Analiz edilecek metni buraya girin... (örn: mahkeme kararı, dilekçe, sözleşme metni)"
-                  className="w-full px-6 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 transition-all duration-300 bg-white/50 backdrop-blur-sm text-slate-800 placeholder-slate-400 font-medium h-32 resize-none"
+                  className={`w-full px-6 py-4 border-2 rounded-xl focus:ring-4 focus:ring-offset-2 transition-all duration-300 backdrop-blur-sm font-medium h-32 resize-none ${
+                    isDarkMode 
+                      ? 'bg-gray-600/50 border-gray-500 text-white placeholder-gray-400 focus:ring-rose-500/20 focus:border-rose-500' 
+                      : 'bg-white/50 border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-rose-500/20 focus:border-rose-500'
+                  }`}
                 />
-                <button
+                  <button
                   onClick={analyzeEmotion}
                   disabled={isAnalyzingEmotion || !emotionText.trim()}
                   className="mt-6 px-8 py-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:from-rose-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -893,14 +998,20 @@ const AdvancedSearch: React.FC = () => {
                     </>
                   )}
                 </button>
-              </div>
-            </div>
+                      </div>
+                        </div>
 
             {emotionResults && (
               <div className="space-y-8">
                 {/* Sentiment Overview */}
-                <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
-                  <h3 className="text-xl font-bold text-slate-800 mb-4">Genel Sentiment</h3>
+                <div className={`rounded-2xl p-6 border ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-gray-700/60 to-gray-600/60 border-gray-500' 
+                    : 'bg-gradient-to-r from-slate-50 to-blue-50 border-slate-200'
+                }`}>
+                  <h3 className={`text-xl font-bold mb-4 ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}>Genel Sentiment</h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
@@ -913,55 +1024,87 @@ const AdvancedSearch: React.FC = () => {
                          <Target className="w-8 h-8 text-white" />}
                       </div>
                       <div>
-                        <h4 className="text-lg font-bold text-slate-800">
+                        <h4 className={`text-lg font-bold ${
+                          isDarkMode ? 'text-white' : 'text-slate-800'
+                        }`}>
                           {emotionResults.sentiment === 'positive' ? 'Pozitif' :
                            emotionResults.sentiment === 'negative' ? 'Negatif' : 'Nötr'}
                         </h4>
-                        <p className="text-slate-600">Genel duygusal ton</p>
-                      </div>
+                        <p className={`${
+                          isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                        }`}>Genel duygusal ton</p>
                     </div>
+            </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-slate-800">%{Math.round(emotionResults.confidence * 100)}</p>
-                      <p className="text-sm text-slate-600">Güven Skoru</p>
+                      <p className={`text-2xl font-bold ${
+                        isDarkMode ? 'text-white' : 'text-slate-800'
+                      }`}>%{Math.round(emotionResults.confidence * 100)}</p>
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                      }`}>Güven Skoru</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Emotion Distribution */}
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
-                  <h3 className="text-xl font-bold text-slate-800 mb-6">Duygu Dağılımı</h3>
+                <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+                  isDarkMode 
+                    ? 'bg-gray-700/60 border-gray-600' 
+                    : 'bg-white/60 border-slate-200'
+                }`}>
+                  <h3 className={`text-xl font-bold mb-6 ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}>Duygu Dağılımı</h3>
                   <div className="space-y-4">
                     {emotionResults.emotions.map((emotion, index) => (
                       <div key={index} className="flex items-center space-x-4">
-                        <div className="w-24 text-sm font-semibold text-slate-700">{emotion.emotion}</div>
-                        <div className="flex-1 bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className={`w-24 text-sm font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                        }`}>{emotion.emotion}</div>
+                        <div className={`flex-1 rounded-full h-3 overflow-hidden ${
+                          isDarkMode ? 'bg-gray-600' : 'bg-slate-200'
+                        }`}>
                           <div
                             className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${emotion.score * 100}%` }}
                           ></div>
-                        </div>
+                    </div>
                         <div className="w-16 text-right">
-                          <span className="text-sm font-bold text-slate-800">%{Math.round(emotion.score * 100)}</span>
-                        </div>
+                          <span className={`text-sm font-bold ${
+                            isDarkMode ? 'text-white' : 'text-slate-800'
+                          }`}>%{Math.round(emotion.score * 100)}</span>
                       </div>
+                    </div>
                     ))}
                   </div>
                 </div>
-              </div>
+            </div>
             )}
           </div>
         )}
 
         {/* Voice Commands Tab */}
         {activeTab === 'voice' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700/50' 
+              : 'bg-white/80 border-white/20'
+          }`}>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">Akıllı Sesli Komutlar</h2>
-              <p className="text-slate-600 text-lg">Sesli komutlarla sistemi kontrol edin ve hızlı arama yapın</p>
+              <h2 className={`text-3xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>Akıllı Sesli Komutlar</h2>
+              <p className={`text-lg ${
+                isDarkMode ? 'text-gray-300' : 'text-slate-600'
+              }`}>Sesli komutlarla sistemi kontrol edin ve hızlı arama yapın</p>
             </div>
             
             {/* Voice Control */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 mb-8">
+            <div className={`backdrop-blur-sm rounded-2xl p-8 border mb-8 ${
+              isDarkMode 
+                ? 'bg-gray-700/60 border-gray-600' 
+                : 'bg-white/60 border-slate-200'
+            }`}>
               <div className="text-center mb-6">
                 <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 shadow-lg ${
                   isVoiceListening 
@@ -971,15 +1114,19 @@ const AdvancedSearch: React.FC = () => {
                   {isVoiceListening ? <MicOff className="w-12 h-12 text-white" /> : <Mic className="w-12 h-12 text-white" />}
                 </div>
                 
-                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                <h3 className={`text-xl font-bold mb-2 ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>
                   {isVoiceListening ? 'Dinleniyor...' : 'Sesli Komut Hazır'}
                 </h3>
-                <p className="text-slate-600 mb-6">
+                <p className={`mb-6 ${
+                  isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                }`}>
                   {isVoiceListening ? 'Komutunuzu söyleyin' : 'Başlat butonuna basarak sesli komutları kullanabilirsiniz'}
                 </p>
                 
                 <div className="flex items-center justify-center space-x-4 mb-6">
-                  <button
+              <button
                     onClick={isVoiceListening ? stopVoiceCommand : startVoiceCommand}
                     className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
                       isVoiceListening
@@ -989,7 +1136,7 @@ const AdvancedSearch: React.FC = () => {
                   >
                     {isVoiceListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                     <span>{isVoiceListening ? 'Durdur' : 'Başlat'}</span>
-                  </button>
+              </button>
                   
                   <div className={`px-4 py-2 rounded-full text-sm font-semibold ${
                     voiceStatus === 'listening' ? 'bg-emerald-100 text-emerald-800' :
@@ -1002,13 +1149,21 @@ const AdvancedSearch: React.FC = () => {
                      voiceStatus === 'processing' ? '⚙️ İşleniyor' :
                      voiceStatus === 'success' ? '✅ Başarılı' :
                      voiceStatus === 'error' ? '❌ Hata' : '🔘 Hazır'}
-                  </div>
-                </div>
+            </div>
+        </div>
 
                 {recognizedText && (
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                    <p className="text-sm text-blue-600 font-medium mb-2">Tanınan Metin:</p>
-                    <p className="font-semibold text-slate-800">{recognizedText}</p>
+                  <div className={`rounded-xl p-4 border ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/30' 
+                      : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                  }`}>
+                    <p className={`text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-cyan-400' : 'text-blue-600'
+                    }`}>Tanınan Metin:</p>
+                    <p className={`font-semibold ${
+                      isDarkMode ? 'text-white' : 'text-slate-800'
+                    }`}>{recognizedText}</p>
                   </div>
                 )}
               </div>
@@ -1017,57 +1172,89 @@ const AdvancedSearch: React.FC = () => {
             {/* Commands and History */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Available Commands */}
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
-                <h3 className="text-xl font-bold text-slate-800 mb-6">Mevcut Komutlar</h3>
+              <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+                isDarkMode 
+                  ? 'bg-gray-700/60 border-gray-600' 
+                  : 'bg-white/60 border-slate-200'
+              }`}>
+                <h3 className={`text-xl font-bold mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>Mevcut Komutlar</h3>
                 <div className="space-y-3">
                   {voiceCommands.map((cmd, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
+                    <div key={index} className={`flex items-center justify-between p-4 rounded-xl border hover:shadow-md transition-all duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-600/50 border-gray-500' 
+                        : 'bg-white/50 border-slate-200'
+                    }`}>
                       <div className="flex items-center space-x-3">
                         <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
                           {index + 1}
                         </div>
-                        <span className="font-semibold text-slate-800">{cmd.command}</span>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-800'
+                        }`}>{cmd.command}</span>
                       </div>
                       <button
                         onClick={() => processVoiceCommand(cmd.command)}
                         className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105"
                       >
                         Test Et
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                </button>
               </div>
+                  ))}
+            </div>
+          </div>
 
               {/* Command History */}
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200">
-                <h3 className="text-xl font-bold text-slate-800 mb-6">Komut Geçmişi</h3>
+              <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+                isDarkMode 
+                  ? 'bg-gray-700/60 border-gray-600' 
+                  : 'bg-white/60 border-slate-200'
+              }`}>
+                <h3 className={`text-xl font-bold mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>Komut Geçmişi</h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {voiceCommandHistory.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      <Mic className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                    <div className={`text-center py-8 ${
+                      isDarkMode ? 'text-gray-400' : 'text-slate-500'
+                    }`}>
+                      <Mic className={`w-12 h-12 mx-auto mb-4 ${
+                        isDarkMode ? 'text-gray-500' : 'text-slate-300'
+                      }`} />
                       <p>Henüz komut geçmişi yok</p>
                       <p className="text-sm">Sesli komutları kullanmaya başlayın</p>
-                    </div>
-                  ) : (
+              </div>
+            ) : (
                     voiceCommandHistory.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-slate-200">
+                      <div key={index} className={`flex items-center justify-between p-4 rounded-xl border ${
+                        isDarkMode 
+                          ? 'bg-gray-600/50 border-gray-500' 
+                          : 'bg-white/50 border-slate-200'
+                      }`}>
                         <div className="flex-1">
-                          <p className="font-semibold text-slate-800">{item.command}</p>
-                          <p className="text-sm text-slate-600">{item.time}</p>
+                          <p className={`font-semibold ${
+                            isDarkMode ? 'text-white' : 'text-slate-800'
+                          }`}>{item.command}</p>
+                          <p className={`text-sm ${
+                            isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                          }`}>{item.time}</p>
                           {item.result && (
-                            <p className="text-xs text-slate-500 mt-1">{item.result}</p>
+                            <p className={`text-xs mt-1 ${
+                              isDarkMode ? 'text-gray-500' : 'text-slate-500'
+                            }`}>{item.result}</p>
                           )}
-                        </div>
+                    </div>
                         <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           item.status === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                         }`}>
                           {item.status === 'success' ? '✅' : '❌'}
-                        </div>
                       </div>
+                    </div>
                     ))
                   )}
-                </div>
+                  </div>
               </div>
             </div>
           </div>
@@ -1076,12 +1263,20 @@ const AdvancedSearch: React.FC = () => {
         {/* Result Detail Modal */}
         {showResultDetail && selectedResult && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+            <div className={`backdrop-blur-sm rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border ${
+              isDarkMode 
+                ? 'bg-gray-800/95 border-gray-700/50' 
+                : 'bg-white/95 border-white/20'
+            }`}>
               <div className="p-8">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-2">{selectedResult.subject}</h3>
-                    <div className="flex items-center space-x-4 text-sm text-slate-600">
+                    <h3 className={`text-2xl font-bold mb-2 ${
+                      isDarkMode ? 'text-white' : 'text-slate-800'
+                    }`}>{selectedResult.subject}</h3>
+                    <div className={`flex items-center space-x-4 text-sm ${
+                      isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                    }`}>
                       <div className="flex items-center space-x-1">
                         <Scale className="w-4 h-4 text-blue-500" />
                         <span className="font-medium">{selectedResult.courtName}</span>
@@ -1098,7 +1293,11 @@ const AdvancedSearch: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setShowResultDetail(false)}
-                    className="text-slate-500 hover:text-slate-700 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700/50' 
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                    }`}
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -1106,15 +1305,25 @@ const AdvancedSearch: React.FC = () => {
                 
                 <div className="space-y-6">
                   {/* Relevans Skoru */}
-                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                  <div className={`rounded-xl p-4 border ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/30' 
+                      : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-semibold text-slate-800">Relevans Skoru</h4>
-                        <p className="text-sm text-slate-600">Arama terimiyle uyumluluk</p>
+                        <h4 className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-800'
+                        }`}>Relevans Skoru</h4>
+                        <p className={`text-sm ${
+                          isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                        }`}>Arama terimiyle uyumluluk</p>
                       </div>
                       <div className="text-right">
                         <p className="text-3xl font-bold text-emerald-600">%{Math.round(selectedResult.relevanceScore * 100)}</p>
-                        <div className="w-24 bg-slate-200 rounded-full h-2 mt-2">
+                        <div className={`w-24 rounded-full h-2 mt-2 ${
+                          isDarkMode ? 'bg-gray-600' : 'bg-slate-200'
+                        }`}>
                           <div
                             className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full"
                             style={{ width: `${selectedResult.relevanceScore * 100}%` }}
@@ -1125,28 +1334,48 @@ const AdvancedSearch: React.FC = () => {
                   </div>
                   
                   {/* İçerik */}
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-slate-200">
-                    <h4 className="text-lg font-bold text-slate-800 mb-4">İçerik</h4>
-                    <p className="text-slate-700 leading-relaxed text-base">{selectedResult.content}</p>
+                  <div className={`backdrop-blur-sm rounded-xl p-6 border ${
+                    isDarkMode 
+                      ? 'bg-gray-700/60 border-gray-600' 
+                      : 'bg-white/60 border-slate-200'
+                  }`}>
+                    <h4 className={`text-lg font-bold mb-4 ${
+                      isDarkMode ? 'text-white' : 'text-slate-800'
+                    }`}>İçerik</h4>
+                    <p className={`leading-relaxed text-base ${
+                      isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                    }`}>{selectedResult.content}</p>
                   </div>
                   
                   {/* Hukuki Alanlar */}
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-slate-200">
-                    <h4 className="text-lg font-bold text-slate-800 mb-4">Hukuki Alanlar</h4>
+                  <div className={`backdrop-blur-sm rounded-xl p-6 border ${
+                    isDarkMode 
+                      ? 'bg-gray-700/60 border-gray-600' 
+                      : 'bg-white/60 border-slate-200'
+                  }`}>
+                    <h4 className={`text-lg font-bold mb-4 ${
+                      isDarkMode ? 'text-white' : 'text-slate-800'
+                    }`}>Hukuki Alanlar</h4>
                     <div className="flex flex-wrap gap-3">
                       {selectedResult.legalAreas.map((area, index) => (
                         <span
                           key={index}
-                          className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-sm rounded-full font-medium border border-blue-200"
+                          className={`px-4 py-2 text-sm rounded-full font-medium border ${
+                            isDarkMode 
+                              ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/30' 
+                              : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-blue-200'
+                          }`}
                         >
                           {area}
                         </span>
                       ))}
                     </div>
-                  </div>
+                    </div>
                   
                   {/* Aksiyon Butonları */}
-                  <div className="flex space-x-4 pt-6 border-t border-slate-200">
+                  <div className={`flex space-x-4 pt-6 border-t ${
+                    isDarkMode ? 'border-gray-600' : 'border-slate-200'
+                  }`}>
                     <button className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 flex items-center justify-center space-x-2 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                       <Download className="w-5 h-5" />
                       <span>PDF Olarak İndir</span>
@@ -1157,10 +1386,10 @@ const AdvancedSearch: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
           </div>
-        )}
+            </div>
+        </div>
+      )}
       </div>
     </div>
   );
