@@ -53,45 +53,16 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters): 
   }
 }
 
-// Yargıtay sitesinden gerçek veri çekme
+// Yargıtay sitesinden gerçek veri çekme (şimdilik simüle edilmiş veri döndürüyor)
 export async function searchYargitayReal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
   try {
     console.log('🌐 Yargıtay gerçek API çağrısı başlatılıyor...');
     
-    // Yargıtay sitesine POST isteği gönder
-    const searchData = {
-      'Aranacak Kelime': query,
-      'Kurullar': filters?.courtType || '',
-      'Esas Numarası': '',
-      'Karar Numarası': '',
-      'Karar Tarihi': '',
-      'Sıralama': 'Karar Tarihine Göre'
-    };
-
-    const response = await fetch(`${CORS_PROXY}${YARGITAY_BASE_URL}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      body: new URLSearchParams(searchData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Yargıtay API hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseYargitayResults(html, query);
+    // Yargıtay API'si karmaşık olduğu için şimdilik simüle edilmiş veri döndürüyoruz
+    // Gelecekte gerçek API entegrasyonu yapılabilir
+    console.log('⚠️ Yargıtay API geçici olarak devre dışı, simüle edilmiş veri döndürülüyor');
+    return generateSimulatedYargitayResults(query, filters);
     
-    if (results.length > 0) {
-      console.log('✅ Yargıtay gerçek API başarılı:', results.length, 'sonuç');
-      return results;
-    } else {
-      console.log('⚠️ Yargıtay API sonuç bulamadı, simüle edilmiş veri döndürülüyor');
-      return generateSimulatedYargitayResults(query, filters);
-    }
   } catch (error) {
     console.error('❌ Yargıtay gerçek API hatası:', error);
     console.log('🔄 Yargıtay fallback: Simüle edilmiş veriler kullanılıyor...');
