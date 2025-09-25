@@ -72,6 +72,7 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showAddAdvance, setShowAddAdvance] = useState(false);
+  const [showEditAdvance, setShowEditAdvance] = useState(false);
   const [showClientReport, setShowClientReport] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientAdvance | null>(null);
   const [showPaymentPlan, setShowPaymentPlan] = useState(false);
@@ -94,6 +95,18 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
     advanceDate: '',
     dueDate: '',
     notes: ''
+  });
+
+  // Düzenleme formu için state
+  const [editAdvance, setEditAdvance] = useState({
+    caseTitle: '',
+    totalAmount: '',
+    advanceAmount: '',
+    paidAmount: '',
+    advanceDate: '',
+    dueDate: '',
+    notes: '',
+    status: 'active' as 'active' | 'completed' | 'overdue' | 'cancelled'
   });
   
   // Ödeme planı için state
@@ -164,6 +177,49 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
         ? { ...advance, ...updates, updatedAt: new Date().toISOString() }
         : advance
     ));
+  };
+
+  const handleEditAdvance = (advance: ClientAdvance) => {
+    setSelectedClient(advance);
+    setEditAdvance({
+      caseTitle: advance.caseTitle,
+      totalAmount: advance.totalAmount.toString(),
+      advanceAmount: advance.advanceAmount.toString(),
+      paidAmount: advance.paidAmount.toString(),
+      advanceDate: advance.advanceDate,
+      dueDate: advance.dueDate || '',
+      notes: advance.notes || '',
+      status: advance.status
+    });
+    setShowEditAdvance(true);
+  };
+
+  const handleUpdateAdvance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+    
+    try {
+      const updatedAdvance = {
+        ...selectedClient,
+        caseTitle: editAdvance.caseTitle,
+        totalAmount: parseFloat(editAdvance.totalAmount),
+        advanceAmount: parseFloat(editAdvance.advanceAmount),
+        paidAmount: parseFloat(editAdvance.paidAmount),
+        remainingAmount: Math.max(0, parseFloat(editAdvance.totalAmount) - parseFloat(editAdvance.paidAmount)),
+        advanceDate: editAdvance.advanceDate,
+        dueDate: editAdvance.dueDate,
+        notes: editAdvance.notes,
+        status: editAdvance.status,
+        updatedAt: new Date().toISOString()
+      };
+      
+      updateClientAdvance(selectedClient.id, updatedAdvance);
+      setShowEditAdvance(false);
+      setSelectedClient(null);
+      alert('Müvekkil avansı başarıyla güncellendi!');
+    } catch (error) {
+      alert('Hata: ' + error.message);
+    }
   };
 
   const generateClientReport = (clientAdvance: ClientAdvance) => {
@@ -589,8 +645,8 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          setSelectedClient(advance);
-                          setShowClientReport(true);
+                          const report = generateClientReport(advance);
+                          generatePDFReport(report);
                         }}
                         className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 flex items-center justify-center gap-1"
                       >
@@ -609,10 +665,21 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                       </button>
                       <button
                         onClick={() => {
+                          setSelectedClient(advance);
+                          setShowEditAdvance(true);
+                        }}
+                        className="px-3 py-2 text-sm font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                        title="Düzenle"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
                           const report = generateClientReport(advance);
                           generatePDFReport(report);
                         }}
                         className="px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                        title="PDF İndir"
                       >
                         <Download className="w-4 h-4" />
                       </button>
@@ -1140,6 +1207,155 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Client Advance Modal */}
+      {showEditAdvance && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Müvekkil Avansını Düzenle - {selectedClient.clientName}
+              </h3>
+              <button
+                onClick={() => setShowEditAdvance(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form className="space-y-4" onSubmit={handleUpdateAdvance}>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Dava Başlığı *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={editAdvance.caseTitle}
+                  onChange={(e) => setEditAdvance(prev => ({ ...prev, caseTitle: e.target.value }))}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Toplam Tutar *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={editAdvance.totalAmount}
+                    onChange={(e) => setEditAdvance(prev => ({ ...prev, totalAmount: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Avans Tutarı *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={editAdvance.advanceAmount}
+                    onChange={(e) => setEditAdvance(prev => ({ ...prev, advanceAmount: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Ödenen Tutar *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={editAdvance.paidAmount}
+                    onChange={(e) => setEditAdvance(prev => ({ ...prev, paidAmount: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Avans Tarihi *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={editAdvance.advanceDate}
+                    onChange={(e) => setEditAdvance(prev => ({ ...prev, advanceDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vade Tarihi
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    value={editAdvance.dueDate}
+                    onChange={(e) => setEditAdvance(prev => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Durum
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={editAdvance.status}
+                  onChange={(e) => setEditAdvance(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <option value="active">Aktif</option>
+                  <option value="completed">Tamamlandı</option>
+                  <option value="overdue">Vadesi Geçti</option>
+                  <option value="cancelled">İptal</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notlar
+                </label>
+                <textarea
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  value={editAdvance.notes}
+                  onChange={(e) => setEditAdvance(prev => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAdvance(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Güncelle
                 </button>
               </div>
             </form>
