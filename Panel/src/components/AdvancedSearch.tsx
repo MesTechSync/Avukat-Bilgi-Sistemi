@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Mic, MicOff, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
@@ -136,7 +136,7 @@ const AdvancedSearch: React.FC = () => {
   };
 
   // Arama fonksiyonu
-  const handleSearch = async (searchQuery?: string) => {
+  const handleSearch = useCallback(async (searchQuery?: string) => {
     const searchTerm = searchQuery || query;
     if (!searchTerm.trim()) return;
     
@@ -198,7 +198,7 @@ const AdvancedSearch: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query, searchType, selectedCourt, dateRange, selectedArea]);
 
   // Sesli arama başlatma
   const startVoiceSearch = () => {
@@ -255,11 +255,13 @@ const AdvancedSearch: React.FC = () => {
       setVoiceStatus('success');
       
       // Otomatik arama yap
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         handleSearch(interimText);
       }, 1000);
+      
+      return () => clearTimeout(timer);
     }
-  }, [interimText]);
+  }, [interimText, handleSearch]);
 
   // Sesli arama hatası işleme
   useEffect(() => {
