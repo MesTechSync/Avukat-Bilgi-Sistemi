@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Mic, MicOff, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon } from 'lucide-react';
+import { Search, Mic, MicOff, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon, Sparkles } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { useTheme } from '../contexts/ThemeContext';
+import { geminiService } from '../services/geminiService';
 
 interface SearchResult {
   id: string;
@@ -74,6 +75,11 @@ const AdvancedSearch: React.FC = () => {
     status: 'success' | 'error';
     result: string;
   }>>([]);
+
+  // Yapay Zeka State'leri
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
 
   // Akıllı Arama Özellikleri
   const searchSuggestionsData = {
@@ -161,6 +167,11 @@ const AdvancedSearch: React.FC = () => {
       
       setSearchResults(results);
       
+      // Yapay zeka analizi başlat
+      if (results.length > 0) {
+        analyzeWithAI(results, searchTerm);
+      }
+      
       // Arama geçmişine ekle
       setSearchHistory(prev => [{
         query: searchTerm,
@@ -223,6 +234,31 @@ const AdvancedSearch: React.FC = () => {
       setIsAnalyzingEmotion(false);
     }
   }, [emotionText]);
+
+  // Yapay zeka analizi
+  const analyzeWithAI = useCallback(async (searchResults: SearchResult[], query: string) => {
+    if (searchResults.length === 0) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const resultsText = searchResults.map(result => 
+        `${result.courtName} - ${result.subject}\n${result.content.substring(0, 500)}...`
+      ).join('\n\n');
+
+      const analysis = await geminiService.analyzeText(
+        `Aşağıdaki hukuki arama sonuçlarını analiz et ve "${query}" konusunda kapsamlı bir değerlendirme yap. Sonuçları kategorize et, önemli noktaları vurgula ve pratik öneriler sun.`,
+        `Arama Terimi: ${query}\n\nSonuçlar:\n${resultsText}`
+      );
+      
+      setAiAnalysis(analysis);
+      setShowAiAnalysis(true);
+    } catch (error) {
+      console.error('AI analizi hatası:', error);
+      setAiAnalysis('AI analizi yapılamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, []);
 
   // Sesli arama sonucu işleme
   useEffect(() => {
@@ -320,8 +356,8 @@ const AdvancedSearch: React.FC = () => {
                     ? 'from-cyan-400 to-blue-500' 
                     : 'from-blue-500 to-indigo-500'
                 }`}></div>
-              </div>
-              <button
+        </div>
+                <button
                 onClick={toggleTheme}
                 className={`p-3 rounded-xl transition-all duration-300 ${
                   isDarkMode 
@@ -330,8 +366,8 @@ const AdvancedSearch: React.FC = () => {
                 }`}
               >
                 {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-              </button>
-            </div>
+                </button>
+              </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -349,9 +385,9 @@ const AdvancedSearch: React.FC = () => {
                 </span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+                      </div>
+                    </div>
+                  </div>
 
       {/* Tab Navigation */}
       <div className="mb-8">
@@ -367,7 +403,7 @@ const AdvancedSearch: React.FC = () => {
               { id: 'analytics', label: 'Analitik', icon: BarChart3, color: 'purple' },
               { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' }
             ].map(tab => (
-              <button
+                          <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`group flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
@@ -388,11 +424,11 @@ const AdvancedSearch: React.FC = () => {
                       : 'text-slate-500 group-hover:text-slate-700'
                 }`} />
                 <span className="hidden sm:inline font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
       {/* Search Tab */}
       {activeTab === 'search' && (
@@ -426,7 +462,7 @@ const AdvancedSearch: React.FC = () => {
                         : 'bg-white/95 border-slate-200'
                     }`}>
                       {searchSuggestions.map((suggestion, index) => (
-                        <button
+                          <button
                           key={index}
                           onClick={() => {
                             setQuery(suggestion);
@@ -442,14 +478,14 @@ const AdvancedSearch: React.FC = () => {
                             isDarkMode ? 'text-cyan-500' : 'text-blue-500'
                           }`} />
                           {suggestion}
-                        </button>
-                      ))}
-                    </div>
+                          </button>
+                        ))}
+                      </div>
                   )}
-                </div>
+                    </div>
 
                 {/* Voice Search Button */}
-                <button
+                          <button
                   onClick={isVoiceListening ? stopVoiceSearch : startVoiceSearch}
                   className={`px-4 py-4 rounded-xl font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
                     isVoiceListening 
@@ -463,9 +499,9 @@ const AdvancedSearch: React.FC = () => {
                   <span className="hidden sm:inline">
                     {isVoiceListening ? 'Durdur' : 'Sesli Ara'}
                   </span>
-                </button>
+                          </button>
                 
-                <button
+                          <button
                   onClick={() => handleSearch()}
                   disabled={isLoading || !query.trim()}
                   className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -485,8 +521,8 @@ const AdvancedSearch: React.FC = () => {
                       <span>Ara</span>
                     </>
                   )}
-                </button>
-              </div>
+                          </button>
+                    </div>
 
               {/* Voice Recognition Text */}
               {recognizedText && (
@@ -498,7 +534,7 @@ const AdvancedSearch: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Mic className="w-4 h-4" />
                     <span className="text-sm font-medium">Tanınan Metin:</span>
-                  </div>
+                      </div>
                   <p className="mt-1 text-sm">{recognizedText}</p>
                 </div>
               )}
@@ -523,7 +559,7 @@ const AdvancedSearch: React.FC = () => {
                   <option value="mevzuat">Mevzuat</option>
                   <option value="uyap">UYAP Emsal</option>
                 </select>
-              </div>
+      </div>
 
               <div className="relative">
                 <label className={`block text-sm font-semibold mb-2 ${
@@ -543,13 +579,13 @@ const AdvancedSearch: React.FC = () => {
                   <option value="danistay">Danıştay</option>
                   <option value="uyap">UYAP Emsal</option>
                 </select>
-              </div>
+          </div>
 
               <div className="relative">
                 <label className={`block text-sm font-semibold mb-2 ${
                   isDarkMode ? 'text-gray-300' : 'text-slate-700'
                 }`}>Tarih</label>
-                <input
+            <input
                   type="date"
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
@@ -675,6 +711,83 @@ const AdvancedSearch: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Yapay Zeka Analizi */}
+            {(isAnalyzing || showAiAnalysis) && (
+              <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-br from-purple-900/80 to-blue-900/80 border-purple-700/50' 
+                  : 'bg-gradient-to-br from-purple-50/80 to-blue-50/80 border-purple-200/50'
+              }`}>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-xl ${
+                      isDarkMode 
+                        ? 'bg-gradient-to-r from-purple-500 to-blue-500' 
+                        : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                    }`}>
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className={`text-2xl font-bold ${
+                        isDarkMode ? 'text-white' : 'text-slate-800'
+                      }`}>
+                        AI Hukuki Analiz
+                      </h3>
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                      }`}>
+                        Yapay zeka destekli sonuç değerlendirmesi
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAiAnalysis(false)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {isAnalyzing ? (
+                  <div className="text-center py-8">
+                    <div className="inline-flex items-center space-x-3">
+                      <div className="w-6 h-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                      <span className={`text-lg font-semibold ${
+                        isDarkMode ? 'text-white' : 'text-slate-800'
+                      }`}>
+                        AI analiz yapıyor...
+                      </span>
+                    </div>
+                    <p className={`mt-2 text-sm ${
+                      isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                    }`}>
+                      Sonuçlar analiz ediliyor ve öneriler hazırlanıyor
+                    </p>
+                  </div>
+                ) : (
+                  <div className={`prose prose-lg max-w-none ${
+                    isDarkMode 
+                      ? 'prose-invert text-gray-300' 
+                      : 'text-slate-700'
+                  }`}>
+                    <div className={`p-6 rounded-xl border ${
+                      isDarkMode 
+                        ? 'bg-gray-800/50 border-gray-700' 
+                        : 'bg-white/50 border-gray-200'
+                    }`}>
+                      <div className="whitespace-pre-wrap leading-relaxed">
+                        {aiAnalysis}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -697,7 +810,7 @@ const AdvancedSearch: React.FC = () => {
             }`}>
               Son hukuki gelişmeler ve önemli kararlar
             </p>
-          </div>
+        </div>
 
           <div className="space-y-6">
             {timelineData.map((item, index) => (
@@ -733,8 +846,8 @@ const AdvancedSearch: React.FC = () => {
                       }`}>
                         {item.importance === 'high' ? 'Yüksek Önem' :
                          item.importance === 'medium' ? 'Orta Önem' : 'Düşük Önem'}
-                      </span>
-                    </div>
+          </span>
+        </div>
 
                     <p className={`leading-relaxed mb-4 ${
                       isDarkMode ? 'text-gray-300' : 'text-slate-700'
@@ -810,7 +923,7 @@ const AdvancedSearch: React.FC = () => {
                   <span className="text-sm text-purple-100">Bu Ay</span>
                 </div>
               </div>
-            </div>
+          </div>
 
             {/* Recent Searches */}
             <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
@@ -832,21 +945,21 @@ const AdvancedSearch: React.FC = () => {
                       <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
                         {index + 1}
                       </div>
-                      <div>
+          <div>
                         <p className={`font-semibold ${
                           isDarkMode ? 'text-white' : 'text-slate-800'
                         }`}>{search.query}</p>
                         <p className={`text-sm ${
                           isDarkMode ? 'text-gray-400' : 'text-slate-600'
                         }`}>{search.type} • {search.date}</p>
-                      </div>
-                    </div>
+          </div>
+          </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-emerald-600">{search.results}</p>
                       <p className={`text-xs ${
                         isDarkMode ? 'text-gray-400' : 'text-slate-500'
                       }`}>sonuç</p>
-                    </div>
+      </div>
                   </div>
                 ))}
               </div>
@@ -894,7 +1007,7 @@ const AdvancedSearch: React.FC = () => {
                     : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 text-slate-800 placeholder-slate-400'
                 }`}
               />
-              <button
+                  <button
                 onClick={analyzeEmotion}
                 disabled={!emotionText.trim() || isAnalyzingEmotion}
                 className={`px-8 py-3 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -915,7 +1028,7 @@ const AdvancedSearch: React.FC = () => {
                   </>
                 )}
               </button>
-            </div>
+                      </div>
 
             {/* Results */}
             {emotionResults && (
@@ -948,16 +1061,16 @@ const AdvancedSearch: React.FC = () => {
                                 className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-1000"
                                 style={{ width: `${emotion.score * 100}%` }}
                               ></div>
-                            </div>
+                        </div>
                             <span className={`text-sm font-bold ${
                               isDarkMode ? 'text-gray-400' : 'text-slate-600'
                             }`}>
                               {Math.round(emotion.score * 100)}%
                             </span>
-                          </div>
-                        </div>
-                      ))}
+                      </div>
                     </div>
+                      ))}
+            </div>
                   </div>
 
                   {/* Sentiment */}
@@ -973,7 +1086,7 @@ const AdvancedSearch: React.FC = () => {
                       <div className="text-2xl font-bold mb-2">
                         {emotionResults.sentiment === 'positive' ? '😊 Pozitif' :
                          emotionResults.sentiment === 'negative' ? '😔 Negatif' : '😐 Nötr'}
-                      </div>
+                    </div>
                       <div className="text-sm">
                         Güven: %{Math.round(emotionResults.confidence * 100)}
                       </div>
@@ -991,7 +1104,7 @@ const AdvancedSearch: React.FC = () => {
                   }`}>
                     {emotionResults.insights}
                   </p>
-                </div>
+            </div>
               </div>
             )}
           </div>
@@ -1013,7 +1126,7 @@ const AdvancedSearch: React.FC = () => {
                 }`}>
                   Karar Detayları
                 </h2>
-                <button
+              <button
                   onClick={() => setShowResultDetail(false)}
                   className={`p-2 rounded-lg transition-colors ${
                     isDarkMode 
@@ -1022,9 +1135,9 @@ const AdvancedSearch: React.FC = () => {
                   }`}
                 >
                   <X className="w-6 h-6" />
-                </button>
-              </div>
+              </button>
             </div>
+        </div>
 
             <div className="p-6 space-y-6">
               <div>
@@ -1041,13 +1154,13 @@ const AdvancedSearch: React.FC = () => {
                       isDarkMode ? 'text-gray-400' : 'text-slate-600'
                     }`}>
                       Mahkeme
-                    </div>
+              </div>
                     <div className={`font-semibold ${
                       isDarkMode ? 'text-white' : 'text-slate-800'
                     }`}>
                       {selectedResult.courtName}
-                    </div>
-                  </div>
+              </div>
+            </div>
                   <div className={`p-4 rounded-lg ${
                     isDarkMode ? 'bg-gray-700/50' : 'bg-slate-50'
                   }`}>
@@ -1055,13 +1168,13 @@ const AdvancedSearch: React.FC = () => {
                       isDarkMode ? 'text-gray-400' : 'text-slate-600'
                     }`}>
                       Karar Tarihi
-                    </div>
+          </div>
                     <div className={`font-semibold ${
                       isDarkMode ? 'text-white' : 'text-slate-800'
                     }`}>
                       {selectedResult.decisionDate}
+              </div>
                     </div>
-                  </div>
                   <div className={`p-4 rounded-lg ${
                     isDarkMode ? 'bg-gray-700/50' : 'bg-slate-50'
                   }`}>
@@ -1069,7 +1182,7 @@ const AdvancedSearch: React.FC = () => {
                       isDarkMode ? 'text-gray-400' : 'text-slate-600'
                     }`}>
                       Dava Numarası
-                    </div>
+                      </div>
                     <div className={`font-semibold ${
                       isDarkMode ? 'text-white' : 'text-slate-800'
                     }`}>
@@ -1090,15 +1203,15 @@ const AdvancedSearch: React.FC = () => {
                       %{Math.round(selectedResult.relevanceScore * 100)}
                     </div>
                   </div>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               <div>
                 <h4 className={`text-lg font-semibold mb-3 ${
                   isDarkMode ? 'text-white' : 'text-slate-800'
                 }`}>
                   Karar İçeriği
-                </h4>
+                  </h4>
                 <div className={`p-6 rounded-lg border leading-relaxed ${
                   isDarkMode 
                     ? 'bg-gray-700/30 border-gray-600 text-gray-300' 
@@ -1116,18 +1229,18 @@ const AdvancedSearch: React.FC = () => {
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedResult.legalAreas.map((area, index) => (
-                    <span
-                      key={index}
+                        <span
+                          key={index}
                       className={`px-4 py-2 rounded-full text-sm font-medium border ${
                         isDarkMode 
                           ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/30' 
                           : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-blue-200'
                       }`}
-                    >
-                      {area}
-                    </span>
-                  ))}
-                </div>
+                        >
+                          {area}
+                        </span>
+                      ))}
+                    </div>
               </div>
 
               <div className="flex flex-wrap gap-3 pt-4">
@@ -1161,11 +1274,11 @@ const AdvancedSearch: React.FC = () => {
                   <Download className="w-4 h-4" />
                   <span>İndir</span>
                 </button>
-              </div>
+                    </div>
+                  </div>
+                </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
     </div>
   );
 };
