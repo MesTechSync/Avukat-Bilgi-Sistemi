@@ -822,13 +822,13 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
                                       </div>
                                     </div>
                                   ))}
-                                </div>
-                              </div>
+        </div>
+      </div>
                             )}
                           </div>
                         )}
-                      </div>
-                    )}
+                </div>
+              )}
 
                     {message.role === 'assistant' && (
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-600/50">
@@ -863,11 +863,11 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
                         <span className="text-xs text-gray-500">
                           {new Date(message.timestamp).toLocaleTimeString()}
                         </span>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              ))}
+              )}
+            </div>
+          </div>
+        ))}
               
               {/* Thinking Process */}
               {isThinking && (
@@ -885,14 +885,14 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
               )}
               
               <div ref={messagesEndRef} />
-            </div>
+      </div>
           )}
 
           {/* Input Alanı */}
           <div className="p-4 border-t border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
             <div className="max-w-4xl mx-auto">
               <div className="relative">
-                <textarea
+          <textarea 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}

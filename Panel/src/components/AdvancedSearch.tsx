@@ -192,14 +192,14 @@ const AdvancedSearch: React.FC = () => {
     setIsVoiceListening(true);
     setVoiceStatus('listening');
     setRecognizedText('');
-    startDictation();
+        startDictation();
   }, [startDictation]);
 
   // Sesli arama durdurma
   const stopVoiceSearch = useCallback(() => {
     setIsVoiceListening(false);
     setVoiceStatus('processing');
-    stopDictation();
+        stopDictation();
   }, [stopDictation]);
 
   // Duygu analizi
@@ -693,7 +693,7 @@ const AdvancedSearch: React.FC = () => {
                           }`}>
                             <Clock className="w-4 h-4" />
                             <span className="text-sm">Detayları görüntülemek için tıklayın</span>
-                          </div>
+          </div>
                           <div className={`flex items-center space-x-1 group-hover:transition-colors ${
                             isDarkMode 
                               ? 'text-cyan-400 group-hover:text-cyan-300' 
@@ -703,7 +703,7 @@ const AdvancedSearch: React.FC = () => {
                             <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                          </div>
+        </div>
                         </div>
                       </div>
                     </div>
@@ -741,7 +741,7 @@ const AdvancedSearch: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <button
+          <button
                     onClick={() => setShowAiAnalysis(false)}
                     className={`p-2 rounded-lg transition-colors ${
                       isDarkMode 
@@ -750,8 +750,8 @@ const AdvancedSearch: React.FC = () => {
                     }`}
                   >
                     <X className="w-5 h-5" />
-                  </button>
-                </div>
+          </button>
+        </div>
 
                 {isAnalyzing ? (
                   <div className="text-center py-8">
@@ -761,7 +761,7 @@ const AdvancedSearch: React.FC = () => {
                         isDarkMode ? 'text-white' : 'text-slate-800'
                       }`}>
                         AI analiz yapıyor...
-                      </span>
+          </span>
                     </div>
                     <p className={`mt-2 text-sm ${
                       isDarkMode ? 'text-purple-300' : 'text-purple-600'
@@ -785,8 +785,8 @@ const AdvancedSearch: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+          )}
+        </div>
             )}
           </div>
         </div>
@@ -810,7 +810,7 @@ const AdvancedSearch: React.FC = () => {
             }`}>
               Son hukuki gelişmeler ve önemli kararlar
             </p>
-        </div>
+          </div>
 
           <div className="space-y-6">
             {timelineData.map((item, index) => (
@@ -826,7 +826,7 @@ const AdvancedSearch: React.FC = () => {
                      item.type === 'court' ? <Gavel className="w-6 h-6 text-white" /> :
                      item.type === 'legislation' ? <FileText className="w-6 h-6 text-white" /> :
                      <Scale className="w-6 h-6 text-white" />}
-                  </div>
+          </div>
 
                   <div className={`ml-6 flex-1 backdrop-blur-sm border rounded-xl p-6 ${
                     isDarkMode 
@@ -847,7 +847,7 @@ const AdvancedSearch: React.FC = () => {
                         {item.importance === 'high' ? 'Yüksek Önem' :
                          item.importance === 'medium' ? 'Orta Önem' : 'Düşük Önem'}
           </span>
-        </div>
+          </div>
 
                     <p className={`leading-relaxed mb-4 ${
                       isDarkMode ? 'text-gray-300' : 'text-slate-700'
@@ -877,8 +877,8 @@ const AdvancedSearch: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
@@ -898,7 +898,7 @@ const AdvancedSearch: React.FC = () => {
             }`}>
               Arama trendleri ve istatistikler
             </p>
-          </div>
+      </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Trend Analysis */}

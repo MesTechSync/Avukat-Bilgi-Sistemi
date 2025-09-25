@@ -733,7 +733,7 @@ export default function NotebookLLM() {
                   <Image className="w-4 h-4" />
                 </button>
               </div>
-            </div>
+          </div>
           <label
             htmlFor="nbllm-files"
             onDrop={onDrop}

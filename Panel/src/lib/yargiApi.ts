@@ -101,34 +101,6 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
 }
 
 // UYAP HTML sonuçlarını parse etme
-      'Tarih': '',
-      'Sıralama': 'Karar Tarihine Göre'
-    };
-
-    const response = await fetch(`${CORS_PROXY}${encodeURIComponent(UYAP_SEARCH_URL)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      body: new URLSearchParams(searchData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`UYAP Emsal API hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    return parseUyapResults(html, query);
-  } catch (error) {
-    console.error('UYAP Emsal gerçek API hatası:', error);
-    // Fallback olarak simüle edilmiş veri döndür
-    return generateSimulatedUyapResults(query, filters);
-  }
-}
-
-// UYAP HTML sonuçlarını parse etme
 function parseUyapResults(html: string, query: string): IctihatResultItem[] {
   const results: IctihatResultItem[] = [];
   

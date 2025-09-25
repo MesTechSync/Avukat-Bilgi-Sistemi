@@ -454,8 +454,8 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                     <option value="alphabetical">Alfabetik</option>
                   </select>
                 </div>
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Templates Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -472,7 +472,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                       </h3>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs">
-                          {template.category}
+                        {template.category}
                         </span>
                         <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
                           {template.subcategory}
@@ -486,8 +486,8 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-                    {template.description}
-                  </p>
+                        {template.description}
+                      </p>
 
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
                     <div className="flex items-center gap-3">
@@ -541,15 +541,15 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
         {activeTab === 'ai-create' && (
           <div className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     AI ile Sıfırdan Sözleşme Oluştur
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                     Yapay zeka ile özel sözleşmenizi oluşturun
-                  </p>
-                </div>
+                </p>
+              </div>
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">
                     AI Destekli
@@ -681,13 +681,13 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                     </>
                   )}
                 </button>
-                <button
+              <button
                   onClick={() => setActiveTab('templates')}
                   className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
+              >
                   Geri
-                </button>
-              </div>
+              </button>
+            </div>
             </div>
           </div>
         )}
@@ -720,10 +720,10 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                       {field.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
                     {field.type === 'textarea' ? (
-                      <textarea
+                        <textarea
                         value={field.value}
                         onChange={(e) => updateFieldValue(field.id, e.target.value)}
-                        placeholder={field.placeholder}
+                          placeholder={field.placeholder}
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                       />
@@ -749,7 +749,7 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                     )}
                   </div>
                 ))}
-              </div>
+            </div>
 
               {/* AI Önerileri */}
               {aiSuggestions.length > 0 && (
@@ -766,10 +766,10 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                         <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                         <span>{suggestion}</span>
                       </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
               {isGeneratingSuggestions && (
                 <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -781,31 +781,31 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
               )}
 
               <div className="mt-8 flex gap-4">
-                <button
-                  onClick={generateContract}
+              <button
+                onClick={generateContract}
                   disabled={isGenerating || formFields.some(field => field.required && !field.value.trim())}
                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {isGenerating ? (
+              >
+                {isGenerating ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Oluşturuluyor...
                     </>
-                  ) : (
+                ) : (
                     <>
                       <Wand2 className="w-4 h-4" />
                       AI ile Oluştur
                     </>
-                  )}
-                </button>
-                <button
+                )}
+              </button>
+              <button
                   onClick={() => setActiveTab('templates')}
-                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
                   Geri
-                </button>
-              </div>
+              </button>
             </div>
+                </div>
           </div>
         )}
 
@@ -814,37 +814,37 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
           <div className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
-                <div>
+          <div>
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     Sözleşme Önizleme
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                     {generatedContract.metadata.wordCount} kelime • {new Date(generatedContract.metadata.generatedAt).toLocaleString('tr-TR')}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={copyToClipboard}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <Copy className="w-4 h-4" />
-                    Kopyala
-                  </button>
-                  <button
-                    onClick={downloadContract}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    İndir
-                  </button>
-                </div>
+                </p>
               </div>
-
+              <div className="flex gap-2">
+                <button
+                  onClick={copyToClipboard}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Kopyala
+                </button>
+                <button
+                  onClick={downloadContract}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  İndir
+                </button>
+              </div>
+            </div>
+            
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                   {generatedContract.content}
-                </pre>
-              </div>
+              </pre>
+            </div>
 
               <div className="mt-6 flex gap-4">
                 <button
@@ -860,9 +860,9 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
                   Yeni Şablon
                 </button>
               </div>
-            </div>
-          </div>
-        )}
+                </div>
+              </div>
+            )}
 
         {/* Empty State */}
         {activeTab === 'create' && !selectedTemplate && (

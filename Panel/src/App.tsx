@@ -174,15 +174,15 @@ function App() {
 
   const menuItems = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: BarChart3, color: 'text-blue-600' },
-    { id: 'ai-chat', label: 'Hukuk Asistanı', icon: Bot, color: 'text-purple-600', badge: 'BETA' },
-    { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
+  { id: 'ai-chat', label: 'Hukuk Asistanı', icon: Bot, color: 'text-purple-600', badge: 'BETA' },
+  { id: 'search', label: 'İçtihat & Mevzuat', icon: Search, color: 'text-green-600', badge: 'AI' },
     
     // 🚀 Benzersiz Efsane Özellikler - Artık İçtihat & Mevzuat içinde
     
     { id: 'petition-writer', label: 'Dilekçe Yazım', icon: FileText, color: 'text-orange-600', badge: 'AI' },
     { id: 'contract-generator', label: 'Sözleşme Oluştur', icon: Building, color: 'text-indigo-600', badge: 'YENİ' },
-    { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
-    { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
+  { id: 'notebook-llm', label: 'Notebook LLM', icon: Bot, color: 'text-fuchsia-600', badge: 'BETA' },
+  { id: 'file-converter', label: 'Dosya Dönüştürücü', icon: FileText, color: 'text-teal-600', badge: 'YENİ' },
     { id: 'cases', label: 'Dava Yönetimi', icon: Gavel, color: 'text-red-600' },
     { id: 'clients', label: 'Müvekkil Yönetimi', icon: Users, color: 'text-blue-500' },
     { id: 'appointments', label: 'Randevu Yönetimi', icon: Calendar, color: 'text-purple-500' },
