@@ -601,8 +601,11 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
         "Referer": "https://karararama.yargitay.gov.tr/",
+        "Origin": "https://karararama.yargitay.gov.tr",
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+        "X-Requested-With": "XMLHttpRequest",
         "Connection": "keep-alive",
+        "Cache-Control": "no-cache",
     }
     logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
     timeout = httpx.Timeout(30.0, connect=10.0)
@@ -640,7 +643,7 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
                 }
                 if token:
                     form["__RequestVerificationToken"] = token
-                post_headers = headers | {"Content-Type": "application/x-www-form-urlencoded"}
+                post_headers = headers | {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
                 logger.debug(f"🌐 Yargıtay POST denemesi: {form}")
                 r = await client.post(target_url, data=form, headers=post_headers)
             logger.debug(f"📥 Yargıtay yanıt durum kodu: {r.status_code}")
@@ -685,8 +688,11 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
         "Referer": "https://emsal.uyap.gov.tr/",
+        "Origin": "https://emsal.uyap.gov.tr",
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+        "X-Requested-With": "XMLHttpRequest",
         "Connection": "keep-alive",
+        "Cache-Control": "no-cache",
     }
     logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
     timeout = httpx.Timeout(30.0, connect=10.0)
@@ -711,7 +717,7 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
                     "sayfa": str(req.page or 1)
                 }
                 logger.debug(f"🌐 UYAP POST denemesi: {form}")
-                r = await client.post(target_url, data=form, headers={"Content-Type": "application/x-www-form-urlencoded", **headers})
+                r = await client.post(target_url, data=form, headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", **headers})
             logger.debug(f"📥 UYAP yanıt durum kodu: {r.status_code}")
             
             if r.status_code != 200:
