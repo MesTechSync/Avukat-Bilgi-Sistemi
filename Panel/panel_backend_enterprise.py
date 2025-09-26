@@ -12,6 +12,7 @@ import json
 import logging
 import time
 import uuid
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -603,23 +604,32 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
         "Origin": "https://karararama.yargitay.gov.tr",
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    form = {
-        "q": req.query,
-        "court": req.courtType or "all",
-        "dateFrom": req.fromISO or "",
-        "dateTo": req.toISO or "",
-    }
-    if req.page and req.page > 1:
-        form["sayfa"] = str(req.page)
-        form["page"] = str(req.page)
-    
     logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
-    logger.debug(f"📤 Gönderilen form verisi: {form}")
-    
-    timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
+    timeout = httpx.Timeout(30.0, connect=10.0)
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
-            logger.debug(f"🌐 Yargıtay sitesine POST isteği yapılıyor: {target_url}")
+            logger.debug("🌐 Yargıtay sitesine başlangıç GET isteği yapılıyor")
+            initial_resp = await client.get(target_url)
+            initial_resp.raise_for_status()
+            token = None
+            match = re.search(r'name="__RequestVerificationToken"\s+type="hidden"\s+value="([^"']+)"', initial_resp.text)
+            if match:
+                token = match.group(1)
+                logger.debug("🔐 __RequestVerificationToken bulundu")
+            else:
+                logger.warning("⚠️ __RequestVerificationToken bulunamadı")
+
+            form = {
+                "q": req.query,
+                "court": req.courtType or "all",
+                "dateFrom": req.fromISO or "",
+                "dateTo": req.toISO or "",
+                "sayfa": str(req.page or 1)
+            }
+            if token:
+                form["__RequestVerificationToken"] = token
+
+            logger.debug(f"🌐 Yargıtay sitesine POST isteği yapılıyor: {target_url} -> {form}")
             r = await client.post(target_url, data=form)
             logger.debug(f"📥 Yargıtay yanıt durum kodu: {r.status_code}")
             
@@ -666,24 +676,20 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
         "Origin": "https://emsal.uyap.gov.tr",
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    form = {
-        "Aranacak Kelime": req.query,
-        "BİRİMLER": req.courtType or "",
-        "Esas Numarası": "",
-        "Karar Numarası": "",
-        "Tarih": "",
-        "Sıralama": "Karar Tarihine Göre",
-    }
-    if req.page and req.page > 1:
-        form["sayfa"] = str(req.page)
-    
     logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
-    logger.debug(f"📤 Gönderilen form verisi: {form}")
-    
-    timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
+    timeout = httpx.Timeout(30.0, connect=10.0)
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
-            logger.debug(f"🌐 UYAP sitesine POST isteği yapılıyor: {target_url}")
+            form = {
+                "Aranacak Kelime": req.query,
+                "BİRİMLER": req.courtType or "",
+                "Esas Numarası": "",
+                "Karar Numarası": "",
+                "Tarih": "",
+                "Sıralama": "Karar Tarihine Göre",
+                "sayfa": str(req.page or 1)
+            }
+            logger.debug(f"🌐 UYAP sitesine POST isteği yapılıyor: {target_url} -> {form}")
             r = await client.post(target_url, data=form)
             logger.debug(f"📥 UYAP yanıt durum kodu: {r.status_code}")
             
