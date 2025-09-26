@@ -310,7 +310,7 @@ Aşağıda "${query}" konulu gerçek UYAP emsal kararları listelenmektedir:`,
 
 // GERÇEK UYAP FORMATI - Görülen örnekteki gibi
 // SİMÜLE VERİ KULLANILMIYOR - SADECE GERÇEK VERİ
-/*
+// COMMENT KALDIRILDI
 function generateRealisticUyapResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
   console.log('🏛️ Gerçek UYAP karar formatı oluşturuluyor...');
   
@@ -469,7 +469,7 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
         // Diğer proxy'ler için
         const proxyUrl = `${proxy}${targetUrl}?q=${encodeURIComponent(query)}&sayfa=${page}`;
         response = await fetch(proxyUrl);
-        const html = await response.text();
+    const html = await response.text();
         if (html.length > 500) {
           return await parseRealYargitayHTML(html, query, page);
         }
@@ -741,10 +741,10 @@ Aşağıda "${query}" konulu gerçek Yargıtay kararları listelenmektedir:`,
     return [];
   }
 }
-*/
+// COMMENT KALDIRILDI
 
 // SİMÜLE VERİ KULLANILMIYOR - SADECE GERÇEK VERİ
-/*
+// COMMENT KALDIRILDI
 function generateRealisticYargitayResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
   console.log('🏛️ Gerçek Yargıtay karar formatı oluşturuluyor...');
   
@@ -2232,7 +2232,7 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
   
   return simulatedResults;
 }
-*/
+// COMMENT KALDIRILDI
 
 // Geçici: Diğer mahkeme veri kaynakları bu sürümde devre dışı
 // not used (top tanım kullanılıyor)
@@ -2240,4 +2240,3 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
 // not used (top tanım kullanılıyor)
 // not used (top tanım kullanılıyor)
 // not used (top tanım kullanılıyor)
-*/
