@@ -590,6 +590,7 @@ class ProxyYargitayRequest(CompatBaseModel):
     courtType: str | None = None
     fromISO: str | None = None
     toISO: str | None = None
+    page: int | None = None
 
 @app.post("/api/proxy/yargitay_html", tags=["Proxy"])
 async def proxy_yargitay_html(req: ProxyYargitayRequest):
@@ -600,22 +601,27 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
         "Referer": "https://karararama.yargitay.gov.tr/",
         "Origin": "https://karararama.yargitay.gov.tr",
+        "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    form = {
+    params = {
         "q": req.query,
         "court": req.courtType or "all",
-        "dateFrom": req.fromISO or "",
-        "dateTo": req.toISO or "",
     }
+    if (req.fromISO or ""):
+        params["dateFrom"] = req.fromISO or ""
+    if (req.toISO or ""):
+        params["dateTo"] = req.toISO or ""
+    if req.page and req.page > 1:
+        params["sayfa"] = str(req.page)
     
-    logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}'")
-    logger.debug(f"📤 Gönderilen form verisi: {form}")
+    logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
+    logger.debug(f"📤 Gönderilen URL parametreleri: {params}")
     
     timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
-            logger.debug(f"🌐 Yargıtay sitesine POST isteği yapılıyor: {target_url}")
-            r = await client.post(target_url, data=form)
+            logger.debug(f"🌐 Yargıtay sitesine GET isteği yapılıyor: {target_url}")
+            r = await client.get(target_url, params=params)
             logger.debug(f"📥 Yargıtay yanıt durum kodu: {r.status_code}")
             
             if r.status_code != 200:
@@ -648,6 +654,7 @@ class ProxyUyapRequest(CompatBaseModel):
     courtType: str | None = None
     fromISO: str | None = None
     toISO: str | None = None
+    page: int | None = None
 
 @app.post("/api/proxy/uyap_html", tags=["Proxy"])
 async def proxy_uyap_html(req: ProxyUyapRequest):
@@ -658,24 +665,23 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
         "Referer": "https://emsal.uyap.gov.tr/",
         "Origin": "https://emsal.uyap.gov.tr",
+        "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    form = {
+    params = {
         "Aranacak Kelime": req.query,
-        "BİRİMLER": req.courtType or "",
-        "Esas Numarası": "",
-        "Karar Numarası": "",
-        "Tarih": "",
         "Sıralama": "Karar Tarihine Göre",
     }
+    if req.page and req.page > 1:
+        params["sayfa"] = str(req.page)
     
-    logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}'")
-    logger.debug(f"📤 Gönderilen form verisi: {form}")
+    logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
+    logger.debug(f"📤 Gönderilen URL parametreleri: {params}")
     
     timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
-            logger.debug(f"🌐 UYAP sitesine POST isteği yapılıyor: {target_url}")
-            r = await client.post(target_url, data=form)
+            logger.debug(f"🌐 UYAP sitesine GET isteği yapılıyor: {target_url}")
+            r = await client.get(target_url, params=params)
             logger.debug(f"📥 UYAP yanıt durum kodu: {r.status_code}")
             
             if r.status_code != 200:

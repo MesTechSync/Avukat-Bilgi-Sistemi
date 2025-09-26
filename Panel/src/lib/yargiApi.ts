@@ -5,69 +5,25 @@
 
 // GERÇEK UYAP SİTESİNDEN SAYFALAMA İLE VERİ ÇEKME
 export async function searchUyapEmsal(query: string, filters?: IctihatFilters, page: number = 1): Promise<IctihatResultItem[]> {
-  console.log(`🌐 Gerçek UYAP sitesine bağlanılıyor (Sayfa: ${page})...`);
-  
+  console.log(`🌐 Backend proxy ile UYAP (Sayfa: ${page})...`);
   try {
-    // Farklı proxy servisleri dene
-    const proxies = [
-      'https://api.allorigins.win/get?url=',
-      'https://corsproxy.io/?',
-  'https://cors-anywhere.herokuapp.com/',
-      'https://proxy.cors.sh/'
-    ];
-    
-    // UYAP arama URL'si - sayfa parametresi ile
-    let uyapUrl = `https://emsal.uyap.gov.tr/karar-arama?Aranacak%20Kelime=${encodeURIComponent(query)}&Siralama=Karar%20Tarihine%20Göre`;
-    if (page > 1) {
-      uyapUrl += `&sayfa=${page}`;
+    const base = getBackendBase() || BASE_URL || '';
+    const url = `${base.replace(/\/$/, '')}/api/proxy/uyap_html`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, courtType: '', fromISO: '', toISO: '', page })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Backend UYAP proxy hata: ${res.status} - ${text.slice(0,200)}`);
     }
-    
-    console.log(`🔗 UYAP URL: ${uyapUrl}`);
-    
-    for (let i = 0; i < proxies.length; i++) {
-      try {
-        console.log(`🔄 UYAP Proxy ${i+1}/${proxies.length} deneniyor (Sayfa ${page})...`);
-        
-        const proxyUrl = proxies[i] + encodeURIComponent(uyapUrl);
-      const response = await fetch(proxyUrl, {
-          method: 'GET',
-        headers: {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (response.ok) {
-          let htmlData;
-          
-          if (proxies[i].includes('allorigins')) {
-            const data = await response.json();
-            htmlData = data.contents;
-      } else {
-            htmlData = await response.text();
-          }
-          
-          console.log(`✅ UYAP Proxy başarılı! HTML alındı: ${htmlData.length} karakter (Sayfa ${page})`);
-          
-          // Gerçek UYAP kararlarını parse et
-          const results = await parseRealUyapHTML(htmlData, query, page);
-          console.log(`📊 UYAP Parse edilen sonuç: ${results.length} karar (Sayfa ${page})`);
-          
-          if (results.length > 0) {
-            return results;
-          }
-        }
-      } catch (proxyError) {
-        console.log(`❌ UYAP Proxy ${i+1} başarısız (Sayfa ${page}):`, proxyError);
-      }
-    }
-    
-    console.log(`⚠️ Tüm UYAP proxy'leri başarısız (Sayfa ${page}), varsayılan veri döndürülüyor`);
-    return generateRealisticUyapResults(query, filters, page);
-    
-    } catch (error) {
-    console.error(`❌ UYAP bağlantı hatası (Sayfa ${page}):`, error);
-    return generateRealisticUyapResults(query, filters, page);
+    const data = await res.json();
+    if (!data?.html) throw new Error('Backend UYAP boş HTML döndü');
+    return await parseRealUyapHTML(data.html, query, page);
+  } catch (e) {
+    console.error('❌ Backend UYAP proxy hatası:', e);
+    throw e;
   }
 }
 
@@ -459,69 +415,25 @@ UYAP Sistemi - Adalet Bakanlığı`;
 
 // GERÇEK YARGITAY SİTESİNDEN SAYFALAMA İLE VERİ ÇEKME
 export async function searchYargitayReal(query: string, filters?: IctihatFilters, page: number = 1): Promise<IctihatResultItem[]> {
-  console.log(`🌐 Gerçek Yargıtay sitesine bağlanılıyor (Sayfa: ${page})...`);
-  
+  console.log(`🌐 Backend proxy ile Yargıtay (Sayfa: ${page})...`);
   try {
-    // Farklı proxy servisleri dene
-    const proxies = [
-      'https://api.allorigins.win/get?url=',
-      'https://corsproxy.io/?',
-      'https://cors-anywhere.herokuapp.com/',
-      'https://proxy.cors.sh/'
-    ];
-    
-    // Yargıtay arama URL'si - sayfa parametresi ile
-    let yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/?q=${encodeURIComponent(query)}&court=all&dateFrom=&dateTo=`;
-    if (page > 1) {
-      yargitayUrl += `&sayfa=${page}`;
+    const base = getBackendBase() || BASE_URL || '';
+    const url = `${base.replace(/\/$/, '')}/api/proxy/yargitay_html`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, courtType: 'all', fromISO: '', toISO: '', page })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Backend Yargıtay proxy hata: ${res.status} - ${text.slice(0,200)}`);
     }
-    
-    console.log(`🔗 Yargıtay URL: ${yargitayUrl}`);
-    
-    for (let i = 0; i < proxies.length; i++) {
-      try {
-        console.log(`🔄 Yargıtay Proxy ${i+1}/${proxies.length} deneniyor (Sayfa ${page})...`);
-        
-        const proxyUrl = proxies[i] + encodeURIComponent(yargitayUrl);
-        const response = await fetch(proxyUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (response.ok) {
-          let htmlData;
-          
-          if (proxies[i].includes('allorigins')) {
-            const data = await response.json();
-            htmlData = data.contents;
-          } else {
-            htmlData = await response.text();
-          }
-          
-          console.log(`✅ Yargıtay Proxy başarılı! HTML alındı: ${htmlData.length} karakter (Sayfa ${page})`);
-          
-          // Gerçek Yargıtay kararlarını parse et
-          const results = await parseRealYargitayHTML(htmlData, query, page);
-          console.log(`📊 Yargıtay Parse edilen sonuç: ${results.length} karar (Sayfa ${page})`);
-          
-          if (results.length > 0) {
-    return results;
-          }
-        }
-      } catch (proxyError) {
-        console.log(`❌ Yargıtay Proxy ${i+1} başarısız (Sayfa ${page}):`, proxyError);
-      }
-    }
-    
-    console.log(`⚠️ Tüm Yargıtay proxy'leri başarısız (Sayfa ${page}), varsayılan veri döndürülüyor`);
-    return generateRealisticYargitayResults(query, filters, page);
-    
-  } catch (error) {
-    console.error(`❌ Yargıtay bağlantı hatası (Sayfa ${page}):`, error);
-    return generateRealisticYargitayResults(query, filters, page);
+    const data = await res.json();
+    if (!data?.html) throw new Error('Backend Yargıtay boş HTML döndü');
+    return await parseRealYargitayHTML(data.html, query, page);
+  } catch (e) {
+    console.error('❌ Backend Yargıtay proxy hatası:', e);
+    throw e;
   }
 }
 
@@ -568,8 +480,8 @@ export async function searchYargitayRealMultiPage(query: string, filters?: Ictih
       if (page < maxPages) {
         await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 500));
       }
-      
-    } catch (error) {
+    
+  } catch (error) {
       console.error(`❌ Yargıtay Sayfa ${page} hatası:`, error);
       break;
     }
@@ -661,7 +573,7 @@ async function parseRealYargitayHTML(html: string, query: string, page: number =
         
         console.log(`📄 Yargıtay Karar ${foundCount} (Sayfa ${page}): ${daire} - ${esas}/${karar}`);
         
-        results.push({
+          results.push({
           id: `real-yargitay-p${page}-${foundCount}`,
           title: `${daire} - ${esas}/${karar}`,
           court: daire,
@@ -786,8 +698,8 @@ Aşağıda "${query}" konulu gerçek Yargıtay kararları listelenmektedir:`,
 function generateRealisticYargitayResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
   console.log('🏛️ Gerçek Yargıtay karar formatı oluşturuluyor...');
   
-  // Gerçek Yargıtay daire isimleri (görselden)
-  const gercekDaireler = [
+  // Gerçek Yargıtay dairelerini taklit eden simüle veriler
+  const daireler = [
     "Hukuk Genel Kurulu",
     "19. Hukuk Dairesi", 
     "3. Hukuk Dairesi",
@@ -842,7 +754,7 @@ Kaynak: karararama.yargitay.gov.tr`,
   ];
   
   for (let i = 0; i < 25; i++) {
-    const daire = gercekDaireler[i % gercekDaireler.length];
+    const daire = daireler[i % daireler.length];
     const esasYil = 2008 + (i % 15);
     const esasSira = 10 + i;
     const kararYil = esasYil + (i % 2);
@@ -1182,7 +1094,8 @@ export async function searchMevzuatReal(query: string, filters?: MevzuatFilters)
       'dateTo': filters?.dateRange?.to || ''
     };
 
-    const response = await fetch(`${CORS_PROXIES[0]}${MEVZUAT_SEARCH_URL}`, {
+    // Not: Mevzuat doğrudan desteklenmiyor; backend proxy eklendiğinde burası güncellenecek
+    const response = await fetch(`${MEVZUAT_SEARCH_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -1367,12 +1280,12 @@ const ENV: any = (import.meta as any).env || {};
 // Development için localhost:8001, production için otomatik
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 export const BASE_URL = isDev 
-  ? 'http://localhost:8001' 
+  ? 'http://localhost:9000' 
   : (ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || '');
 
 // Absolute backend base for diagnostics/pings, bypassing dev middleware
 export function getBackendBase(): string {
-  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || 'http://localhost:8000';
+  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || 'http://localhost:9000';
 }
 
 
@@ -1499,190 +1412,22 @@ bu sistemler üzerinden erişilebilir.`,
 }
 
 // Gerçek Danıştay verisi çekme
-async function fetchRealDanistayData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek Danıştay sitesinden veri çekiliyor...');
-    
-    const danistayUrl = `https://www.danistay.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${danistayUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Danıştay sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealDanistayResults(html, query);
-    
-    console.log('✅ Gerçek Danıştay verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek Danıştay veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealDanistayData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Gerçek AYM verisi çekme
-async function fetchRealAymData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek AYM sitesinden veri çekiliyor...');
-    
-    const aymUrl = `https://www.anayasa.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${aymUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`AYM sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealAymResults(html, query);
-    
-    console.log('✅ Gerçek AYM verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek AYM veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealAymData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Gerçek Sayıştay verisi çekme
-async function fetchRealSayistayData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek Sayıştay sitesinden veri çekiliyor...');
-    
-    const sayistayUrl = `https://www.sayistay.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${sayistayUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Sayıştay sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealSayistayResults(html, query);
-    
-    console.log('✅ Gerçek Sayıştay verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek Sayıştay veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealSayistayData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Gerçek İstinaf verisi çekme
-async function fetchRealIstinafData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek İstinaf sitesinden veri çekiliyor...');
-    
-    const istinafUrl = `https://www.istinaf.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${istinafUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`İstinaf sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealIstinafResults(html, query);
-    
-    console.log('✅ Gerçek İstinaf verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek İstinaf veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealIstinafData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Gerçek Hukuk Mahkemeleri verisi çekme
-async function fetchRealHukukData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek Hukuk Mahkemeleri sitesinden veri çekiliyor...');
-    
-    const hukukUrl = `https://www.hukuk.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${hukukUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Hukuk Mahkemeleri sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealHukukResults(html, query);
-    
-    console.log('✅ Gerçek Hukuk Mahkemeleri verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek Hukuk Mahkemeleri veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealHukukData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Gerçek BAM verisi çekme
-async function fetchRealBamData(query: string, _filters?: IctihatFilters): Promise<IctihatResultItem[]> {
-  try {
-    console.log('🌐 Gerçek BAM sitesinden veri çekiliyor...');
-    
-    const bamUrl = `https://www.bam.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
-    
-    const response = await fetchWithProxy(`${bamUrl}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`BAM sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealBamResults(html, query);
-    
-    console.log('✅ Gerçek BAM verisi başarılı:', results.length, 'sonuç');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Gerçek BAM veri çekme hatası:', error);
-    return [];
-  }
-}
+async function fetchRealBamData(_q: string, _f?: IctihatFilters): Promise<IctihatResultItem[]> { return []; }
 
 // Parse fonksiyonları
 function parseRealDanistayResults(html: string, query: string): IctihatResultItem[] {
@@ -2450,3 +2195,11 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
   
   return simulatedResults;
 }
+
+// Geçici: Diğer mahkeme veri kaynakları bu sürümde devre dışı
+async function fetchRealDanistayData(_q: string, _f?: IctihatFilters) { return []; }
+async function fetchRealAymData(_q: string, _f?: IctihatFilters) { return []; }
+async function fetchRealSayistayData(_q: string, _f?: IctihatFilters) { return []; }
+async function fetchRealIstinafData(_q: string, _f?: IctihatFilters) { return []; }
+async function fetchRealHukukData(_q: string, _f?: IctihatFilters) { return []; }
+async function fetchRealBamData(_q: string, _f?: IctihatFilters) { return []; }
