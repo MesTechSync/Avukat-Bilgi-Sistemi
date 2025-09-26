@@ -1212,7 +1212,7 @@ const AdvancedSearch: React.FC = () => {
                 }`}>
                   Karar İçeriği
                   </h4>
-                <div className={`p-6 rounded-lg border leading-relaxed ${
+                <div className={`p-6 rounded-lg border leading-relaxed whitespace-pre-line ${
                   isDarkMode 
                     ? 'bg-gray-700/30 border-gray-600 text-gray-300' 
                     : 'bg-slate-50 border-slate-200 text-slate-700'
