@@ -94,7 +94,12 @@ Lütfen talimatı takip ederek Türkçe yanıt ver, Türk hukuk sistemine uygun 
     const message = context || instruction;
     const messageLower = message.toLowerCase();
 
-    // Dilekçe türü tespit et
+    // Boşanma dilekçesi yazma
+    if (messageLower.includes('boşanma') && (messageLower.includes('yaz') || messageLower.includes('hazırla') || messageLower.includes('oluştur'))) {
+      return this.generateDivorcePetition(message);
+    }
+
+    // Boşanma dilekçesi bilgi isteme
     if (messageLower.includes('boşanma')) {
       return `Boşanma dilekçesi için gerekli bilgiler:
 
@@ -108,6 +113,12 @@ Lütfen talimatı takip ederek Türkçe yanıt ver, Türk hukuk sistemine uygun 
 Bu bilgileri aldıktan sonra size profesyonel bir boşanma dilekçesi hazırlayabilirim. Lütfen bu bilgileri paylaşın.`;
     }
 
+    // İcra takibi itiraz dilekçesi yazma
+    if ((messageLower.includes('icra') || messageLower.includes('takip')) && (messageLower.includes('yaz') || messageLower.includes('hazırla') || messageLower.includes('oluştur'))) {
+      return this.generateExecutionObjectionPetition(message);
+    }
+
+    // İcra takibi itiraz dilekçesi bilgi isteme
     if (messageLower.includes('icra') || messageLower.includes('takip')) {
       return `İcra takibi itiraz dilekçesi için gerekli bilgiler:
 
@@ -121,6 +132,12 @@ Bu bilgileri aldıktan sonra size profesyonel bir boşanma dilekçesi hazırlaya
 Bu bilgileri aldıktan sonra size profesyonel bir itiraz dilekçesi hazırlayabilirim. Lütfen bu bilgileri paylaşın.`;
     }
 
+    // Tazminat davası dilekçesi yazma
+    if (messageLower.includes('tazminat') && (messageLower.includes('yaz') || messageLower.includes('hazırla') || messageLower.includes('oluştur'))) {
+      return this.generateCompensationPetition(message);
+    }
+
+    // Tazminat davası dilekçesi bilgi isteme
     if (messageLower.includes('tazminat')) {
       return `Tazminat davası dilekçesi için gerekli bilgiler:
 
@@ -173,6 +190,146 @@ Hangi tür dilekçe yazmak istiyorsunuz? Size yardımcı olabileceğim konular:
 • **Diğer** - Diğer hukuki konular
 
 Lütfen ihtiyacınızı açıklayın, size adım adım yardımcı olayım.`;
+  }
+
+  // Boşanma dilekçesi oluştur
+  private generateDivorcePetition(message: string): string {
+    return `T.C.
+ANTAKYA AİLE MAHKEMESİ
+
+DAVACI: [Davacı Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Davacı Adresi]
+
+DAVALI: [Davalı Adı Soyadı]  
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Davalı Adresi]
+
+KONU: Anlaşmalı Boşanma Davası
+
+DEĞERLİ MAHKEMEMİZ,
+
+1. Davacı ile davalı arasında [Evlilik Tarihi] tarihinde [Evlilik Yeri]'nde evlilik akdi yapılmıştır.
+
+2. Taraflar arasında evlilik birliği kurulmuş olup, evlilik süresince [Çocuk Durumu] çocuk dünyaya gelmiştir.
+
+3. Taraflar arasında evlilik birliğinin temelinden sarsılmasına neden olan olaylar yaşanmış ve taraflar arasındaki sevgi, saygı ve güven ortamı tamamen yok olmuştur.
+
+4. Taraflar, evlilik birliğinin devamının mümkün olmadığını kabul etmekte ve anlaşmalı boşanma konusunda mutabık kalmışlardır.
+
+5. Taraflar arasında mal rejimi olarak [Mal Rejimi] uygulanmaktadır.
+
+6. Çocukların velayeti, nafakası ve kişisel ilişki düzenlenmesi konularında taraflar anlaşmışlardır.
+
+HUKUKİ DAYANAK:
+- 4721 sayılı Türk Medeni Kanunu'nun 166. maddesi
+- 4721 sayılı Türk Medeni Kanunu'nun 182. maddesi
+
+TALEP:
+Yukarıda açıklanan nedenlerle, taraflar arasındaki evlilik birliğinin anlaşmalı boşanma ile sona erdirilmesini saygılarımla talep ederim.
+
+EK: 1. Nüfus kayıt örneği
+2. Evlilik cüzdanı
+3. Çocukların nüfus kayıt örnekleri
+4. Mal rejimi sözleşmesi (varsa)
+
+[İmza]
+[Davacı Adı Soyadı]
+[Tarih]`;
+  }
+
+  // İcra takibi itiraz dilekçesi oluştur
+  private generateExecutionObjectionPetition(message: string): string {
+    return `T.C.
+ANTAKYA İCRA DAİRESİ
+
+İTİRAZ EDEN: [Borçlu Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Borçlu Adresi]
+
+ALACAKLI: [Alacaklı Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Alacaklı Adresi]
+
+İCRA DOSYA NO: [İcra Dosya No]
+
+KONU: İcra Takibine İtiraz
+
+DEĞERLİ İCRA DAİRESİ,
+
+1. Yukarıda kimlik bilgileri yazılı alacaklı tarafından, aleyhimde [İcra Dosya No] sayılı icra takibi başlatılmıştır.
+
+2. İcra takibinde [Borç Miktarı] TL tutarında alacak iddia edilmektedir.
+
+3. Ancak, icra takibinde iddia edilen alacak hukuki dayanağından yoksundur ve [İtiraz Sebebi] nedeniyle geçersizdir.
+
+4. [İtiraz Sebebi Detayı] nedeniyle icra takibinin iptali gerekmektedir.
+
+5. İcra takibinde iddia edilen alacak için zamanaşımı süresi dolmuştur.
+
+HUKUKİ DAYANAK:
+- 2004 sayılı İcra ve İflas Kanunu'nun 67. maddesi
+- 6098 sayılı Türk Borçlar Kanunu'nun 125. maddesi
+- 4721 sayılı Türk Medeni Kanunu'nun 146. maddesi
+
+TALEP:
+Yukarıda açıklanan nedenlerle, [İcra Dosya No] sayılı icra takibinin iptal edilmesini saygılarımla talep ederim.
+
+EK: 1. T.C. Kimlik belgesi
+2. İcra takip tebliğnamesi
+3. [Destekleyici Belgeler]
+
+[İmza]
+[Borçlu Adı Soyadı]
+[Tarih]`;
+  }
+
+  // Tazminat davası dilekçesi oluştur
+  private generateCompensationPetition(message: string): string {
+    return `T.C.
+ANTAKYA ASLİYE HUKUK MAHKEMESİ
+
+DAVACI: [Davacı Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Davacı Adresi]
+
+DAVALI: [Davalı Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Davalı Adresi]
+
+KONU: Maddi ve Manevi Tazminat Davası
+
+DEĞERLİ MAHKEMEMİZ,
+
+1. Davacı ile davalı arasında [Olay Tarihi] tarihinde [Olay Yeri]'nde [Olay Açıklaması] meydana gelmiştir.
+
+2. Meydana gelen olay sonucunda davacı [Zarar Açıklaması] zararına uğramıştır.
+
+3. Davalının [Kusur Açıklaması] kusuru nedeniyle meydana gelen olay, davacının maddi ve manevi zarara uğramasına neden olmuştur.
+
+4. Davacının uğradığı maddi zarar [Maddi Zarar Miktarı] TL'dir.
+
+5. Davacının uğradığı manevi zarar [Manevi Zarar Miktarı] TL'dir.
+
+6. Davalının kusuru nedeniyle meydana gelen olay, davacının [Manevi Zarar Açıklaması] manevi zarara uğramasına neden olmuştur.
+
+HUKUKİ DAYANAK:
+- 6098 sayılı Türk Borçlar Kanunu'nun 49. maddesi
+- 6098 sayılı Türk Borçlar Kanunu'nun 50. maddesi
+- 6098 sayılı Türk Borçlar Kanunu'nun 51. maddesi
+- 4721 sayılı Türk Medeni Kanunu'nun 24. maddesi
+
+TALEP:
+Yukarıda açıklanan nedenlerle, davalıdan [Toplam Tazminat Miktarı] TL tutarında maddi ve manevi tazminatın ödenmesini saygılarımla talep ederim.
+
+EK: 1. T.C. Kimlik belgesi
+2. [Zarar Belgeleri]
+3. [Olay Belgeleri]
+4. [Diğer Destekleyici Belgeler]
+
+[İmza]
+[Davacı Adı Soyadı]
+[Tarih]`;
   }
 
   // Dosya içeriğini analiz et
