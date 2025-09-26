@@ -723,7 +723,8 @@ export interface IctihatResultItem {
 
 // Prefer using Vite dev proxy when VITE_BACKEND_URL is defined (BASE_URL becomes empty, so paths like '/api/...')
 const ENV: any = (import.meta as any).env || {};
-export const BASE_URL = ENV.VITE_BACKEND_URL ? '' : (ENV.VITE_YARGI_API_URL || 'http://localhost:8000');
+// Prod varsayılanı: aynı origin. Sadece env verilirse özel backend URL'si kullanılır.
+export const BASE_URL = ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || '';
 const MEVZUAT_BASE_URL = ENV.VITE_MEVZUAT_URL || 'http://localhost:9001';
 const ENABLE_BEDDESTEN = String(ENV.VITE_ENABLE_BEDDESTEN || '').toLowerCase() === 'true';
 
