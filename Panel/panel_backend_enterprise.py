@@ -606,31 +606,43 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
     }
     logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
     timeout = httpx.Timeout(30.0, connect=10.0)
-    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
+    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True, http2=True) as client:
         try:
-            logger.debug("🌐 Yargıtay sitesine başlangıç GET isteği yapılıyor")
-            initial_resp = await client.get(target_url)
-            initial_resp.raise_for_status()
-            token = None
-            match = re.search(r'name="__RequestVerificationToken"\s+type="hidden"\s+value="([^"']+)"', initial_resp.text)
-            if match:
-                token = match.group(1)
-                logger.debug("🔐 __RequestVerificationToken bulundu")
-            else:
-                logger.warning("⚠️ __RequestVerificationToken bulunamadı")
-
-            form = {
+            # 1) Önce basit GET ile dene
+            params = {
                 "q": req.query,
                 "court": req.courtType or "all",
                 "dateFrom": req.fromISO or "",
                 "dateTo": req.toISO or "",
                 "sayfa": str(req.page or 1)
             }
-            if token:
-                form["__RequestVerificationToken"] = token
+            logger.debug(f"🌐 Yargıtay GET denemesi: {params}")
+            r = await client.get(target_url, params=params)
+            if r.status_code != 200 or (len(r.text or "") < 500):
+                # 2) Gerekirse token alıp POST et
+                logger.debug("↩️ GET başarısız/şüpheli, token almak için başlangıç GET")
+                initial = await client.get(target_url)
+                initial.raise_for_status()
+                token = None
+                m = re.search(r'name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"', initial.text)
+                if m:
+                    token = m.group(1)
+                    logger.debug("🔐 __RequestVerificationToken alındı")
+                else:
+                    logger.warning("⚠️ Token bulunamadı, POST tokensiz denenecek")
 
-            logger.debug(f"🌐 Yargıtay sitesine POST isteği yapılıyor: {target_url} -> {form}")
-            r = await client.post(target_url, data=form)
+                form = {
+                    "q": req.query,
+                    "court": req.courtType or "all",
+                    "dateFrom": req.fromISO or "",
+                    "dateTo": req.toISO or "",
+                    "sayfa": str(req.page or 1)
+                }
+                if token:
+                    form["__RequestVerificationToken"] = token
+                post_headers = headers | {"Content-Type": "application/x-www-form-urlencoded"}
+                logger.debug(f"🌐 Yargıtay POST denemesi: {form}")
+                r = await client.post(target_url, data=form, headers=post_headers)
             logger.debug(f"📥 Yargıtay yanıt durum kodu: {r.status_code}")
             
             if r.status_code != 200:
@@ -678,19 +690,28 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
     }
     logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}', page='{req.page}'")
     timeout = httpx.Timeout(30.0, connect=10.0)
-    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
+    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True, http2=True) as client:
         try:
-            form = {
+            # 1) Basit GET denemesi (UYAP bazı durumlarda querystring ile de dönebilir)
+            params = {
                 "Aranacak Kelime": req.query,
-                "BİRİMLER": req.courtType or "",
-                "Esas Numarası": "",
-                "Karar Numarası": "",
-                "Tarih": "",
                 "Sıralama": "Karar Tarihine Göre",
                 "sayfa": str(req.page or 1)
             }
-            logger.debug(f"🌐 UYAP sitesine POST isteği yapılıyor: {target_url} -> {form}")
-            r = await client.post(target_url, data=form)
+            logger.debug(f"🌐 UYAP GET denemesi: {params}")
+            r = await client.get(target_url, params=params)
+            if r.status_code != 200 or (len(r.text or "") < 500):
+                form = {
+                    "Aranacak Kelime": req.query,
+                    "BİRİMLER": req.courtType or "",
+                    "Esas Numarası": "",
+                    "Karar Numarası": "",
+                    "Tarih": "",
+                    "Sıralama": "Karar Tarihine Göre",
+                    "sayfa": str(req.page or 1)
+                }
+                logger.debug(f"🌐 UYAP POST denemesi: {form}")
+                r = await client.post(target_url, data=form, headers={"Content-Type": "application/x-www-form-urlencoded", **headers})
             logger.debug(f"📥 UYAP yanıt durum kodu: {r.status_code}")
             
             if r.status_code != 200:
