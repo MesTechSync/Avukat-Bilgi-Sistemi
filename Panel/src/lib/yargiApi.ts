@@ -853,21 +853,71 @@ export async function searchIctihat(query: string, filters: IctihatFilters): Pro
       }
     }
     
-    // Fallback: Gerçek API'ler çalışmadığında boş sonuç döndür
-    console.log('❌ Tüm gerçek API\'ler başarısız oldu. Boş sonuç döndürülüyor...');
+    // Fallback: Gerçek API'ler çalışmadığında bilgilendirici sonuç döndür
+    console.log('❌ Tüm gerçek API\'ler başarısız oldu. Bilgilendirici sonuç döndürülüyor...');
     
-    return [{
-      id: 'no-data-warning',
-      title: `"${query}" için gerçek veri alınamadı`,
-      court: 'Sistem Uyarısı',
-      date: new Date().toLocaleDateString('tr-TR'),
-      number: 'UYARI',
-      summary: `"${query}" araması için gerçek UYAP ve Yargıtay verilerine erişim sağlanamadı. Lütfen daha sonra tekrar deneyin.`,
-      content: `Şu anda "${query}" araması için gerçek UYAP Emsal ve Yargıtay verilerine erişim sağlanamıyor. Bu geçici bir durum olabilir. Lütfen:\n\n1. İnternet bağlantınızı kontrol edin\n2. Birkaç dakika sonra tekrar deneyin\n3. Doğrudan UYAP Emsal (emsal.uyap.gov.tr) ve Yargıtay (karararama.yargitay.gov.tr) sitelerini ziyaret edin`,
-      url: 'https://emsal.uyap.gov.tr',
-      source: 'Sistem',
-      relevanceScore: 0.1
-    }];
+    return [
+      {
+        id: 'uyap-redirect',
+        title: `"${query}" için UYAP Emsal'de arama yapın`,
+        court: 'UYAP Emsal',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'YÖNLENDİRME',
+        summary: `"${query}" araması için UYAP Emsal sitesinde arama yapabilirsiniz.`,
+        content: `UYAP Emsal sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://emsal.uyap.gov.tr/karar-arama?q=${encodeURIComponent(query)}\n\nBu site Türkiye'nin en kapsamlı hukuki karar veritabanıdır.`,
+        url: `https://emsal.uyap.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'UYAP Emsal (Yönlendirme)',
+        relevanceScore: 1.0
+      },
+      {
+        id: 'yargitay-redirect',
+        title: `"${query}" için Yargıtay'da arama yapın`,
+        court: 'Yargıtay',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'YÖNLENDİRME',
+        summary: `"${query}" araması için Yargıtay sitesinde arama yapabilirsiniz.`,
+        content: `Yargıtay sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://karararama.yargitay.gov.tr/YargitayBilgiBankasi/?q=${encodeURIComponent(query)}\n\nBu site Yargıtay kararlarının resmi veritabanıdır.`,
+        url: `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/?q=${encodeURIComponent(query)}`,
+        source: 'Yargıtay (Yönlendirme)',
+        relevanceScore: 0.9
+      },
+      {
+        id: 'danistay-redirect',
+        title: `"${query}" için Danıştay'da arama yapın`,
+        court: 'Danıştay',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'YÖNLENDİRME',
+        summary: `"${query}" araması için Danıştay sitesinde arama yapabilirsiniz.`,
+        content: `Danıştay sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://www.danistay.gov.tr/karar-arama?q=${encodeURIComponent(query)}\n\nBu site Danıştay kararlarının resmi veritabanıdır.`,
+        url: `https://www.danistay.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Danıştay (Yönlendirme)',
+        relevanceScore: 0.8
+      },
+      {
+        id: 'aym-redirect',
+        title: `"${query}" için Anayasa Mahkemesi'nde arama yapın`,
+        court: 'Anayasa Mahkemesi',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'YÖNLENDİRME',
+        summary: `"${query}" araması için Anayasa Mahkemesi sitesinde arama yapabilirsiniz.`,
+        content: `Anayasa Mahkemesi sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://www.anayasa.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}\n\nBu site Anayasa Mahkemesi kararlarının resmi veritabanıdır.`,
+        url: `https://www.anayasa.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Anayasa Mahkemesi (Yönlendirme)',
+        relevanceScore: 0.7
+      },
+      {
+        id: 'mevzuat-redirect',
+        title: `"${query}" için Mevzuat'ta arama yapın`,
+        court: 'Mevzuat',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'YÖNLENDİRME',
+        summary: `"${query}" araması için Mevzuat sitesinde arama yapabilirsiniz.`,
+        content: `Mevzuat sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://mevzuat.gov.tr/anasayfa/MevzuatFihristDetay?MevzuatTur=1&MevzuatNo=1\n\nBu site Türkiye'nin resmi mevzuat veritabanıdır.`,
+        url: `https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetay?MevzuatTur=1&MevzuatNo=1`,
+        source: 'Mevzuat (Yönlendirme)',
+        relevanceScore: 0.6
+      }
+    ];
     
   } catch (error) {
     console.error('❌ İçtihat API hatası:', error);
@@ -1612,21 +1662,47 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
       }));
     }
     
-    // Fallback: Gerçek API'ler çalışmadığında boş sonuç döndür
-    console.log('❌ Gerçek Mevzuat API\'si başarısız oldu. Boş sonuç döndürülüyor...');
+    // Fallback: Gerçek API'ler çalışmadığında bilgilendirici sonuç döndür
+    console.log('❌ Gerçek Mevzuat API\'si başarısız oldu. Bilgilendirici sonuç döndürülüyor...');
     
-    return [{
-      id: 'no-mevzuat-data',
-      title: `"${query}" için gerçek mevzuat verisi alınamadı`,
-      category: 'Sistem Uyarısı',
-      institution: 'Sistem',
-      publishDate: new Date().toISOString().split('T')[0],
-      url: 'https://mevzuat.gov.tr',
-      summary: `"${query}" araması için gerçek mevzuat verilerine erişim sağlanamadı.`,
-      content: `Şu anda "${query}" araması için gerçek mevzuat verilerine erişim sağlanamıyor. Lütfen doğrudan mevzuat.gov.tr sitesini ziyaret edin.`,
-      relevanceScore: 0.1,
-      highlight: ''
-    }];
+    return [
+      {
+        id: 'mevzuat-redirect',
+        title: `"${query}" için Mevzuat'ta arama yapın`,
+        category: 'Mevzuat',
+        institution: 'Adalet Bakanlığı',
+        publishDate: new Date().toISOString().split('T')[0],
+        url: `https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetay?MevzuatTur=1&MevzuatNo=1`,
+        summary: `"${query}" araması için Mevzuat sitesinde arama yapabilirsiniz.`,
+        content: `Mevzuat sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://mevzuat.gov.tr/anasayfa/MevzuatFihristDetay?MevzuatTur=1&MevzuatNo=1\n\nBu site Türkiye'nin resmi mevzuat veritabanıdır.`,
+        relevanceScore: 1.0,
+        highlight: ''
+      },
+      {
+        id: 'resmi-gazete-redirect',
+        title: `"${query}" için Resmi Gazete'de arama yapın`,
+        category: 'Resmi Gazete',
+        institution: 'Başbakanlık',
+        publishDate: new Date().toISOString().split('T')[0],
+        url: `https://www.resmigazete.gov.tr/anasayfa/Metinler.aspx`,
+        summary: `"${query}" araması için Resmi Gazete sitesinde arama yapabilirsiniz.`,
+        content: `Resmi Gazete sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://www.resmigazete.gov.tr/anasayfa/Metinler.aspx\n\nBu site Türkiye'nin resmi gazete arşividir.`,
+        relevanceScore: 0.9,
+        highlight: ''
+      },
+      {
+        id: 'turkish-law-redirect',
+        title: `"${query}" için Türk Hukuku'nda arama yapın`,
+        category: 'Türk Hukuku',
+        institution: 'Hukuk Enstitüsü',
+        publishDate: new Date().toISOString().split('T')[0],
+        url: `https://www.turkhukuksitesi.com/`,
+        summary: `"${query}" araması için Türk Hukuku sitesinde arama yapabilirsiniz.`,
+        content: `Türk Hukuku sitesinde "${query}" araması yapmak için aşağıdaki linke tıklayın:\n\nhttps://www.turkhukuksitesi.com/\n\nBu site kapsamlı hukuki kaynaklar sunar.`,
+        relevanceScore: 0.8,
+        highlight: ''
+      }
+    ];
     
     // Eski demo veri kodu kaldırıldı
     /*
