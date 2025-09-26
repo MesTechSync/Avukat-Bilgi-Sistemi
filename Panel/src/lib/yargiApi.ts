@@ -1997,20 +1997,7 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
     return generateMevzuatSimulatedResults(query, filters);
     
     // Eski demo veri kodu kaldırıldı
-    /*
-    const results: MevzuatResultItem[] = [];
-    const categories = ['Medeni Kanun', 'İş Kanunu', 'Ceza Kanunu', 'Ticaret Kanunu', 'Borçlar Kanunu'];
-    const institutions = ['Adalet Bakanlığı', 'Çalışma ve Sosyal Güvenlik Bakanlığı', 'İçişleri Bakanlığı'];
-    
-    // 8 gerçekçi mevzuat sonucu oluştur
-    for (let i = 0; i < 8; i++) {
-      const category = categories[i % categories.length];
-      const institution = institutions[i % institutions.length];
-      const year = 2024;
-      const articleNum = 100 + i;
-      
     // Demo veri kodu kaldırıldı - gerçek API'ler kullanılacak
-    */
     
   } catch (error: any) {
     console.error('❌ Mevzuat arama hatası:', error);
