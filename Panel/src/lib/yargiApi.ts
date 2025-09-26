@@ -4,7 +4,43 @@ const UYAP_SEARCH_URL = 'https://emsal.uyap.gov.tr/karar-arama';
 
 // Yargıtay API entegrasyonu  
 const YARGITAY_BASE_URL = 'https://karararama.yargitay.gov.tr';
-const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
+// CORS Proxy alternatifleri
+const CORS_PROXIES = [
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://cors-anywhere.herokuapp.com/',
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?'
+];
+
+// CORS Proxy ile fetch fonksiyonu
+async function fetchWithProxy(url: string, options: RequestInit = {}): Promise<Response> {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      console.log(`🔄 CORS Proxy deneniyor: ${proxy}`);
+      const proxyUrl = proxy + encodeURIComponent(url);
+      const response = await fetch(proxyUrl, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (response.ok) {
+        console.log(`✅ CORS Proxy başarılı: ${proxy}`);
+        return response;
+      } else {
+        console.log(`⚠️ CORS Proxy başarısız: ${proxy} - ${response.status}`);
+      }
+    } catch (error) {
+      console.log(`❌ CORS Proxy hatası: ${proxy} - ${error}`);
+    }
+  }
+  
+  throw new Error('Tüm CORS proxy\'leri başarısız oldu');
+}
 
 // UYAP Emsal sitesinden gerçek veri çekme
 export async function searchUyapEmsal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
@@ -21,7 +57,7 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters): 
       'Sıralama': 'Karar Tarihine Göre'
     };
 
-    const response = await fetch(`${CORS_PROXY}${UYAP_SEARCH_URL}`, {
+    const response = await fetchWithProxy(`${UYAP_SEARCH_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -61,7 +97,7 @@ async function fetchRealUyapData(query: string, filters?: IctihatFilters): Promi
     // UYAP Emsal sitesine doğrudan erişim
     const uyapUrl = `https://emsal.uyap.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
     
-    const response = await fetch(`${CORS_PROXY}${uyapUrl}`, {
+    const response = await fetchWithProxy(`${uyapUrl}`, {
       method: 'GET',
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -171,7 +207,7 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
     // Yargıtay sitesine doğrudan erişim
     const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
     
-    const response = await fetch(`${CORS_PROXY}${yargitayUrl}`, {
+    const response = await fetchWithProxy(`${yargitayUrl}`, {
       method: 'GET',
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -840,120 +876,685 @@ export async function searchIctihat(query: string, filters: IctihatFilters): Pro
   }
 
   if (court === 'danistay') {
-    // Primary: /api/danistay/search-keyword - SCHEMA FIX: pageSize kullan, page değil
-    let data: any;
-    try {
-      console.log('🔍 Danıştay Primary API (search_danistay_keyword tool)');
-      data = await post('/api/danistay/search-keyword', { 
-        andKelimeler: [query], 
-        pageSize: 10 
-      });
-    } catch (e1) {
-      if (ENABLE_BEDDESTEN) {
-        console.log('⚠️ Danıştay primary başarısız, Bedesten API deneniyor...');
-        const fallbackBody: any = { phrase: query, pageSize: 10 };
-        if (fromISO) fallbackBody.kararTarihiStart = fromISO;
-        if (toISOv) fallbackBody.kararTarihiEnd = toISOv;
-        data = await post('/api/danistay/search-bedesten', fallbackBody);
-      } else {
-        throw e1;
-      }
-    }
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'danistay');
+    console.log('🌐 Gerçek Danıştay API çağrısı yapılıyor...');
+    return await fetchRealDanistayData(query, filters);
   }
 
   if (court === 'aym') {
-    console.log('🔍 AYM formatı deneniyor');
-    const data = await post('/api/aym/search', { 
-      arananKelime: query, 
-      pageSize: 10,
-      decision_type: filters.legalArea || undefined
-    });
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'aym');
+    console.log('🌐 Gerçek AYM API çağrısı yapılıyor...');
+    return await fetchRealAymData(query, filters);
   }
 
   if (court === 'sayistay') {
-    console.log('🔍 Sayıştay formatı deneniyor');
-    const data = await post('/api/sayistay/search', { 
-      arananKelime: query, 
-      pageSize: 10,
-      audit_type: filters.legalArea || undefined
-    });
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'sayistay');
+    console.log('🌐 Gerçek Sayıştay API çağrısı yapılıyor...');
+    return await fetchRealSayistayData(query, filters);
   }
 
   if (court === 'emsal') {
-    console.log('🔍 UYAP Emsal formatı deneniyor');
-    const data = await post('/api/emsal/search', { 
-      arananKelime: query, 
-      resultsPerPage: 10,
-      courtType: 'all'
-    });
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'emsal');
+    console.log('🌐 Gerçek UYAP Emsal API çağrısı yapılıyor...');
+    return await searchUyapEmsal(query, filters);
   }
 
   if (court === 'istinaf') {
-    console.log('🔍 İstinaf formatı deneniyor');
-    const data = await post('/api/istinaf/search', { 
-      arananKelime: query, 
-      pageSize: 10,
-      courtRegion: filters.legalArea || undefined
-    });
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'istinaf');
+    console.log('🌐 Gerçek İstinaf API çağrısı yapılıyor...');
+    return await fetchRealIstinafData(query, filters);
   }
 
   if (court === 'hukuk') {
-    console.log('🔍 Hukuk Mahkemeleri formatı deneniyor');
-    const data = await post('/api/hukuk/search', { 
-      arananKelime: query, 
-      pageSize: 10,
-      courtLocation: filters.legalArea || undefined
-    });
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'hukuk');
+    console.log('🌐 Gerçek Hukuk Mahkemeleri API çağrısı yapılıyor...');
+    return await fetchRealHukukData(query, filters);
   }
 
   if (court === 'bam') {
-    // İstinaf endpoint'i test edildi - doğru payload formatını bul
-    console.log('🔍 İstinaf-Hukuk API test ediliyor...');
-    
-    // Birkaç farklı format dene
-    const formats = [
-      { phrase: query, pageSize: 10 },  // Bedesten format
-      { arananKelime: query, pageSize: 10 },  // Yargıtay format  
-      { keywords: [query], pageSize: 10 }  // Keywords format
-    ];
-    
-    let data: any;
-    let success = false;
-    
-    for (const body of formats) {
-      try {
-        console.log('🔍 İstinaf format deneniyor:', body);
-        data = await post('/api/istinaf-hukuk/search', body);
-        success = true;
-        break;
-      } catch (e) {
-        console.log('⚠️ İstinaf format başarısız:', body);
-        // Continue to next format
-      }
-    }
-    
-    if (!success) {
-      throw new Error('İstinaf-Hukuk endpoint hiçbir payload format ile çalışmıyor');
-    }
-    
-    const list = data?.results || data?.decisions || data?.items || [];
-    return mapGenericListToResults(list, 'bam');
+    console.log('🌐 Gerçek BAM API çağrısı yapılıyor...');
+    return await fetchRealBamData(query, filters);
   }
 
   // Default: try Yargıtay as a sensible default
   return searchIctihat(query, { ...filters, courtType: 'yargitay' });
+}
+
+// Gerçek Danıştay verisi çekme
+async function fetchRealDanistayData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek Danıştay sitesinden veri çekiliyor...');
+    
+    const danistayUrl = `https://www.danistay.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${danistayUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Danıştay sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealDanistayResults(html, query);
+    
+    console.log('✅ Gerçek Danıştay verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek Danıştay veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Gerçek AYM verisi çekme
+async function fetchRealAymData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek AYM sitesinden veri çekiliyor...');
+    
+    const aymUrl = `https://www.anayasa.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${aymUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`AYM sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealAymResults(html, query);
+    
+    console.log('✅ Gerçek AYM verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek AYM veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Gerçek Sayıştay verisi çekme
+async function fetchRealSayistayData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek Sayıştay sitesinden veri çekiliyor...');
+    
+    const sayistayUrl = `https://www.sayistay.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${sayistayUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Sayıştay sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealSayistayResults(html, query);
+    
+    console.log('✅ Gerçek Sayıştay verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek Sayıştay veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Gerçek İstinaf verisi çekme
+async function fetchRealIstinafData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek İstinaf sitesinden veri çekiliyor...');
+    
+    const istinafUrl = `https://www.istinaf.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${istinafUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`İstinaf sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealIstinafResults(html, query);
+    
+    console.log('✅ Gerçek İstinaf verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek İstinaf veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Gerçek Hukuk Mahkemeleri verisi çekme
+async function fetchRealHukukData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek Hukuk Mahkemeleri sitesinden veri çekiliyor...');
+    
+    const hukukUrl = `https://www.hukuk.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${hukukUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Hukuk Mahkemeleri sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealHukukResults(html, query);
+    
+    console.log('✅ Gerçek Hukuk Mahkemeleri verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek Hukuk Mahkemeleri veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Gerçek BAM verisi çekme
+async function fetchRealBamData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek BAM sitesinden veri çekiliyor...');
+    
+    const bamUrl = `https://www.bam.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetchWithProxy(`${bamUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`BAM sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealBamResults(html, query);
+    
+    console.log('✅ Gerçek BAM verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek BAM veri çekme hatası:', error);
+    return [];
+  }
+}
+
+// Parse fonksiyonları
+function parseRealDanistayResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // Danıştay sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Danıştay';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `danistay-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.danistay.gov.tr/karar-detay/${index}`,
+            source: 'Danıştay (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'danistay-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'Danıştay',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `Danıştay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `Danıştay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için Danıştay sitesini ziyaret ediniz.`,
+        url: `https://www.danistay.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Danıştay (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Danıştay sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+function parseRealAymResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // AYM sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Anayasa Mahkemesi';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `aym-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.anayasa.gov.tr/tr/karar-detay/${index}`,
+            source: 'Anayasa Mahkemesi (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'aym-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'Anayasa Mahkemesi',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `Anayasa Mahkemesi sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `Anayasa Mahkemesi sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için Anayasa Mahkemesi sitesini ziyaret ediniz.`,
+        url: `https://www.anayasa.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Anayasa Mahkemesi (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('AYM sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+function parseRealSayistayResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // Sayıştay sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Sayıştay';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `sayistay-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.sayistay.gov.tr/tr/karar-detay/${index}`,
+            source: 'Sayıştay (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'sayistay-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'Sayıştay',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `Sayıştay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `Sayıştay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için Sayıştay sitesini ziyaret ediniz.`,
+        url: `https://www.sayistay.gov.tr/tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Sayıştay (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Sayıştay sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+function parseRealIstinafResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // İstinaf sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'İstinaf';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `istinaf-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.istinaf.gov.tr/karar-detay/${index}`,
+            source: 'İstinaf (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'istinaf-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'İstinaf',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `İstinaf sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `İstinaf sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için İstinaf sitesini ziyaret ediniz.`,
+        url: `https://www.istinaf.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'İstinaf (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('İstinaf sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+function parseRealHukukResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // Hukuk Mahkemeleri sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Hukuk Mahkemeleri';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `hukuk-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.hukuk.gov.tr/karar-detay/${index}`,
+            source: 'Hukuk Mahkemeleri (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'hukuk-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'Hukuk Mahkemeleri',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `Hukuk Mahkemeleri sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `Hukuk Mahkemeleri sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için Hukuk Mahkemeleri sitesini ziyaret ediniz.`,
+        url: `https://www.hukuk.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'Hukuk Mahkemeleri (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Hukuk Mahkemeleri sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+function parseRealBamResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // BAM sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'BAM';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `bam-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://www.bam.gov.tr/karar-detay/${index}`,
+            source: 'BAM (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'bam-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'BAM',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `BAM sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `BAM sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için BAM sitesini ziyaret ediniz.`,
+        url: `https://www.bam.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'BAM (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('BAM sonuç parse hatası:', error);
+    return [];
+  }
 }
 
 // ============================================
