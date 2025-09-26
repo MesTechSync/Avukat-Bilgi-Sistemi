@@ -663,7 +663,7 @@ const AdvancedSearch: React.FC = () => {
                         </div>
                       </div>
 
-                      <p className={`mb-4 leading-relaxed ${
+                      <p className={`mb-4 leading-relaxed whitespace-pre-line ${
                         isDarkMode ? 'text-gray-300' : 'text-slate-700'
                       }`}>
                         {result.content.substring(0, 800)}...
