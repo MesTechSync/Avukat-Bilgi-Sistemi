@@ -49,7 +49,7 @@ export async function searchUyapEmsalMultiPage(query: string, filters?: IctihatF
       // İlk sayfadan toplam bilgiyi al
       if (page === 1) {
         const firstResult = pageResults.find(r => r.id.includes('total'));
-        if (firstResult) {
+        if (firstResult && firstResult.title) {
           const countMatch = firstResult.title.match(/([\d,\.]+)\s*adet/);
           if (countMatch) {
             const countStr = countMatch[1].replace(/[,\.]/g, '');
@@ -459,7 +459,7 @@ export async function searchYargitayRealMultiPage(query: string, filters?: Ictih
       // İlk sayfadan toplam bilgiyi al
       if (page === 1) {
         const firstResult = pageResults.find(r => r.id.includes('total'));
-        if (firstResult) {
+        if (firstResult && firstResult.title) {
           const countMatch = firstResult.title.match(/([\d,\.]+)\s*adet/);
       if (countMatch) {
             const countStr = countMatch[1].replace(/[,\.]/g, '');
@@ -2197,9 +2197,8 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
 }
 
 // Geçici: Diğer mahkeme veri kaynakları bu sürümde devre dışı
-async function fetchRealDanistayData(_q: string, _f?: IctihatFilters) { return []; }
-async function fetchRealAymData(_q: string, _f?: IctihatFilters) { return []; }
-async function fetchRealSayistayData(_q: string, _f?: IctihatFilters) { return []; }
-async function fetchRealIstinafData(_q: string, _f?: IctihatFilters) { return []; }
-async function fetchRealHukukData(_q: string, _f?: IctihatFilters) { return []; }
-async function fetchRealBamData(_q: string, _f?: IctihatFilters) { return []; }
+// not used (top tanım kullanılıyor)
+// not used (top tanım kullanılıyor)
+// not used (top tanım kullanılıyor)
+// not used (top tanım kullanılıyor)
+// not used (top tanım kullanılıyor)
