@@ -2240,3 +2240,4 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
 // not used (top tanım kullanılıyor)
 // not used (top tanım kullanılıyor)
 // not used (top tanım kullanılıyor)
+*/
