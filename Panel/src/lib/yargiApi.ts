@@ -1,33 +1,58 @@
 // API URL'leri
 
-// CORS Proxy alternatifleri
+// Güvenilir CORS Proxy alternatifleri
 const CORS_PROXIES = [
-  'https://api.codetabs.com/v1/proxy?quest=',
-  'https://cors-anywhere.herokuapp.com/',
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?'
+  'https://api.allorigins.win/get?url=', // AllOrigins JSON wrapper
+  'https://proxy.cors.sh/', // CORS.sh proxy 
+  'https://corsproxy.org/?', // CORSProxy.org
+  'https://thingproxy.freeboard.io/fetch/', // Freeboard Thing Proxy
+  'https://cors-proxy.fringe.zone/' // Fringe Zone CORS proxy
 ];
 
-// CORS Proxy ile fetch fonksiyonu
+// Gelişmiş CORS Proxy ile fetch fonksiyonu
 async function fetchWithProxy(url: string, options: RequestInit = {}): Promise<Response> {
-  for (const proxy of CORS_PROXIES) {
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
     try {
-      console.log(`🔄 CORS Proxy deneniyor: ${proxy}`);
-      const proxyUrl = proxy + encodeURIComponent(url);
-      const response = await fetch(proxyUrl, {
+      console.log(`🔄 CORS Proxy deneniyor (${i+1}/${CORS_PROXIES.length}): ${proxy}`);
+      
+      let proxyUrl: string;
+      let fetchOptions: RequestInit = {
         ...options,
         headers: {
           ...options.headers,
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+          'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8'
         }
-      });
+      };
       
-      if (response.ok) {
-        console.log(`✅ CORS Proxy başarılı: ${proxy}`);
-        return response;
+      // AllOrigins JSON wrapper - özel handling
+      if (proxy.includes('allorigins.win/get')) {
+        proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl, fetchOptions);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.contents) {
+            console.log(`✅ AllOrigins başarılı: ${data.contents.length} karakter`);
+            return new Response(data.contents, { 
+              status: 200, 
+              statusText: 'OK',
+              headers: { 'Content-Type': 'text/html' }
+            });
+          }
+        }
       } else {
-        console.log(`⚠️ CORS Proxy başarısız: ${proxy} - ${response.status}`);
+        // Diğer proxy'ler için standart handling
+        proxyUrl = proxy + encodeURIComponent(url);
+        const response = await fetch(proxyUrl, fetchOptions);
+        
+        if (response.ok) {
+          console.log(`✅ CORS Proxy başarılı: ${proxy}`);
+          return response;
+        } else {
+          console.log(`⚠️ CORS Proxy başarısız: ${proxy} - ${response.status}`);
+        }
       }
     } catch (error) {
       console.log(`❌ CORS Proxy hatası: ${proxy} - ${error}`);
@@ -1563,45 +1588,95 @@ function generateUyapSimulatedResults(query: string, _filters?: IctihatFilters):
 
 // Simüle edilmiş Yargıtay sonuçları oluşturma
 function generateYargitaySimulatedResults(query: string, _filters?: IctihatFilters): IctihatResultItem[] {
-  // Simüle edilmiş Yargıtay sonuçları - gerçekçi veriler
-  const simulatedResults = [
-    {
-      id: `yargitay-${query}-1`,
-      title: `"${query}" ile ilgili Yargıtay Kararı - 2024/5678`,
-      court: 'Yargıtay',
-      date: '2024-02-15',
-      number: '2024/5678',
-      summary: `"${query}" konusunda Yargıtay'ın verdiği karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili Yargıtay kararı:\n\nMAHKEME: Yargıtay\nKARARIN TARİHİ: 15.02.2024\nKARARIN NUMARASI: 2024/5678\n\nOLAY:\n"${query}" konusunda taraflar arasında çıkan uyuşmazlık...\n\nGEREKÇE:\n"${query}" konusunda Yargıtay'ın görüşü şu şekildedir...\n\nSONUÇ:\n"${query}" ile ilgili bu kararla hukuki durum netleştirilmiştir.`,
-      url: 'https://karararama.yargitay.gov.tr',
-      source: 'Yargıtay (Simüle)',
-      relevanceScore: 0.95
-    },
-    {
-      id: `yargitay-${query}-2`,
-      title: `"${query}" hakkında Yargıtay Kararı - 2024/5677`,
-      court: 'Yargıtay',
-      date: '2024-02-10',
-      number: '2024/5677',
-      summary: `"${query}" konusunda Yargıtay'ın verdiği karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili Yargıtay kararı:\n\nMAHKEME: Yargıtay\nKARARIN TARİHİ: 10.02.2024\nKARARIN NUMARASI: 2024/5677\n\nOLAY:\n"${query}" konusunda taraflar arasında çıkan uyuşmazlık...\n\nGEREKÇE:\n"${query}" konusunda Yargıtay'ın görüşü şu şekildedir...\n\nSONUÇ:\n"${query}" ile ilgili bu kararla hukuki durum netleştirilmiştir.`,
-      url: 'https://karararama.yargitay.gov.tr',
-      source: 'Yargıtay (Simüle)',
-      relevanceScore: 0.90
-    },
-    {
-      id: `yargitay-${query}-3`,
-      title: `"${query}" konusunda Yargıtay Kararı - 2024/5676`,
-      court: 'Yargıtay',
-      date: '2024-02-05',
-      number: '2024/5676',
-      summary: `"${query}" konusunda Yargıtay'ın verdiği karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili Yargıtay kararı:\n\nMAHKEME: Yargıtay\nKARARIN TARİHİ: 05.02.2024\nKARARIN NUMARASI: 2024/5676\n\nOLAY:\n"${query}" konusunda taraflar arasında çıkan uyuşmazlık...\n\nGEREKÇE:\n"${query}" konusunda Yargıtay'ın görüşü şu şekildedir...\n\nSONUÇ:\n"${query}" ile ilgili bu kararla hukuki durum netleştirilmiştir.`,
-      url: 'https://karararama.yargitay.gov.tr',
-      source: 'Yargıtay (Simüle)',
-      relevanceScore: 0.85
-    }
+  console.log('⚠️ Son çare: Gerçek formatta simüle veri oluşturuluyor...');
+  
+  // Gerçek Yargıtay dairelerini taklit eden simüle veriler
+  const daireler = [
+    'İstanbul Bölge Adliye Mahkemesi 45. Hukuk Dairesi',
+    'Ankara Bölge Adliye Mahkemesi 23. Hukuk Dairesi', 
+    'İzmir Bölge Adliye Mahkemesi 20. Hukuk Dairesi',
+    'Bursa Bölge Adliye Mahkemesi 7. Hukuk Dairesi',
+    'Antalya Bölge Adliye Mahkemesi 3. Hukuk Dairesi'
   ];
+  
+  const simulatedResults: IctihatResultItem[] = [];
+  const currentDate = new Date();
+  
+  // İlk öğe: Açıklama
+  simulatedResults.push({
+    id: 'simulated-warning',
+    title: `⚠️ BEKLENMEDİK VERİ - "${query}" araması için örnek ${Math.floor(Math.random() * 100000 + 300000).toLocaleString('tr-TR')} adet karar`,
+    court: 'Sistem Bilgisi',
+    courtName: 'Avukat Bilgi Sistemi', 
+    courtType: 'yargitay',
+    date: new Date().toLocaleDateString('tr-TR'),
+    subject: `${query} - Bağlantı sorunu`,
+    summary: `Gerçek Yargıtay verilerine erişimde sorun - Örnek format gösteriliyor.`,
+    content: `YARGITAY KARAR ARAMA SİSTEMİ UYARISI
+
+⚠️ GERİ YÜKLEME MODU AKTİF
+
+Arama: "${query}"
+Durum: Gerçek veriye erişim başarısız
+Gösterilen: Örnek format
+
+NEDEN GÖRÜYORSUNUZ?
+• Backend API bağlantı hatası (500)
+• CORS proxy'leri engellenmiş
+• İnternet erişim sorunu
+
+ÇÖZÜMLERİ:
+1. Sayfayı yenile → F5
+2. Farklı arama dene
+3. Direkt: karararama.yargitay.gov.tr
+
+⬇️ Aşağıda örnek format gösterilmektedir`,
+    url: 'https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/',
+    source: '⚠️ Sistem Uyarısı',
+    relevanceScore: 1.0
+  });
+  
+  for (let i = 0; i < 12; i++) {
+    const daire = daireler[i % daireler.length];
+    const esas = `2020/${10 + i}`;
+    const karar = `2020/${i + 1}`;
+    const tarih = new Date(currentDate.getTime() - Math.random() * 365 * 24 * 60 * 60 * 1000);
+    const kararTarihi = tarih.toLocaleDateString('tr-TR');
+    const kararDurumu = Math.random() > 0.5 ? 'KESİNLEŞTİ' : 'TEMYIZDE';
+    
+    simulatedResults.push({
+      id: `yargitay-sim-${Date.now()}-${i}`,
+      title: `${daire} - ${esas}/${karar}`,
+      court: daire,
+      courtName: daire,
+      courtType: 'yargitay',
+      caseNumber: esas,
+      number: karar,
+      date: kararTarihi,
+      subject: `${query} - ${daire.split(' ')[0]}`,
+      summary: `${daire} - ${esas}/${karar} (${kararDurumu})`,
+      content: `T.C.
+${daire.toUpperCase()}
+
+ESAS NO: ${esas}
+KARAR NO: ${karar} 
+KARAR TARİHİ: ${kararTarihi}
+KARAR DURUMU: ${kararDurumu}
+
+⚠️ BU ÖRNEK BİR VERİDİR
+
+Gerçek: karararama.yargitay.gov.tr
+Mahkeme: ${daire}
+Esas: ${esas} | Karar: ${karar}
+Tarih: ${kararTarihi}
+Durum: ${kararDurumu}
+
+"${query}" araması örnek format.`,
+      url: 'https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/',
+      source: '⚠️ Örnek Veri',
+      relevanceScore: 0.9 - (i * 0.01)
+    });
+  }
   
   return simulatedResults;
 }
