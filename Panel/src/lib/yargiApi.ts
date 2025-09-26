@@ -1280,12 +1280,12 @@ const ENV: any = (import.meta as any).env || {};
 // Development için localhost:8001, production için otomatik
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 export const BASE_URL = isDev 
-  ? 'http://localhost:9000' 
-  : (ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || '');
+  ? 'http://127.0.0.1:9000' 
+  : (ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || window.location.origin);
 
 // Absolute backend base for diagnostics/pings, bypassing dev middleware
 export function getBackendBase(): string {
-  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || 'http://localhost:9000';
+  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || window.location.origin;
 }
 
 
