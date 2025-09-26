@@ -89,7 +89,7 @@ export default function PetitionWriter() {
     setChatMessages(prev => [...prev, userMessage]);
     setChatInput('');
     setIsGenerating(true);
-
+    
     try {
       const prompt = `Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Kullanıcı ile sohbet ederek dilekçe yazımında yardımcı olacaksın.
 
@@ -130,7 +130,7 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
         });
         setActiveTab('preview');
       }
-
+      
     } catch (error) {
       console.error('Chat hatası:', error);
       const errorMessage: ChatMessage = {
@@ -172,13 +172,13 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
   // Dilekçeyi indir
   const downloadPetition = () => {
     if (generatedPetition) {
-      const element = document.createElement('a');
+    const element = document.createElement('a');
       const file = new Blob([generatedPetition.content], { type: 'text/plain' });
-      element.href = URL.createObjectURL(file);
+    element.href = URL.createObjectURL(file);
       element.download = `dilekce_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
     }
   };
 
@@ -200,7 +200,7 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
             Sesli yazım özelliği ile daha hızlı çalışın.
           </p>
         </div>
-
+        
         {/* Tab Navigation */}
         <div className="max-w-6xl mx-auto mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2">
@@ -225,9 +225,9 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                   </button>
                 );
               })}
-            </div>
           </div>
         </div>
+      </div>
 
         {/* AI Create Tab */}
         {activeTab === 'ai-create' && (
@@ -236,12 +236,12 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
                   <MessageCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
+        </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-800 dark:text-white">AI Asistan ile Dilekçe Yazımı</h2>
                   <p className="text-gray-600 dark:text-gray-300">Sohbet ederek dilekçenizi oluşturun</p>
-                </div>
               </div>
+            </div>
 
               {/* Chat Container */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-96 overflow-y-auto mb-4">
@@ -272,10 +272,10 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                           }`}>
                             {new Date(message.timestamp).toLocaleTimeString('tr-TR')}
                           </p>
-                        </div>
-                      </div>
+                  </div>
                     </div>
-                  ))}
+                </div>
+              ))}
                   {isGenerating && (
                     <div className="flex justify-start">
                       <div className="flex items-start gap-3">
@@ -286,19 +286,19 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                           <div className="flex items-center gap-2">
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
                             <span className="text-sm text-gray-600 dark:text-gray-300">Yazıyor...</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            </div>
+          </div>
+            </div>
+          </div>
                   )}
                   <div ref={chatEndRef} />
-                </div>
-              </div>
+            </div>
+          </div>
 
               {/* Chat Input */}
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <textarea
+                      <textarea
                     ref={chatInputRef}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
@@ -310,7 +310,7 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                     }}
                     placeholder="Dilekçe türünüzü ve detaylarınızı yazın..."
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                    rows={3}
+                        rows={3}
                     disabled={isGenerating}
                   />
                   {isVoiceMode && (
@@ -333,18 +333,18 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                 >
                   {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
-                <button
+            <button
                   onClick={handleSendMessage}
                   disabled={!chatInput.trim() || isGenerating}
                   className="px-6 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
                   Gönder
-                </button>
+            </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Preview Tab */}
         {activeTab === 'preview' && generatedPetition && (
@@ -362,9 +362,9 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">
                     AI Destekli
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
 
               {/* Dilekçe İçeriği */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
@@ -377,27 +377,27 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
 
               {/* Aksiyon Butonları */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={copyToClipboard}
+              <button
+                onClick={copyToClipboard}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
+              >
                   <Copy className="w-4 h-4" />
                   Panoya Kopyala
-                </button>
-                <button
-                  onClick={downloadPetition}
+              </button>
+              <button
+                onClick={downloadPetition}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
+              >
                   <Download className="w-4 h-4" />
                   İndir
-                </button>
-                <button
+              </button>
+              <button
                   onClick={() => setActiveTab('ai-create')}
                   className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Yeni Dilekçe
-                </button>
-              </div>
+              >
+                Yeni Dilekçe
+              </button>
+          </div>
 
               {/* Metadata */}
               <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -409,11 +409,11 @@ Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe me
                   <div>AI Modeli: {generatedPetition.metadata.aiModel}</div>
                   <div>Kelime Sayısı: {generatedPetition.metadata.wordCount}</div>
                   <div>Chat Mesajı: {generatedPetition.metadata.chatHistory.length}</div>
-                </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );
