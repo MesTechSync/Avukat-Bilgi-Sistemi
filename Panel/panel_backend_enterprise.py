@@ -36,6 +36,13 @@ from pydantic import BaseModel, Field
 import pydantic as _pyd
 import httpx
 try:
+    # Headless tarayıcı (opsiyonel)
+    from playwright.async_api import async_playwright  # type: ignore
+    _has_playwright = True
+except Exception:
+    async_playwright = None  # type: ignore
+    _has_playwright = False
+try:
     # Pydantic v2
     from pydantic import ConfigDict  # type: ignore
     _has_configdict = True
@@ -644,9 +651,69 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
             logger.error(f"🔌 {error_msg}")
             raise HTTPException(status_code=503, detail=error_msg)
         except Exception as e:
-            error_msg = f"Yargıtay proxy beklenmeyen hata: {e}"
-            logger.error(f"💥 {error_msg}", exc_info=True)
-            raise HTTPException(status_code=500, detail=error_msg)
+            logger.warning(f"HTTP yolunda hata, Playwright fallback denenecek: {e}")
+            # Playwright fallback
+            if not _has_playwright:
+                error_msg = "Playwright kurulu değil. Kur: pip install playwright && python -m playwright install --with-deps chromium"
+                logger.error(error_msg)
+                raise HTTPException(status_code=502, detail=error_msg)
+            try:
+                html = await _yargitay_via_playwright(req.query, req.page or 1)
+                return JSONResponse(content={"success": True, "html": html})
+            except Exception as pe:
+                error_msg = f"Yargıtay Playwright fallback hata: {pe}"
+                logger.error(error_msg, exc_info=True)
+                raise HTTPException(status_code=500, detail=error_msg)
+
+async def _yargitay_via_playwright(query: str, page_no: int) -> str:
+    assert _has_playwright and async_playwright is not None
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])  # type: ignore
+        context = await browser.new_context(locale="tr-TR", user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36")
+        page = await context.new_page()
+        try:
+            await page.goto("https://karararama.yargitay.gov.tr/", wait_until="load")
+            # Çerez/uyarı varsa kapatmaya çalış
+            for sel in ["button:has-text('Kabul')", "button:has-text('Tamam')", "text=Kabul", "text=Kapat"]:
+                try:
+                    el = await page.query_selector(sel)
+                    if el:
+                        await el.click()
+                        break
+                except Exception:
+                    pass
+            # Arama kutusu doldur
+            selectors = ["input[name='q']", "#q", "input[type='search']", "input[type='text']"]
+            filled = False
+            for sel in selectors:
+                try:
+                    await page.fill(sel, query)
+                    filled = True
+                    break
+                except Exception:
+                    continue
+            if not filled:
+                raise RuntimeError("Yargıtay arama kutusu bulunamadı")
+            # Ara butonu
+            for sel in ["button[type='submit']", "button:has-text('Ara')", "input[type='submit']"]:
+                try:
+                    await page.click(sel)
+                    break
+                except Exception:
+                    continue
+            # Sayfaya git (page_no>1 ise)
+            if page_no > 1:
+                # Basitçe URL query ile sayfa değişimi dene
+                current = page.url
+                sep = "&" if "?" in current else "?"
+                await page.goto(f"{current}{sep}sayfa={page_no}", wait_until="domcontentloaded")
+            # Sonuçları bekle
+            await page.wait_for_selector("table, tbody tr, .result, .tablo", timeout=15000)
+            html = await page.content()
+            return html
+        finally:
+            await context.close()
+            await browser.close()
 
 class ProxyUyapRequest(CompatBaseModel):
     query: str
@@ -704,9 +771,66 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
             logger.error(f"🔌 {error_msg}")
             raise HTTPException(status_code=503, detail=error_msg)
         except Exception as e:
-            error_msg = f"UYAP proxy beklenmeyen hata: {e}"
-            logger.error(f"💥 {error_msg}", exc_info=True)
-            raise HTTPException(status_code=500, detail=error_msg)
+            logger.warning(f"HTTP yolunda hata, Playwright fallback denenecek: {e}")
+            if not _has_playwright:
+                error_msg = "Playwright kurulu değil. Kur: pip install playwright && python -m playwright install --with-deps chromium"
+                logger.error(error_msg)
+                raise HTTPException(status_code=502, detail=error_msg)
+            try:
+                html = await _uyap_via_playwright(req.query, req.page or 1)
+                return JSONResponse(content={"success": True, "html": html})
+            except Exception as pe:
+                error_msg = f"UYAP Playwright fallback hata: {pe}"
+                logger.error(error_msg, exc_info=True)
+                raise HTTPException(status_code=500, detail=error_msg)
+
+async def _uyap_via_playwright(query: str, page_no: int) -> str:
+    assert _has_playwright and async_playwright is not None
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])  # type: ignore
+        context = await browser.new_context(locale="tr-TR", user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36")
+        page = await context.new_page()
+        try:
+            await page.goto("https://emsal.uyap.gov.tr/index", wait_until="load")
+            # Çerez/uyarı kapatma
+            for sel in ["button:has-text('Kabul')", "button:has-text('Tamam')", "text=Kapat"]:
+                try:
+                    el = await page.query_selector(sel)
+                    if el:
+                        await el.click()
+                        break
+                except Exception:
+                    pass
+            # Aranacak Kelime alanını doldur
+            selectors = ["input[name='Aranacak Kelime']", "#aranacakKelime", "input[placeholder*='Kelime']", "input[type='text']"]
+            filled = False
+            for sel in selectors:
+                try:
+                    await page.fill(sel, query)
+                    filled = True
+                    break
+                except Exception:
+                    continue
+            if not filled:
+                raise RuntimeError("UYAP arama kutusu bulunamadı")
+            # Ara butonu
+            for sel in ["button:has-text('Ara')", "input[type='submit']"]:
+                try:
+                    await page.click(sel)
+                    break
+                except Exception:
+                    continue
+            # Sayfa numarası
+            if page_no > 1:
+                current = page.url
+                sep = "&" if "?" in current else "?"
+                await page.goto(f"{current}{sep}sayfa={page_no}", wait_until="domcontentloaded")
+            await page.wait_for_selector("table, tbody tr, .karar, .result", timeout=15000)
+            html = await page.content()
+            return html
+        finally:
+            await context.close()
+            await browser.close()
 
 @app.get("/api/yargitay/document/{document_id}", tags=["Yargıtay"])
 async def get_yargitay_document(document_id: str):
