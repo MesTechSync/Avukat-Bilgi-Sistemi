@@ -607,15 +607,41 @@ async def proxy_yargitay_html(req: ProxyYargitayRequest):
         "dateFrom": req.fromISO or "",
         "dateTo": req.toISO or "",
     }
-    timeout = httpx.Timeout(20.0, connect=20.0)
+    
+    logger.info(f"🔍 Yargıtay proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}'")
+    logger.debug(f"📤 Gönderilen form verisi: {form}")
+    
+    timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
+            logger.debug(f"🌐 Yargıtay sitesine POST isteği yapılıyor: {target_url}")
             r = await client.post(target_url, data=form)
+            logger.debug(f"📥 Yargıtay yanıt durum kodu: {r.status_code}")
+            
+            if r.status_code != 200:
+                logger.error(f"❌ Yargıtay yanıt hatası: {r.status_code} - {r.text[:500]}")
+            
             r.raise_for_status()
-            return JSONResponse(content={"success": True, "html": r.text})
-        except httpx.HTTPError as e:
-            logger.error(f"Proxy Yargıtay error: {e}")
-            raise HTTPException(status_code=502, detail=f"Yargıtay proxy hatası: {e}")
+            html_content = r.text
+            logger.info(f"✅ Yargıtay HTML alındı: {len(html_content)} karakter")
+            
+            return JSONResponse(content={"success": True, "html": html_content})
+        except httpx.TimeoutException as e:
+            error_msg = f"Yargıtay sitesi zaman aşımına uğradı: {e}"
+            logger.error(f"⏰ {error_msg}")
+            raise HTTPException(status_code=504, detail=error_msg)
+        except httpx.HTTPStatusError as e:
+            error_msg = f"Yargıtay sitesi HTTP hatası: {e.response.status_code} - {e.response.text[:200]}"
+            logger.error(f"📵 {error_msg}")
+            raise HTTPException(status_code=502, detail=error_msg)
+        except httpx.RequestError as e:
+            error_msg = f"Yargıtay sitesi bağlantı hatası: {e}"
+            logger.error(f"🔌 {error_msg}")
+            raise HTTPException(status_code=503, detail=error_msg)
+        except Exception as e:
+            error_msg = f"Yargıtay proxy beklenmeyen hata: {e}"
+            logger.error(f"💥 {error_msg}", exc_info=True)
+            raise HTTPException(status_code=500, detail=error_msg)
 
 class ProxyUyapRequest(CompatBaseModel):
     query: str
@@ -641,15 +667,41 @@ async def proxy_uyap_html(req: ProxyUyapRequest):
         "Tarih": "",
         "Sıralama": "Karar Tarihine Göre",
     }
-    timeout = httpx.Timeout(20.0, connect=20.0)
+    
+    logger.info(f"🔍 UYAP proxy isteği başlatılıyor: query='{req.query}', courtType='{req.courtType}'")
+    logger.debug(f"📤 Gönderilen form verisi: {form}")
+    
+    timeout = httpx.Timeout(30.0, connect=10.0)  # Timeout arttırıldı
     async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
         try:
+            logger.debug(f"🌐 UYAP sitesine POST isteği yapılıyor: {target_url}")
             r = await client.post(target_url, data=form)
+            logger.debug(f"📥 UYAP yanıt durum kodu: {r.status_code}")
+            
+            if r.status_code != 200:
+                logger.error(f"❌ UYAP yanıt hatası: {r.status_code} - {r.text[:500]}")
+            
             r.raise_for_status()
-            return JSONResponse(content={"success": True, "html": r.text})
-        except httpx.HTTPError as e:
-            logger.error(f"Proxy UYAP error: {e}")
-            raise HTTPException(status_code=502, detail=f"UYAP proxy hatası: {e}")
+            html_content = r.text
+            logger.info(f"✅ UYAP HTML alındı: {len(html_content)} karakter")
+            
+            return JSONResponse(content={"success": True, "html": html_content})
+        except httpx.TimeoutException as e:
+            error_msg = f"UYAP sitesi zaman aşımına uğradı: {e}"
+            logger.error(f"⏰ {error_msg}")
+            raise HTTPException(status_code=504, detail=error_msg)
+        except httpx.HTTPStatusError as e:
+            error_msg = f"UYAP sitesi HTTP hatası: {e.response.status_code} - {e.response.text[:200]}"
+            logger.error(f"📵 {error_msg}")
+            raise HTTPException(status_code=502, detail=error_msg)
+        except httpx.RequestError as e:
+            error_msg = f"UYAP sitesi bağlantı hatası: {e}"
+            logger.error(f"🔌 {error_msg}")
+            raise HTTPException(status_code=503, detail=error_msg)
+        except Exception as e:
+            error_msg = f"UYAP proxy beklenmeyen hata: {e}"
+            logger.error(f"💥 {error_msg}", exc_info=True)
+            raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/api/yargitay/document/{document_id}", tags=["Yargıtay"])
 async def get_yargitay_document(document_id: str):
