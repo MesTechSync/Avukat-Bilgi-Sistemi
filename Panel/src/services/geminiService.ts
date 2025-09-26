@@ -94,6 +94,22 @@ Lütfen talimatı takip ederek Türkçe yanıt ver, Türk hukuk sistemine uygun 
     const message = context || instruction;
     const messageLower = message.toLowerCase();
 
+    // Bilgi verildiğinde dilekçe yazma kontrolü
+    if (this.hasDetailedInfo(message)) {
+      if (messageLower.includes('boşanma')) {
+        return this.generateDivorcePetition(message);
+      }
+      if (messageLower.includes('icra') || messageLower.includes('takip')) {
+        return this.generateExecutionObjectionPetition(message);
+      }
+      if (messageLower.includes('tazminat')) {
+        return this.generateCompensationPetition(message);
+      }
+      if (messageLower.includes('iş') || messageLower.includes('çalışan')) {
+        return this.generateLaborLawPetition(message);
+      }
+    }
+
     // Boşanma dilekçesi yazma
     if (messageLower.includes('boşanma') && (messageLower.includes('yaz') || messageLower.includes('hazırla') || messageLower.includes('oluştur'))) {
       return this.generateDivorcePetition(message);
@@ -151,6 +167,12 @@ Bu bilgileri aldıktan sonra size profesyonel bir itiraz dilekçesi hazırlayabi
 Bu bilgileri aldıktan sonra size profesyonel bir tazminat davası dilekçesi hazırlayabilirim. Lütfen bu bilgileri paylaşın.`;
     }
 
+    // İş hukuku dilekçesi yazma
+    if ((messageLower.includes('iş') || messageLower.includes('çalışan')) && (messageLower.includes('yaz') || messageLower.includes('hazırla') || messageLower.includes('oluştur'))) {
+      return this.generateLaborLawPetition(message);
+    }
+
+    // İş hukuku dilekçesi bilgi isteme
     if (messageLower.includes('iş') || messageLower.includes('çalışan')) {
       return `İş hukuku dilekçesi için gerekli bilgiler:
 
@@ -330,6 +352,80 @@ EK: 1. T.C. Kimlik belgesi
 [İmza]
 [Davacı Adı Soyadı]
 [Tarih]`;
+  }
+
+  // İş hukuku dilekçesi oluştur
+  private generateLaborLawPetition(message: string): string {
+    return `T.C.
+ANTAKYA İŞ MAHKEMESİ
+
+DAVACI: [Çalışan Adı Soyadı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [Çalışan Adresi]
+
+DAVALI: [İşveren Adı Soyadı/Şirket Adı]
+T.C. Kimlik No: [T.C. Kimlik No]
+Adres: [İşveren Adresi]
+
+KONU: İşe İade ve Tazminat Davası
+
+DEĞERLİ MAHKEMEMİZ,
+
+1. Davacı ile davalı arasında [İş Sözleşmesi Tarihi] tarihinde iş sözleşmesi imzalanmıştır.
+
+2. Davacı, davalı işverenin yanında [İş Tanımı] olarak çalışmaya başlamıştır.
+
+3. Davacının aylık brüt ücreti [Aylık Ücret] TL'dir.
+
+4. Davalı işveren, [İşten Çıkarma Tarihi] tarihinde davacıyı [İşten Çıkarma Sebebi] gerekçesiyle işten çıkarmıştır.
+
+5. Ancak, davalı işverenin işten çıkarma işlemi hukuka aykırıdır ve geçersizdir.
+
+6. Davacı, işten çıkarılmadan önce [Çalışma Süresi] yıl süreyle davalı işverenin yanında çalışmıştır.
+
+7. Davacının işten çıkarılması, 4857 sayılı İş Kanunu'nun 25. maddesinde belirtilen geçerli nedenlerden biri değildir.
+
+HUKUKİ DAYANAK:
+- 4857 sayılı İş Kanunu'nun 20. maddesi
+- 4857 sayılı İş Kanunu'nun 21. maddesi
+- 4857 sayılı İş Kanunu'nun 25. maddesi
+- 4857 sayılı İş Kanunu'nun 26. maddesi
+
+TALEP:
+Yukarıda açıklanan nedenlerle, davalı işverenin işten çıkarma işleminin geçersizliğinin tespiti ve davacının işe iade edilmesini, ayrıca [Tazminat Miktarı] TL tutarında tazminatın ödenmesini saygılarımla talep ederim.
+
+EK: 1. T.C. Kimlik belgesi
+2. İş sözleşmesi
+3. İşten çıkarma belgesi
+4. Maaş bordroları
+5. [Diğer Destekleyici Belgeler]
+
+[İmza]
+[Çalışan Adı Soyadı]
+[Tarih]`;
+  }
+
+  // Detaylı bilgi kontrolü
+  private hasDetailedInfo(message: string): boolean {
+    const messageLower = message.toLowerCase();
+    
+    // Tarih kontrolü (dd.mm.yyyy formatı)
+    const datePattern = /\d{1,2}\.\d{1,2}\.\d{4}/;
+    if (datePattern.test(message)) return true;
+    
+    // Sayı kontrolü (tazminat miktarı, ücret vb.)
+    const numberPattern = /\d+/;
+    if (numberPattern.test(message) && message.length > 10) return true;
+    
+    // Anahtar kelime kontrolü
+    const keywords = ['işe iade', 'kıdem tazminatı', 'sebepsiz', 'tazminat', 'icra', 'takip', 'boşanma', 'anlaşmalı'];
+    if (keywords.some(keyword => messageLower.includes(keyword))) return true;
+    
+    // Çoklu satır kontrolü
+    const lines = message.split('\n').filter(line => line.trim().length > 0);
+    if (lines.length >= 3) return true;
+    
+    return false;
   }
 
   // Dosya içeriğini analiz et
