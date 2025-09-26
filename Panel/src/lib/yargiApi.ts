@@ -42,32 +42,235 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters): 
       console.log('✅ UYAP Emsal gerçek API başarılı:', results.length, 'sonuç');
       return results;
     } else {
-      console.log('⚠️ UYAP Emsal API sonuç bulamadı, simüle edilmiş veri döndürülüyor');
-      return generateSimulatedUyapResults(query, filters);
+      console.log('⚠️ UYAP Emsal API sonuç bulamadı, gerçek UYAP sitesinden veri çekiliyor...');
+      return await fetchRealUyapData(query, filters);
     }
   } catch (error) {
     console.error('❌ UYAP Emsal gerçek API hatası:', error);
-    console.log('🔄 UYAP Emsal fallback: Simüle edilmiş veriler kullanılıyor...');
-    // Fallback olarak simüle edilmiş veri döndür
-    return generateSimulatedUyapResults(query, filters);
+    console.log('🔄 UYAP Emsal fallback: Gerçek UYAP sitesinden veri çekiliyor...');
+    // Fallback olarak gerçek UYAP sitesinden veri çek
+    return await fetchRealUyapData(query, filters);
   }
 }
 
-// Yargıtay sitesinden gerçek veri çekme (şimdilik simüle edilmiş veri döndürüyor)
+// Gerçek UYAP sitesinden veri çekme
+async function fetchRealUyapData(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
+  try {
+    console.log('🌐 Gerçek UYAP sitesinden veri çekiliyor...');
+    
+    // UYAP Emsal sitesine doğrudan erişim
+    const uyapUrl = `https://emsal.uyap.gov.tr/karar-arama?q=${encodeURIComponent(query)}`;
+    
+    const response = await fetch(`${CORS_PROXY}${uyapUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`UYAP sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealUyapResults(html, query);
+    
+    console.log('✅ Gerçek UYAP verisi başarılı:', results.length, 'sonuç');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Gerçek UYAP veri çekme hatası:', error);
+    // Son çare olarak boş array döndür
+    return [];
+  }
+}
+
+// Gerçek UYAP sonuçlarını parse etme
+function parseRealUyapResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // UYAP sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Mahkeme';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `uyap-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://emsal.uyap.gov.tr/karar-detay/${index}`,
+            source: 'UYAP Emsal (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'uyap-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'UYAP Emsal',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `UYAP Emsal sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `UYAP Emsal sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için UYAP Emsal sitesini ziyaret ediniz.`,
+        url: `https://emsal.uyap.gov.tr/karar-arama?q=${encodeURIComponent(query)}`,
+        source: 'UYAP Emsal (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('UYAP sonuç parse hatası:', error);
+    return [];
+  }
+}
+
+// Yargıtay sitesinden gerçek veri çekme
 export async function searchYargitayReal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
   try {
     console.log('🌐 Yargıtay gerçek API çağrısı başlatılıyor...');
     
-    // Yargıtay API'si karmaşık olduğu için şimdilik simüle edilmiş veri döndürüyoruz
-    // Gelecekte gerçek API entegrasyonu yapılabilir
-    console.log('⚠️ Yargıtay API geçici olarak devre dışı, simüle edilmiş veri döndürülüyor');
-    return generateSimulatedYargitayResults(query, filters);
+    // Yargıtay sitesine doğrudan erişim
+    const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
+    
+    const response = await fetch(`${CORS_PROXY}${yargitayUrl}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Yargıtay sitesi erişim hatası: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const results = parseRealYargitayResults(html, query);
+    
+    console.log('✅ Yargıtay gerçek API başarılı:', results.length, 'sonuç');
+    return results;
     
   } catch (error) {
     console.error('❌ Yargıtay gerçek API hatası:', error);
-    console.log('🔄 Yargıtay fallback: Simüle edilmiş veriler kullanılıyor...');
-    // Fallback olarak simüle edilmiş veri döndür
-    return generateSimulatedYargitayResults(query, filters);
+    console.log('🔄 Yargıtay fallback: Boş sonuç döndürülüyor...');
+    // Fallback olarak boş array döndür
+    return [];
+  }
+}
+
+// Gerçek Yargıtay sonuçlarını parse etme
+function parseRealYargitayResults(html: string, query: string): IctihatResultItem[] {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const results: IctihatResultItem[] = [];
+    
+    // Yargıtay sonuç sayısını bul
+    const resultCountElement = doc.querySelector('.sonuc-sayisi, .result-count, .toplam-sonuc');
+    let totalResults = 0;
+    if (resultCountElement) {
+      const countText = resultCountElement.textContent || '';
+      const countMatch = countText.match(/(\d+)/);
+      if (countMatch) {
+        totalResults = parseInt(countMatch[1]);
+      }
+    }
+    
+    // Sonuç listesini bul
+    const resultItems = doc.querySelectorAll('.karar-item, .result-item, .decision-item, tr');
+    
+    resultItems.forEach((item, index) => {
+      if (index >= 50) return; // İlk 50 sonucu al
+      
+      const titleElement = item.querySelector('.karar-baslik, .result-title, .decision-title, td:nth-child(2)');
+      const courtElement = item.querySelector('.mahkeme, .court, td:nth-child(1)');
+      const dateElement = item.querySelector('.tarih, .date, td:nth-child(3)');
+      const numberElement = item.querySelector('.karar-no, .decision-no, td:nth-child(4)');
+      
+      if (titleElement) {
+        const title = titleElement.textContent?.trim() || '';
+        const court = courtElement?.textContent?.trim() || 'Yargıtay';
+        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString('tr-TR');
+        const number = numberElement?.textContent?.trim() || `KARAR-${index + 1}`;
+        
+        if (title.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            id: `yargitay-real-${index}`,
+            title: title,
+            court: court,
+            date: date,
+            number: number,
+            summary: title,
+            content: title,
+            url: `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/karar-detay/${index}`,
+            source: 'Yargıtay (Gerçek)',
+            relevanceScore: 0.9 - (index * 0.01)
+          });
+        }
+      }
+    });
+    
+    // Eğer sonuç bulunamazsa, toplam sonuç sayısını göster
+    if (results.length === 0 && totalResults > 0) {
+      results.push({
+        id: 'yargitay-total-count',
+        title: `"${query}" için ${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
+        court: 'Yargıtay',
+        date: new Date().toLocaleDateString('tr-TR'),
+        number: 'TOPLAM',
+        summary: `Yargıtay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır.`,
+        content: `Yargıtay sitesinde "${query}" araması için toplam ${totalResults.toLocaleString('tr-TR')} adet karar bulunmaktadır. Detaylı sonuçlar için Yargıtay sitesini ziyaret ediniz.`,
+        url: `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/?q=${encodeURIComponent(query)}`,
+        source: 'Yargıtay (Gerçek)',
+        relevanceScore: 1.0
+      });
+    }
+    
+    return results;
+    
+  } catch (error) {
+    console.error('Yargıtay sonuç parse hatası:', error);
+    return [];
   }
 }
 
@@ -614,46 +817,21 @@ export async function searchIctihat(query: string, filters: IctihatFilters): Pro
       }
     }
     
-    // Fallback: Simüle edilmiş veriler
-    console.log('🔄 Fallback: Simüle edilmiş veriler kullanılıyor...');
-    await new Promise(resolve => setTimeout(resolve, 500)); // Network delay
+    // Fallback: Gerçek API'ler çalışmadığında boş sonuç döndür
+    console.log('❌ Tüm gerçek API\'ler başarısız oldu. Boş sonuç döndürülüyor...');
     
-    const results: IctihatResultItem[] = [];
-    const courtNames = {
-      'yargitay': 'Yargıtay',
-      'danistay': 'Danıştay',
-      'aym': 'Anayasa Mahkemesi',
-      'sayistay': 'Sayıştay',
-      'uyap': 'UYAP Emsal'
-    };
-    
-    const legalAreas = ['İş Hukuku', 'Aile Hukuku', 'Borçlar Hukuku', 'Ceza Hukuku', 'Ticaret Hukuku'];
-    const chambers = ['1. Hukuk Dairesi', '2. Hukuk Dairesi', '3. Hukuk Dairesi', '4. Hukuk Dairesi', '5. Hukuk Dairesi'];
-    
-    // 10 gerçekçi sonuç oluştur
-    for (let i = 0; i < 10; i++) {
-      const legalArea = legalAreas[i % legalAreas.length];
-      const chamber = chambers[i % chambers.length];
-      const year = 2024;
-      const caseNum = 10000 + i;
-      
-      results.push({
-        id: `${court}_${year}_${caseNum}`,
-        caseNumber: `${year}/${caseNum} K`,
-        courtName: courtNames[court] || 'Mahkeme',
-        courtType: court,
-        decisionDate: `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-        subject: `${query} konulu ${legalArea} kararı - ${courtNames[court]} ${chamber}`,
-        content: `${courtNames[court]} ${chamber}'nin ${year}/${caseNum} sayılı kararında ${query} konusu ele alınmıştır. Bu kararda ${legalArea} açısından önemli hükümler bulunmaktadır. Karar, ${query} ile ilgili mevcut uygulamaları değerlendirerek hukuki çözüm önerileri sunmaktadır.`,
-        relevanceScore: Math.max(0.1, 1.0 - (i * 0.08)),
-        legalAreas: [legalArea],
-        keywords: [query.toLowerCase(), legalArea.toLowerCase(), courtNames[court].toLowerCase()],
-        highlight: `${query} konulu karar`
-      });
-    }
-    
-    console.log('✅ Fallback API başarılı:', results.length, 'sonuç');
-    return results;
+    return [{
+      id: 'no-data-warning',
+      title: `"${query}" için gerçek veri alınamadı`,
+      court: 'Sistem Uyarısı',
+      date: new Date().toLocaleDateString('tr-TR'),
+      number: 'UYARI',
+      summary: `"${query}" araması için gerçek UYAP ve Yargıtay verilerine erişim sağlanamadı. Lütfen daha sonra tekrar deneyin.`,
+      content: `Şu anda "${query}" araması için gerçek UYAP Emsal ve Yargıtay verilerine erişim sağlanamıyor. Bu geçici bir durum olabilir. Lütfen:\n\n1. İnternet bağlantınızı kontrol edin\n2. Birkaç dakika sonra tekrar deneyin\n3. Doğrudan UYAP Emsal (emsal.uyap.gov.tr) ve Yargıtay (karararama.yargitay.gov.tr) sitelerini ziyaret edin`,
+      url: 'https://emsal.uyap.gov.tr',
+      source: 'Sistem',
+      relevanceScore: 0.1
+    }];
     
   } catch (error) {
     console.error('❌ İçtihat API hatası:', error);
@@ -833,10 +1011,24 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
       }));
     }
     
-    // Fallback: Simüle edilmiş veriler
-    console.log('🔄 Fallback: Simüle edilmiş veriler kullanılıyor...');
-    await new Promise(resolve => setTimeout(resolve, 400)); // Network delay
+    // Fallback: Gerçek API'ler çalışmadığında boş sonuç döndür
+    console.log('❌ Gerçek Mevzuat API\'si başarısız oldu. Boş sonuç döndürülüyor...');
     
+    return [{
+      id: 'no-mevzuat-data',
+      title: `"${query}" için gerçek mevzuat verisi alınamadı`,
+      category: 'Sistem Uyarısı',
+      institution: 'Sistem',
+      publishDate: new Date().toISOString().split('T')[0],
+      url: 'https://mevzuat.gov.tr',
+      summary: `"${query}" araması için gerçek mevzuat verilerine erişim sağlanamadı.`,
+      content: `Şu anda "${query}" araması için gerçek mevzuat verilerine erişim sağlanamıyor. Lütfen doğrudan mevzuat.gov.tr sitesini ziyaret edin.`,
+      relevanceScore: 0.1,
+      highlight: ''
+    }];
+    
+    // Eski demo veri kodu kaldırıldı
+    /*
     const results: MevzuatResultItem[] = [];
     const categories = ['Medeni Kanun', 'İş Kanunu', 'Ceza Kanunu', 'Ticaret Kanunu', 'Borçlar Kanunu'];
     const institutions = ['Adalet Bakanlığı', 'Çalışma ve Sosyal Güvenlik Bakanlığı', 'İçişleri Bakanlığı'];
@@ -848,51 +1040,8 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
       const year = 2024;
       const articleNum = 100 + i;
       
-      results.push({
-        id: `mevzuat_${year}_${articleNum}`,
-        title: `${category} - ${articleNum}. Madde`,
-        category: category,
-        institution: institution,
-        publishDate: `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-        url: `https://mevzuat.gov.tr/mevzuat/${year}/${articleNum}`,
-        summary: `${category}'nın ${articleNum}. maddesi ${query} konusunu düzenlemektedir.`,
-        content: `T.C.
-${institution.toUpperCase()}
-${category.toUpperCase()}
-MADDE ${articleNum}
-
-${query} ile ilgili hükümler:
-
-Bu madde, ${query} konusunda uygulanacak temel ilkeleri ve kuralları belirlemektedir. ${category}'nın ${articleNum}. maddesi kapsamında ${query} ile ilgili aşağıdaki hükümler düzenlenmiştir:
-
-1. GENEL HÜKÜMLER:
-${query} konusunda tarafların hak ve yükümlülükleri bu madde kapsamında belirlenir. Bu hükümler, ${query} ile ilgili hukuki ilişkilerin düzenlenmesi için temel teşkil eder.
-
-2. UYGULAMA ALANI:
-Bu madde, ${query} konusunda ortaya çıkan hukuki durumların çözümü için uygulanır. ${query} ile ilgili özel durumlar, bu maddenin genel hükümleri çerçevesinde değerlendirilir.
-
-3. HUKUKİ SONUÇLAR:
-${query} konusunda bu maddeye aykırı davranışların hukuki sonuçları belirlenmiştir. Bu sonuçlar, ${query} ile ilgili hukuki güvenliğin sağlanması için önemlidir.
-
-4. İSTİSNA DURUMLAR:
-${query} konusunda özel durumlar için istisna hükümler öngörülmüştür. Bu istisnalar, ${query} ile ilgili adil çözümlerin sağlanması için gereklidir.
-
-5. YÜRÜRLÜK:
-Bu madde, ${year} yılında yürürlüğe girmiş olup, ${query} konusunda geçmişe etkili olmayacak şekilde uygulanır.
-
-Bu madde, ${query} konusunda hukuki düzenin sağlanması için önemli bir rol oynar ve ${query} ile ilgili uyuşmazlıkların çözümünde temel referans kaynağıdır.
-
-Yayım Tarihi: ${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}
-Resmi Gazete: ${year}/${Math.floor(Math.random() * 1000) + 1000}
-
-${institution} tarafından hazırlanmıştır.`,
-        relevanceScore: Math.max(0.1, 1.0 - (i * 0.1)),
-        highlight: `${query} konulu mevzuat`
-      });
-    }
-    
-    console.log('✅ Fallback Mevzuat API başarılı:', results.length, 'sonuç');
-    return results;
+    // Demo veri kodu kaldırıldı - gerçek API'ler kullanılacak
+    */
     
   } catch (error: any) {
     console.error('❌ Mevzuat arama hatası:', error);
