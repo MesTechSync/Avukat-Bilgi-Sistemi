@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start:backend": "python -m uvicorn panel_backend:app --host 0.0.0.0 --port 9000",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest",
     "check:aichat": "node scripts/check-ai-chat-integrity.mjs",
