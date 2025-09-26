@@ -167,10 +167,10 @@ const AdvancedSearch: React.FC = () => {
       
       setSearchResults(results);
       
-      // Yapay zeka analizi başlat
-      if (results.length > 0) {
-        analyzeWithAI(results, searchTerm);
-      }
+      // Yapay zeka analizi geçici olarak devre dışı
+      // if (results.length > 0) {
+      //   analyzeWithAI(results, searchTerm);
+      // }
       
       // Arama geçmişine ekle
       setSearchHistory(prev => [{
