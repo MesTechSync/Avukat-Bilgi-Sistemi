@@ -47,9 +47,9 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters, p
     }
   }
   
-  // Tüm proxy'ler başarısız olursa simüle edilmiş veri döndür
-  console.log('🔄 Tüm proxy\'ler başarısız, simüle veri döndürülüyor...');
-  return generateRealisticUyapResults(query, page);
+  // Tüm proxy'ler başarısız olursa hata fırlat
+  console.error('❌ Tüm CORS proxy\'ler başarısız oldu');
+  throw new Error('UYAP verilerine erişim sağlanamadı. Lütfen daha sonra tekrar deneyin.');
 }
 
 // ÇOKLU SAYFA UYAP VERİSİ ÇEKME
@@ -309,6 +309,8 @@ Aşağıda "${query}" konulu gerçek UYAP emsal kararları listelenmektedir:`,
 }
 
 // GERÇEK UYAP FORMATI - Görülen örnekteki gibi
+// SİMÜLE VERİ KULLANILMIYOR - SADECE GERÇEK VERİ
+/*
 function generateRealisticUyapResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
   console.log('🏛️ Gerçek UYAP karar formatı oluşturuluyor...');
   
@@ -478,9 +480,9 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
     }
   }
   
-  // Tüm proxy'ler başarısız olursa simüle edilmiş veri döndür
-  console.log('🔄 Tüm proxy\'ler başarısız, simüle veri döndürülüyor...');
-  return generateRealisticYargitayResults(query, page);
+  // Tüm proxy'ler başarısız olursa hata fırlat
+  console.error('❌ Tüm CORS proxy\'ler başarısız oldu');
+  throw new Error('Yargıtay verilerine erişim sağlanamadı. Lütfen daha sonra tekrar deneyin.');
 }
 
 // ÇOKLU SAYFA YARGITAY VERİSİ ÇEKME  
@@ -739,8 +741,10 @@ Aşağıda "${query}" konulu gerçek Yargıtay kararları listelenmektedir:`,
     return [];
   }
 }
+*/
 
-// GERÇEK YARGITAY FORMATI - Görülen örnekteki gibi
+// SİMÜLE VERİ KULLANILMIYOR - SADECE GERÇEK VERİ
+/*
 function generateRealisticYargitayResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
   console.log('🏛️ Gerçek Yargıtay karar formatı oluşturuluyor...');
   
@@ -2241,6 +2245,7 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
   
   return simulatedResults;
 }
+*/
 
 // Geçici: Diğer mahkeme veri kaynakları bu sürümde devre dışı
 // not used (top tanım kullanılıyor)
