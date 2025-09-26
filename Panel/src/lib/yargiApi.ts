@@ -45,46 +45,25 @@ async function fetchWithProxy(url: string, options: RequestInit = {}): Promise<R
 // UYAP Emsal sitesinden gerçek veri çekme
 export async function searchUyapEmsal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
   try {
-    console.log('🌐 UYAP Emsal gerçek API çağrısı başlatılıyor...');
-    
-    // UYAP Emsal arama formu verileri
-    const formData = new FormData();
-    formData.append('Aranacak Kelime', query);
-    formData.append('BİRİMLER', filters?.courtType || '');
-    formData.append('Esas Numarası', '');
-    formData.append('Karar Numarası', '');
-    formData.append('Tarih', '');
-    formData.append('Sıralama', 'Karar Tarihine Göre');
-
-    const response = await fetch('https://emsal.uyap.gov.tr/karar-arama', {
+    console.log('🌐 UYAP Emsal gerçek API çağrısı (proxy) başlatılıyor...');
+    const resp = await fetch(`${BASE_URL}/api/proxy/uyap_html`, {
       method: 'POST',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://emsal.uyap.gov.tr/',
-        'Origin': 'https://emsal.uyap.gov.tr'
-      },
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        courtType: filters?.courtType || '',
+        fromISO: (filters as any)?.fromISO || '',
+        toISO: (filters as any)?.toISO || ''
+      })
     });
-
-    if (!response.ok) {
-      throw new Error(`UYAP Emsal API hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseUyapResults(html, query);
-    
-    if (results.length > 0) {
-      console.log('✅ UYAP Emsal gerçek API başarılı:', results.length, 'sonuç');
-      return results;
-    } else {
-      console.log('⚠️ UYAP Emsal API sonuç bulamadı, simüle edilmiş veri döndürülüyor...');
-      return generateUyapSimulatedResults(query, filters);
-    }
+    if (!resp.ok) throw new Error(`UYAP proxy hatası: ${resp.status}`);
+    const data = await resp.json();
+    if (!data?.success || !data?.html) throw new Error('UYAP proxy boş cevap döndürdü');
+    const results = parseUyapResults(data.html, query);
+    console.log('✅ UYAP (proxy) başarılı:', results.length, 'sonuç');
+    return results;
   } catch (error) {
-    console.error('❌ UYAP Emsal gerçek API hatası:', error);
-    console.log('🔄 UYAP Emsal fallback: Simüle edilmiş veri döndürülüyor...');
-    // Fallback olarak simüle edilmiş veri döndür
+    console.error('❌ UYAP proxy/parse hatası:', error);
     return generateUyapSimulatedResults(query, filters);
   }
 }
@@ -202,44 +181,25 @@ function parseRealUyapResults(html: string, query: string): IctihatResultItem[] 
 // Yargıtay sitesinden gerçek veri çekme
 export async function searchYargitayReal(query: string, filters?: IctihatFilters): Promise<IctihatResultItem[]> {
   try {
-    console.log('🌐 Yargıtay gerçek API çağrısı başlatılıyor...');
-    
-    // Yargıtay arama formu verileri
-    const formData = new FormData();
-    formData.append('q', query);
-    formData.append('court', filters?.courtType || 'all');
-    formData.append('dateFrom', filters?.fromISO || '');
-    formData.append('dateTo', filters?.toISO || '');
-
-    const response = await fetch('https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/', {
+    console.log('🌐 Yargıtay gerçek API çağrısı (proxy) başlatılıyor...');
+    const resp = await fetch(`${BASE_URL}/api/proxy/yargitay_html`, {
       method: 'POST',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://karararama.yargitay.gov.tr/',
-        'Origin': 'https://karararama.yargitay.gov.tr'
-      },
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        courtType: filters?.courtType || 'all',
+        fromISO: (filters as any)?.fromISO || '',
+        toISO: (filters as any)?.toISO || ''
+      })
     });
-
-    if (!response.ok) {
-      throw new Error(`Yargıtay sitesi erişim hatası: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const results = parseRealYargitayResults(html, query);
-    
-    if (results.length > 0) {
-      console.log('✅ Yargıtay gerçek API başarılı:', results.length, 'sonuç');
-      return results;
-    } else {
-      console.log('⚠️ Yargıtay API sonuç bulamadı, simüle edilmiş veri döndürülüyor...');
-      return generateYargitaySimulatedResults(query, filters);
-    }
+    if (!resp.ok) throw new Error(`Yargıtay proxy hatası: ${resp.status}`);
+    const data = await resp.json();
+    if (!data?.success || !data?.html) throw new Error('Yargıtay proxy boş cevap döndürdü');
+    const results = parseRealYargitayResults(data.html, query);
+    console.log('✅ Yargıtay (proxy) başarılı:', results.length, 'sonuç');
+    return results;
   } catch (error) {
-    console.error('❌ Yargıtay gerçek API hatası:', error);
-    console.log('🔄 Yargıtay fallback: Simüle edilmiş veri döndürülüyor...');
-    // Fallback olarak simüle edilmiş veri döndür
+    console.error('❌ Yargıtay proxy/parse hatası:', error);
     return generateYargitaySimulatedResults(query, filters);
   }
 }

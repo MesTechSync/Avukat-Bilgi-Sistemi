@@ -33,6 +33,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import pydantic as _pyd
+import httpx
 try:
     # Pydantic v2
     from pydantic import ConfigDict  # type: ignore
@@ -579,6 +580,76 @@ async def search_yargitay(request: YargitaySearchRequest):
             status_code=500,
             detail=f"Yargıtay araması başarısız: {str(e)}"
         )
+
+# =========================================================================
+# BACKEND PROXY ENDPOINTS (HTML passthrough for frontend parsing)
+# =========================================================================
+
+class ProxyYargitayRequest(CompatBaseModel):
+    query: str
+    courtType: str | None = None
+    fromISO: str | None = None
+    toISO: str | None = None
+
+@app.post("/api/proxy/yargitay_html", tags=["Proxy"])
+async def proxy_yargitay_html(req: ProxyYargitayRequest):
+    """Server-side fetch to Yargıtay, returns raw HTML for frontend parsing."""
+    target_url = "https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/"
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
+        "Referer": "https://karararama.yargitay.gov.tr/",
+        "Origin": "https://karararama.yargitay.gov.tr",
+    }
+    form = {
+        "q": req.query,
+        "court": req.courtType or "all",
+        "dateFrom": req.fromISO or "",
+        "dateTo": req.toISO or "",
+    }
+    timeout = httpx.Timeout(20.0, connect=20.0)
+    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
+        try:
+            r = await client.post(target_url, data=form)
+            r.raise_for_status()
+            return JSONResponse(content={"success": True, "html": r.text})
+        except httpx.HTTPError as e:
+            logger.error(f"Proxy Yargıtay error: {e}")
+            raise HTTPException(status_code=502, detail=f"Yargıtay proxy hatası: {e}")
+
+class ProxyUyapRequest(CompatBaseModel):
+    query: str
+    courtType: str | None = None
+    fromISO: str | None = None
+    toISO: str | None = None
+
+@app.post("/api/proxy/uyap_html", tags=["Proxy"])
+async def proxy_uyap_html(req: ProxyUyapRequest):
+    """Server-side fetch to UYAP Emsal, returns raw HTML for frontend parsing."""
+    target_url = "https://emsal.uyap.gov.tr/karar-arama"
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
+        "Referer": "https://emsal.uyap.gov.tr/",
+        "Origin": "https://emsal.uyap.gov.tr",
+    }
+    form = {
+        "Aranacak Kelime": req.query,
+        "BİRİMLER": req.courtType or "",
+        "Esas Numarası": "",
+        "Karar Numarası": "",
+        "Tarih": "",
+        "Sıralama": "Karar Tarihine Göre",
+    }
+    timeout = httpx.Timeout(20.0, connect=20.0)
+    async with httpx.AsyncClient(headers=headers, timeout=timeout, follow_redirects=True) as client:
+        try:
+            r = await client.post(target_url, data=form)
+            r.raise_for_status()
+            return JSONResponse(content={"success": True, "html": r.text})
+        except httpx.HTTPError as e:
+            logger.error(f"Proxy UYAP error: {e}")
+            raise HTTPException(status_code=502, detail=f"UYAP proxy hatası: {e}")
 
 @app.get("/api/yargitay/document/{document_id}", tags=["Yargıtay"])
 async def get_yargitay_document(document_id: str):
