@@ -113,7 +113,7 @@ function App() {
         const res = await fetchWithTimeout(endpoint, {
           method: 'GET',
           headers: { 
-            'Accept': 'application/json, text/plain, */*',
+            'Accept': 'application/json, text/plain, *\\/*',
             'Content-Type': 'application/json'
           },
           credentials: 'same-origin',
