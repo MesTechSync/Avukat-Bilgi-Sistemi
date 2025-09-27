@@ -6,6 +6,8 @@ import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import JSZip from 'jszip';
+import htmlDocx from 'html-docx-js';
+import htmlToDocx from 'html-to-docx';
 
 const FileConverter: React.FC = () => {
   type UiState = 'idle' | 'uploading' | 'converting' | 'ready' | 'error';
@@ -51,59 +53,93 @@ const FileConverter: React.FC = () => {
     return result.value;
   };
 
-  // Metni Word formatına dönüştürme - Basit ve güvenilir
+  // Metni Word formatına dönüştürme - Çoklu format desteği
   const createWordDocument = async (text: string, filename: string): Promise<Blob> => {
     try {
-      // Metni temizle ve paragraflara böl
+      // Metni temizle
       const cleanText = text.trim();
       if (!cleanText) {
         throw new Error('Boş metin içeriği');
       }
       
-      // Basit Word belgesi oluştur - Minimal yapı
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            // Başlık
-            new Paragraph({
-              children: [new TextRun({
-                text: filename.replace(/\.[^/.]+$/, ""), // Uzantıyı kaldır
-                bold: true,
-                size: 32
-              })],
-              heading: HeadingLevel.HEADING_1,
-            }),
-            // Boş satır
-            new Paragraph({
-              children: [new TextRun({ text: "" })],
-            }),
-            // Ana metin
-            new Paragraph({
-              children: [new TextRun({
-                text: cleanText,
-                size: 24
-              })],
-            })
-          ],
-        }],
+      // HTML içeriği oluştur
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${filename}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+            h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            p { margin-bottom: 15px; }
+          </style>
+        </head>
+        <body>
+          <h1>${filename.replace(/\.[^/.]+$/, "")}</h1>
+          <div>${cleanText.replace(/\n/g, '<br>')}</div>
+        </body>
+        </html>
+      `;
+      
+      // HTML'den DOCX'e dönüştür
+      const docxBuffer = await htmlToDocx(htmlContent, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+        font: 'Arial',
+        fontSize: 12
       });
-
-      // Word belgesini blob olarak oluştur
-      const buffer = await Packer.toBuffer(doc);
-      return new Blob([buffer], { 
+      
+      return new Blob([docxBuffer], { 
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
       });
     } catch (error) {
-      console.error('Word belgesi oluşturma hatası:', error);
-      // Hata durumunda RTF formatı döndür
-      const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+      console.error('HTML-DOCX dönüştürme hatası:', error);
+      
+      // Fallback 1: Basit DOCX
+      try {
+        const doc = new Document({
+          sections: [{
+            properties: {},
+            children: [
+              new Paragraph({
+                children: [new TextRun({
+                  text: filename.replace(/\.[^/.]+$/, ""),
+                  bold: true,
+                  size: 32
+                })],
+                heading: HeadingLevel.HEADING_1,
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "" })],
+              }),
+              new Paragraph({
+                children: [new TextRun({
+                  text: text.trim(),
+                  size: 24
+                })],
+              })
+            ],
+          }],
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+        return new Blob([buffer], { 
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+        });
+      } catch (docxError) {
+        console.error('DOCX oluşturma hatası:', docxError);
+        
+        // Fallback 2: RTF formatı
+        const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
 {\\colortbl;\\red0\\green0\\blue0;}
 \\f0\\fs24\\b ${filename.replace(/\.[^/.]+$/, "")}\\b0\\par\\par
 ${text.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
 }`;
-      
-      return new Blob([rtfContent], { type: 'application/rtf' });
+        
+        return new Blob([rtfContent], { type: 'application/rtf' });
+      }
     }
   };
 
@@ -495,14 +531,25 @@ Versiyon: 1.0`);
           outputName = `${baseName}.udf`;
           break;
         case 'pdf-to-word':
-          // Basit Word dönüştürme - Her zaman RTF formatı kullan
-          const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+          // Çoklu format Word dönüştürme
+          try {
+            outputBlob = await createWordDocument(extractedText, baseName);
+            // Format tipine göre uzantı belirle
+            if (outputBlob.type === 'application/rtf') {
+              outputName = `${baseName}.rtf`;
+            } else {
+              outputName = `${baseName}.docx`;
+            }
+          } catch (wordError) {
+            console.warn('Word dönüştürme hatası, RTF formatı kullanılıyor:', wordError);
+            const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
 {\\colortbl;\\red0\\green0\\blue0;}
 \\f0\\fs24\\b ${baseName}\\b0\\par\\par
 ${extractedText.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
 }`;
-          outputBlob = new Blob([rtfContent], { type: 'application/rtf' });
-          outputName = `${baseName}.rtf`;
+            outputBlob = new Blob([rtfContent], { type: 'application/rtf' });
+            outputName = `${baseName}.rtf`;
+          }
           break;
         case 'word-to-pdf':
           try {
