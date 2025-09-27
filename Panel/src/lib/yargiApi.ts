@@ -492,51 +492,6 @@ async function parseRealUyapHTML(html: string, query: string, page: number): Pro
   return results;
 }
 
-// Fallback UYAP verisi (gerçek site formatında)
-function generateFallbackUyapData(query: string, page: number): IctihatResultItem[] {
-  console.log(`🔄 UYAP fallback verisi oluşturuluyor (Sayfa ${page})...`);
-  
-  const results: IctihatResultItem[] = [];
-  const mahkemeler = [
-    "İstanbul Anadolu 2. ASLİYE TİCARET MAHKEMESİ",
-    "Bursa 2. Asliye Ticaret Mahkemesi", 
-    "İzmir 6. Asliye Ticaret Mahkemesi",
-    "İstanbul Bölge Adliye Mahkemesi 44. Hukuk Dairesi"
-  ];
-  
-  for (let i = 0; i < 10; i++) {
-    const siraNo = (page - 1) * 10 + i + 1;
-    const mahkeme = mahkemeler[i % mahkemeler.length];
-    const year = 2021 + (i % 3);
-    const esasNo = 70 + (siraNo * 5) % 999;
-    const kararNo = 1000 + (siraNo * 3) % 9999;
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-    
-    results.push({
-      id: `uyap-fallback-${siraNo}`,
-      title: `${mahkeme} ${year}/${esasNo} Esas ${year}/${kararNo} Karar`,
-      court: mahkeme,
-      date: `${day}.${month}.${year}`,
-      number: `${year}/${esasNo} Esas, ${year}/${kararNo} Karar`,
-      summary: `"${query}" ile ilgili ${mahkeme} kararı - KESİNLEŞTİ`,
-      content: `ESAS NO : ${year}/${esasNo} Esas\nKARAR NO : ${year}/${kararNo}\n\nDAVA : Menfi Tespit (Kıymetli Evraktan Kaynaklanan)\nDAVA TARİHİ : ${day}/${month}/${year}\nKARAR TARİHİ : ${day}/${month}/${year}\n\nMahkememizde görülmekte olan Menfi Tespit (Kıymetli Evraktan Kaynaklanan) davasının yapılan açık yargılaması sonunda,\nDAVA:\nDavacı vekili dava dilekçesinde özetle; müvekkili firmanın sahibi ve yetkilisi--- olduğunu, müvekkili firmanın sahibi ---- ile eşi davalı .---- çekişmeli ${query} davası açılmış ve ---- --kaydedildiğini, taraflar arasındaki ${query} ilişkin ------ sayılı dosya devam ederken taraflar 09/04/2018 tarihli anlaşmalı: ---- tarihinde ------sayılı dosyasına sunulduğunu, Bahsi geçen ${query} protokolünün gereği olan yapılacak ödemelerle ilgili taraflar bir kısım nakit bir kısım çek olacak şekilde anlaştıkları ödeme planına ait 09/05/2018 tarihli sözleşme imzalandığını, sözleşme gereğince davalıya verilmesi gereken çeklerden bir kısmı nakit bir kısım çek olacak şekilde anlaştıkları ödeme planına ait 09/05/2018`,
-      url: `https://emsal.uyap.gov.tr/karar/${siraNo}`,
-      source: 'UYAP Emsal',
-      relevanceScore: 0.95 - (i * 0.01),
-      highlight: query,
-      pagination: {
-        currentPage: page,
-        totalPages: 2944,
-        totalResults: 294392,
-        hasNextPage: page < 2944,
-        hasPrevPage: page > 1
-      }
-    });
-  }
-  
-    return results;
-}
 
 // ÇOKLU SAYFA UYAP VERİSİ ÇEKME
 export async function searchUyapEmsalMultiPage(query: string, filters?: IctihatFilters, maxPages: number = 5): Promise<IctihatResultItem[]> {
@@ -843,46 +798,6 @@ async function parseRealYargitayHTML(html: string, query: string, page: number):
   return results;
 }
 
-// Fallback Yargıtay verisi (gerçek site formatında)
-function generateFallbackYargitayData(query: string, page: number): IctihatResultItem[] {
-  console.log(`🔄 Yargıtay fallback verisi oluşturuluyor (Sayfa ${page})...`);
-  
-  const results: IctihatResultItem[] = [];
-  const daireler = ["2. Hukuk Dairesi", "3. Hukuk Dairesi", "11. Hukuk Dairesi", "13. Hukuk Dairesi"];
-  
-  for (let i = 0; i < 10; i++) {
-    const siraNo = (page - 1) * 10 + i + 1;
-    const daire = daireler[i % daireler.length];
-    const year = 2013 + (i % 10);
-    const esasNo = 6000 + (siraNo * 7) % 9999;
-    const kararNo = 15000 + (siraNo * 3) % 9999;
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-    
-      results.push({
-      id: `yargitay-fallback-${siraNo}`,
-      title: `${daire} ${year}/${esasNo} E., ${year}/${kararNo} K.`,
-      court: daire,
-      date: `${day}.${month}.${year}`,
-      number: `${year}/${esasNo} E., ${year}/${kararNo} K.`,
-      summary: `"${query}" ile ilgili ${daire} kararı`,
-      content: `"İçtihat Metni"\n\nMAHKEMESİ: ${daire}\nTARİHİ: ${day}.${month}.${year}\nNUMARASI: Esas no:${year}/${esasNo} Karar no:${year}/${kararNo}\n\nTaraflar arasındaki davanın yapılan muhakemesi sonunda mahalli mahkemece verilen, yukarıda tarihi ve numarası gösterilen hüküm, davalı (${query} davası) davacısı) koca tarafından, yargılamanın iadesi (davası), (${query}) (davasındaki) kusur belirlemesi, reddetmesi ve maddi tazminat talebi ile, (${query}) (davası) ve alacak (davası) yönünden verilmeyen vekalet ücretleri yönünden; davacı (${query} davası) davalısı) kadın tarafından alacak (davası) yönünden temyiz edilmekle, evrak okunup gereği görüşüldü.`,
-      url: `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/karar/${siraNo}`,
-      source: 'Yargıtay',
-      relevanceScore: 0.95 - (i * 0.01),
-      highlight: query,
-      pagination: {
-        currentPage: page,
-        totalPages: 29440,
-        totalResults: 720320,
-        hasNextPage: page < 29440,
-        hasPrevPage: page > 1
-      }
-      });
-    }
-    
-    return results;
-}
 
 // ÇOKLU SAYFA YARGITAY VERİSİ ÇEKME  
 export async function searchYargitayRealMultiPage(query: string, filters?: IctihatFilters, maxPages: number = 1): Promise<IctihatResultItem[]> {
