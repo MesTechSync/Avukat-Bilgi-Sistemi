@@ -832,44 +832,31 @@ Aşağıda "${query}" konulu gerçek Yargıtay kararları listelenmektedir:`,
 }*/
 // COMMENT KALDIRILDI
 
-// ESKİ DUPLICATE YARGITAY FONKSIYONU KALDIRILDI - TAMAMEN KALDIRILDI
-
-// Gerçek Yargıtay sonuçlarını parse etme
-function parseRealYargitayResults(html: string, query: string): IctihatResultItem[] {
-  try {
-    console.log('🔍 Yargıtay HTML parse ediliyor...');
-    
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    
-    const results: IctihatResultItem[] = [];
-    
-    // Yargıtay sitesindeki tablo satırlarını bul
-    const tableRows = doc.querySelectorAll('table tr, tbody tr, .karar-item, .result-item');
-    console.log(`📋 Yargıtay Bulunan satır: ${tableRows.length}`);
-    
-    let foundCount = 0;
-    
-    // Her satırı kontrol et
-    tableRows.forEach((row, index) => {
-      const cells = row.querySelectorAll('td');
-      
-      if (cells.length >= 4) {
-        const siraNo = cells[0]?.textContent?.trim() || '';
-        const daire = cells[1]?.textContent?.trim() || '';
-        const esas = cells[2]?.textContent?.trim() || '';
-        const karar = cells[3]?.textContent?.trim() || '';
-        const tarih = cells[4]?.textContent?.trim() || '';
-        
-        // Boş satırları ve başlık satırlarını atla
-        if (!daire || !esas || daire.toLowerCase().includes('daire') || daire === 'Daire') return;
-        
-        foundCount++;
-        
-        console.log(`📄 Yargıtay Karar ${foundCount}: ${daire} - ${esas}/${karar}`);
-        
-        results.push({
-          id: `real-yargitay-${foundCount}`,
+// ESKİ DUPLICATE YARGITAY FONKSIYONU KALDIRILDI
+// SİMÜLE VERİ KULLANILMIYOR - SADECE GERÇEK VERİ
+// COMMENT KALDIRILDI
+/*function generateRealisticYargitayResults(query: string, filters?: IctihatFilters): IctihatResultItem[] {
+  console.log('🏛️ Gerçek Yargıtay karar formatı oluşturuluyor...');
+  
+  // Gerçek Yargıtay dairelerini taklit eden simüle veriler
+  const daireler = [
+    "Hukuk Genel Kurulu",
+    "19. Hukuk Dairesi", 
+    "3. Hukuk Dairesi",
+    "17. Hukuk Dairesi",
+    "Hukuk Genel Kurulu",
+    "2. Hukuk Dairesi",
+    "15. Hukuk Dairesi"
+  ];
+  
+  const results: IctihatResultItem[] = [];
+  const currentDate = new Date();
+  const totalResults = 636715; // Görseldeki gerçek sayı
+  
+  // Görseldeki format: "636715 adet karar bulundu."
+  results.push({
+    id: 'yargitay-total',
+    title: `${totalResults.toLocaleString('tr-TR')} adet karar bulundu`,
     court: 'Yargıtay Karar Arama',
     courtName: 'Yargıtay',
     courtType: 'yargitay',
@@ -975,7 +962,7 @@ ${daire.toUpperCase()}`;
   
   console.log(`✅ ${results.length} adet gerçek Yargıtay kararı oluşturuldu`);
     return results;
-}
+}*/
 
 // Gerçek Yargıtay sonuçlarını parse etme
 function parseRealYargitayResults(html: string, query: string): IctihatResultItem[] {
@@ -1437,9 +1424,7 @@ export const BASE_URL = isDev
   : (ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || window.location.origin);
 
 // Absolute backend base for diagnostics/pings, bypassing dev middleware
-export function getBackendBase(): string {
-  return ENV.VITE_BACKEND_URL || ENV.VITE_YARGI_API_URL || window.location.origin;
-}
+// (getBackendBase fonksiyonu üstte tanımlı)
 
 
 export async function searchIctihat(query: string, filters: IctihatFilters): Promise<IctihatResultItem[]> {
@@ -2345,4 +2330,4 @@ function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilter
 // not used (top tanım kullanılıyor)
 
 // Export edilen fonksiyonlar
-export { searchIctihat };
+// (searchIctihat fonksiyonu üstte export edildi)
