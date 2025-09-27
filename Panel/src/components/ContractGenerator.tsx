@@ -622,17 +622,6 @@ Bu sözleşme türü için 5 adet profesyonel öneri ver. Her öneri:
     }
   };
 
-  // Sözleşmeyi kopyala
-  const copyToClipboard = async () => {
-    if (generatedContract) {
-      try {
-        await navigator.clipboard.writeText(generatedContract.content);
-        alert('Sözleşme panoya kopyalandı!');
-      } catch (error) {
-        console.error('Kopyalama hatası:', error);
-      }
-    }
-  };
 
   // Sözleşmeyi indir
   const downloadContract = () => {
