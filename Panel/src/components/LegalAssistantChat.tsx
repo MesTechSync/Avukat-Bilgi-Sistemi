@@ -76,7 +76,7 @@ const LegalAssistantChat: React.FC = () => {
       title: 'Hukuki Destek Ver',
       description: 'Genel hukuki danışmanlık',
       icon: <Scale className="w-6 h-6" />,
-      prompt: 'Hukuki bir sorunum var ve profesyonel destek istiyorum. Detaylı analiz ve çözüm önerileri sunabilir misin?',
+      prompt: 'Senetteki imzanın geçersizliği halinde, ciro silsilesinde imzası bulunan cirantaların sorumluluğu devam eder mi?',
       category: 'genel',
       gradient: 'from-cyan-400 via-blue-500 to-purple-600'
     },
