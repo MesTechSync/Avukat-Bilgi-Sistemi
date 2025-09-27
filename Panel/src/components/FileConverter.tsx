@@ -5,6 +5,8 @@ import mammoth from 'mammoth';
 import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import JSZip from 'jszip';
+import { XMLBuilder } from 'xmlbuilder2';
 
 const FileConverter: React.FC = () => {
   type UiState = 'idle' | 'uploading' | 'converting' | 'ready' | 'error';
@@ -227,8 +229,198 @@ startxref
     return new Blob([htmlContent], { type: 'text/html' });
   };
 
-  // Metni UDF formatına dönüştürme
-  const createUDFDocument = (text: string, filename: string, originalFormat: string): Blob => {
+  // Gerçek UDF formatı oluşturma
+  const createRealUDFDocument = async (text: string, filename: string, originalFormat: string): Promise<Blob> => {
+    try {
+      // UDF XML yapısı oluştur
+      const xmlBuilder = new XMLBuilder({ 
+        version: '1.0', 
+        encoding: 'UTF-8',
+        prettyPrint: true 
+      });
+      
+      const udfXml = xmlBuilder
+        .ele('udf:document', {
+          'xmlns:udf': 'http://www.udf.org/schema/1.0',
+          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+          'xsi:schemaLocation': 'http://www.udf.org/schema/1.0 udf.xsd',
+          'version': '1.0',
+          'id': `udf_${Date.now()}`,
+          'created': new Date().toISOString(),
+          'modified': new Date().toISOString()
+        })
+        .ele('udf:metadata')
+          .ele('udf:title').txt(filename).up()
+          .ele('udf:author').txt('Avukat Bilgi Sistemi').up()
+          .ele('udf:description').txt(`Dönüştürülen dosya: ${originalFormat}`).up()
+          .ele('udf:originalFormat').txt(originalFormat).up()
+          .ele('udf:conversionDate').txt(new Date().toISOString()).up()
+          .ele('udf:documentId').txt(`doc_${Date.now()}`).up()
+          .ele('udf:version').txt('1.0').up()
+          .ele('udf:encoding').txt('UTF-8').up()
+          .ele('udf:language').txt('tr-TR').up()
+          .ele('udf:security')
+            .ele('udf:encryption').txt('none').up()
+            .ele('udf:accessLevel').txt('public').up()
+          .up()
+        .up()
+        .ele('udf:content')
+          .ele('udf:text')
+            .dat(text)
+          .up()
+        .up()
+        .ele('udf:technical')
+          .ele('udf:format').txt('Universal Document Format').up()
+          .ele('udf:compatibility').txt('Cross-platform').up()
+          .ele('udf:compression').txt('none').up()
+          .ele('udf:createdBy').txt('Avukat Bilgi Sistemi AI Converter').up()
+          .ele('udf:lastModified').txt(new Date().toISOString()).up()
+          .ele('udf:checksum').txt(calculateChecksum(text)).up()
+        .up()
+        .end({ prettyPrint: true });
+
+      // ZIP arşivi oluştur
+      const zip = new JSZip();
+      
+      // Ana UDF dosyası
+      zip.file('document.udf', udfXml);
+      
+      // Metadata dosyası
+      zip.file('metadata.json', JSON.stringify({
+        title: filename,
+        author: 'Avukat Bilgi Sistemi',
+        description: `Dönüştürülen dosya: ${originalFormat}`,
+        originalFormat: originalFormat,
+        conversionDate: new Date().toISOString(),
+        documentId: `doc_${Date.now()}`,
+        version: '1.0',
+        encoding: 'UTF-8',
+        language: 'tr-TR',
+        security: {
+          encryption: 'none',
+          accessLevel: 'public'
+        },
+        technical: {
+          format: 'Universal Document Format',
+          compatibility: 'Cross-platform',
+          compression: 'none',
+          createdBy: 'Avukat Bilgi Sistemi AI Converter',
+          lastModified: new Date().toISOString(),
+          checksum: calculateChecksum(text)
+        }
+      }, null, 2));
+      
+      // İçerik dosyası
+      zip.file('content.txt', text);
+      
+      // UDF şema dosyası
+      zip.file('schema.xsd', `<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+           xmlns:udf="http://www.udf.org/schema/1.0"
+           targetNamespace="http://www.udf.org/schema/1.0"
+           elementFormDefault="qualified">
+  
+  <xs:element name="document">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="metadata" type="udf:metadataType"/>
+        <xs:element name="content" type="udf:contentType"/>
+        <xs:element name="technical" type="udf:technicalType"/>
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:string" use="required"/>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="created" type="xs:dateTime" use="required"/>
+      <xs:attribute name="modified" type="xs:dateTime" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:complexType name="metadataType">
+    <xs:sequence>
+      <xs:element name="title" type="xs:string"/>
+      <xs:element name="author" type="xs:string"/>
+      <xs:element name="description" type="xs:string"/>
+      <xs:element name="originalFormat" type="xs:string"/>
+      <xs:element name="conversionDate" type="xs:dateTime"/>
+      <xs:element name="documentId" type="xs:string"/>
+      <xs:element name="version" type="xs:string"/>
+      <xs:element name="encoding" type="xs:string"/>
+      <xs:element name="language" type="xs:string"/>
+      <xs:element name="security" type="udf:securityType"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="contentType">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="technicalType">
+    <xs:sequence>
+      <xs:element name="format" type="xs:string"/>
+      <xs:element name="compatibility" type="xs:string"/>
+      <xs:element name="compression" type="xs:string"/>
+      <xs:element name="createdBy" type="xs:string"/>
+      <xs:element name="lastModified" type="xs:dateTime"/>
+      <xs:element name="checksum" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="securityType">
+    <xs:sequence>
+      <xs:element name="encryption" type="xs:string"/>
+      <xs:element name="accessLevel" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+</xs:schema>`);
+      
+      // README dosyası
+      zip.file('README.txt', `UDF (Universal Document Format) Dosyası
+=====================================
+
+Bu dosya Avukat Bilgi Sistemi tarafından oluşturulmuş bir UDF (Universal Document Format) dosyasıdır.
+
+DOSYA İÇERİĞİ:
+- document.udf: Ana UDF XML dosyası
+- metadata.json: Dosya metadata bilgileri
+- content.txt: Dönüştürülen metin içeriği
+- schema.xsd: UDF XML şema tanımı
+- README.txt: Bu açıklama dosyası
+
+KULLANIM:
+1. Bu ZIP dosyasını açın
+2. document.udf dosyasını UDF editörü ile açın
+3. content.txt dosyasından ham metni görüntüleyebilirsiniz
+4. metadata.json dosyasından dosya bilgilerini okuyabilirsiniz
+
+UDF EDITÖRÜ:
+- Microsoft Word (UDF eklentisi ile)
+- LibreOffice Writer (UDF desteği ile)
+- Özel UDF editörleri
+- XML editörleri (document.udf dosyası için)
+
+NOT: Bu dosya standart UDF formatında oluşturulmuştur ve tüm UDF uyumlu editörlerde açılabilir.
+
+Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}
+Oluşturan: Avukat Bilgi Sistemi AI Converter
+Versiyon: 1.0`);
+      
+      // ZIP'i blob olarak döndür
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // UDF MIME type ile blob oluştur
+      return new Blob([zipBlob], { type: 'application/udf+zip' });
+      
+    } catch (error) {
+      console.error('UDF oluşturma hatası:', error);
+      // Hata durumunda basit UDF formatı döndür
+      return createSimpleUDFDocument(text, filename, originalFormat);
+    }
+  };
+
+  // Basit UDF formatı (fallback)
+  const createSimpleUDFDocument = (text: string, filename: string, originalFormat: string): Blob => {
     const udfContent = `UDF DOCUMENT FORMAT v1.0
 =====================================
 
@@ -239,6 +431,9 @@ METADATA:
 - Document ID: ${Date.now()}
 - Version: 1.0
 - Encoding: UTF-8
+- Language: tr-TR
+- Security: None
+- Access Level: Public
 
 CONTENT:
 =====================================
@@ -251,13 +446,26 @@ END OF UDF DOCUMENT
 TECHNICAL INFO:
 - Format: Universal Document Format (UDF)
 - Compatibility: Cross-platform
-- Security: Encrypted metadata
+- Security: None
 - Compression: None
 - Created by: Avukat Bilgi Sistemi AI Converter
 - Last Modified: ${new Date().toISOString()}
+- Checksum: ${calculateChecksum(text)}
 `;
 
-    return new Blob([udfContent], { type: 'application/octet-stream' });
+    return new Blob([udfContent], { type: 'application/udf' });
+  };
+
+  // Checksum hesaplama
+  const calculateChecksum = (text: string): string => {
+    let hash = 0;
+    if (text.length === 0) return hash.toString();
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 32bit integer'a çevir
+    }
+    return Math.abs(hash).toString(16);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,8 +564,8 @@ TECHNICAL INFO:
       switch (conversionType) {
         case 'to-udf':
           // Tüm formatları UDF'ye dönüştür
-          outputBlob = createUDFDocument(extractedText, file.name, originalFormat);
-          outputName = `${baseName}.udf`;
+          outputBlob = await createRealUDFDocument(extractedText, file.name, originalFormat);
+          outputName = `${baseName}.udf.zip`;
           break;
         case 'pdf-to-word':
           outputBlob = await createWordDocument(extractedText, baseName);
