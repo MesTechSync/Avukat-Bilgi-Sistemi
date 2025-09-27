@@ -6,7 +6,7 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
   
   try {
     // CORS proxy kullanarak Yargıtay sitesine istek gönder
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
     
     const formData = new FormData();
@@ -17,7 +17,7 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + encodeURIComponent(yargitayUrl), {
+    const response = await fetch(proxyUrl + yargitayUrl, {
       method: 'POST',
       body: formData,
       headers: {
@@ -49,7 +49,7 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
   
   try {
     // CORS proxy kullanarak UYAP sitesine istek gönder
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const uyapUrl = `https://emsal.uyap.gov.tr/`;
     
     const formData = new FormData();
@@ -60,7 +60,7 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + encodeURIComponent(uyapUrl), {
+    const response = await fetch(proxyUrl + uyapUrl, {
       method: 'POST',
       body: formData,
       headers: {
@@ -280,7 +280,7 @@ function generateFallbackYargitayData(query: string, page: number): IctihatResul
     }
   ];
   
-  for (let i = 0; i < Math.min(count, realDecisions.length); i++) {
+  for (let i = 0; i < Math.min(10, realDecisions.length); i++) {
     const decision = realDecisions[i];
     
     const result: IctihatResultItem = {
