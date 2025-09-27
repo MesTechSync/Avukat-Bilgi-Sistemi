@@ -20,6 +20,23 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  type?: 'text' | 'petition' | 'template' | 'suggestion';
+  metadata?: {
+    wordCount?: number;
+    category?: string;
+    confidence?: number;
+  };
+}
+
+interface PetitionTemplate {
+  id: string;
+  name: string;
+  category: string;
+  content: string;
+  createdAt: string;
+  usageCount: number;
+  tags: string[];
+  description: string;
 }
 
 interface GeneratedPetition {
@@ -29,15 +46,32 @@ interface GeneratedPetition {
     aiModel: string;
     wordCount: number;
     chatHistory: ChatMessage[];
+    category: string;
+    confidence: number;
+    suggestions: string[];
   };
 }
 
 export default function PetitionWriter() {
   // Chat state'leri
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: '🌟 **Merhaba! Ben Avukat Bilgi Sistemi\'nin Gelişmiş Dilekçe Yazım Asistanıyım!**\n\n✨ **Özelliklerim:**\n• 🧠 Derin düşünme ve analiz\n• 📚 Türk hukuku uzmanlığı\n• 🎯 Kişiselleştirilmiş dilekçeler\n• 💾 Şablon kaydetme sistemi\n• 🔄 Sürekli öğrenme\n\n💬 **Nasıl çalışırım:**\n1. Dilekçe türünüzü belirtin\n2. Detayları açıklayın\n3. Ben size profesyonel dilekçe hazırlarım\n4. Beğendiğiniz dilekçeyi şablon olarak kaydedebilirsiniz\n\n🚀 **Hangi konuda dilekçe yazmak istiyorsunuz?**',
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    }
+  ]);
   const [chatInput, setChatInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPetition, setGeneratedPetition] = useState<GeneratedPetition | null>(null);
+  
+  // Şablon state'leri
+  const [, setTemplates] = useState<PetitionTemplate[]>([]);
+  
+  // AI özellikleri
+  const [aiMode] = useState<'gemini' | 'claude' | 'auto'>('auto');
   
   // Sesli yazım state'leri
   const { isListening, startDictation, stopDictation, interimText } = useDictation();
@@ -48,12 +82,139 @@ export default function PetitionWriter() {
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   
   // Tab state
-  const [activeTab, setActiveTab] = useState<'ai-create' | 'preview'>('ai-create');
+  const [activeTab, setActiveTab] = useState<'chat' | 'templates' | 'settings' | 'ai-create' | 'preview'>('chat');
 
   // Chat scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Gelişmiş AI fonksiyonları
+  const getAdvancedPrompt = (userMessage: string, chatHistory: ChatMessage[]) => {
+    const historyContext = chatHistory.slice(-5).map(msg => 
+      `${msg.role === 'user' ? 'Kullanıcı' : 'Asistan'}: ${msg.content}`
+    ).join('\n');
+
+    return `Sen Avukat Bilgi Sistemi'nin GELİŞMİŞ DİLEKÇE YAZIM ASİSTANISIN. Türk hukuku uzmanısın ve derin düşünme yeteneğine sahipsin.
+
+KULLANICI SORUSU: "${userMessage}"
+
+ÖNCEKİ KONUŞMA GEÇMİŞİ:
+${historyContext}
+
+GÖREVİN:
+1. Kullanıcının dilekçe ihtiyacını analiz et
+2. Türk hukuku çerçevesinde profesyonel dilekçe hazırla
+3. Derin düşünme ile en iyi çözümü sun
+4. Dilekçeyi kategorize et ve etiketle
+
+DİLEKÇE YAZIM KURALLARI:
+- Türkçe dilbilgisi kurallarına uygun
+- Hukuki terminoloji doğru kullanım
+- Resmi dil ve üslup
+- Açık ve anlaşılır ifadeler
+- Kanun maddelerine referanslar
+- Tarih ve imza alanları
+
+YANIT FORMATI:
+🔍 **Analiz:** [Dilekçe türü ve analiz]
+📝 **Dilekçe:** [Profesyonel dilekçe metni]
+📋 **Kategori:** [Dilekçe kategorisi]
+🏷️ **Etiketler:** [İlgili etiketler]
+💡 **Öneriler:** [Ek öneriler]
+
+Derin düşünme modunda çalış ve en kaliteli dilekçeyi hazırla!`;
+  };
+
+  const generatePetitionWithAI = async (userMessage: string) => {
+    setIsGenerating(true);
+    
+    try {
+      const prompt = getAdvancedPrompt(userMessage, chatMessages);
+      const response = await geminiService.analyzeText(prompt);
+      
+      // Yanıtı parse et
+      const petitionMatch = response.match(/📝 \*\*Dilekçe:\*\* (.+?)(?=📋|$)/s);
+      const categoryMatch = response.match(/📋 \*\*Kategori:\*\* (.+?)(?=🏷️|$)/s);
+      const suggestionsMatch = response.match(/💡 \*\*Öneriler:\*\* (.+?)$/s);
+      
+      const petitionContent = petitionMatch ? petitionMatch[1].trim() : response;
+      const category = categoryMatch ? categoryMatch[1].trim() : 'Genel';
+      const suggestions = suggestionsMatch ? suggestionsMatch[1].trim().split('\n').map(s => s.trim()) : [];
+      
+      // Yeni mesaj ekle
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString(),
+        type: 'petition',
+        metadata: {
+          wordCount: petitionContent.split(' ').length,
+          category: category,
+          confidence: 0.95
+        }
+      };
+      
+      setChatMessages(prev => [...prev, newMessage]);
+      
+      // Dilekçe oluştur
+      const petition: GeneratedPetition = {
+        content: petitionContent,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          aiModel: aiMode === 'auto' ? 'gemini' : aiMode,
+          wordCount: petitionContent.split(' ').length,
+          chatHistory: [...chatMessages, newMessage],
+          category: category,
+          confidence: 0.95,
+          suggestions: suggestions
+        }
+      };
+      
+      setGeneratedPetition(petition);
+      
+    } catch (error) {
+      console.error('AI dilekçe oluşturma hatası:', error);
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '❌ Üzgünüm, dilekçe oluştururken bir hata oluştu. Lütfen tekrar deneyin.',
+        timestamp: new Date().toISOString(),
+        type: 'text'
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Şablon kaydetme fonksiyonları
+  const saveAsTemplate = (petition: GeneratedPetition, templateName: string) => {
+    const newTemplate: PetitionTemplate = {
+      id: Date.now().toString(),
+      name: templateName,
+      category: petition.metadata.category,
+      content: petition.content,
+      createdAt: new Date().toISOString(),
+      usageCount: 0,
+      tags: petition.metadata.suggestions,
+      description: `${petition.metadata.category} kategorisinde ${petition.metadata.wordCount} kelimelik dilekçe şablonu`
+    };
+    
+    setTemplates(prev => [...prev, newTemplate]);
+    
+    // Başarı mesajı
+    const successMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: `✅ **Şablon başarıyla kaydedildi!**\n\n📋 **Şablon Adı:** ${templateName}\n📂 **Kategori:** ${petition.metadata.category}\n📊 **Kelime Sayısı:** ${petition.metadata.wordCount}\n🏷️ **Etiketler:** ${petition.metadata.suggestions.join(', ')}\n\nArtık bu şablonu "Şablonlar" sekmesinden kullanabilirsiniz!`,
+      timestamp: new Date().toISOString(),
+      type: 'template'
+    };
+    
+    setChatMessages(prev => [...prev, successMessage]);
+  };
 
   // Sesli yazım için input güncelleme
   useEffect(() => {
@@ -83,66 +244,15 @@ export default function PetitionWriter() {
       id: Date.now().toString(),
       role: 'user',
       content: chatInput.trim(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      type: 'text'
     };
 
     setChatMessages(prev => [...prev, userMessage]);
     setChatInput('');
-    setIsGenerating(true);
-    
-    try {
-      const prompt = `Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Kullanıcı ile sohbet ederek dilekçe yazımında yardımcı olacaksın.
 
-Kullanıcının mesajı: ${userMessage.content}
-
-${chatMessages.length > 0 ? `Önceki sohbet geçmişi: ${chatMessages.map(m => `${m.role}: ${m.content}`).join('\n')}` : ''}
-
-Lütfen:
-1. Kullanıcının ihtiyacını anla
-2. Hangi tür dilekçe istediğini belirle
-3. Gerekli bilgileri sor
-4. Adım adım dilekçe yazımında yardımcı ol
-5. Türk hukuk sistemine uygun terminoloji kullan
-
-Eğer kullanıcı dilekçe yazımını tamamlamak istiyorsa, tam bir dilekçe metni hazırla.`;
-
-      const response = await geminiService.analyzeText(prompt, userMessage.content);
-      
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response,
-        timestamp: new Date().toISOString()
-      };
-
-      setChatMessages(prev => [...prev, assistantMessage]);
-
-      // Eğer AI tam bir dilekçe yazdıysa, preview'a geç
-      if (response.includes('T.C.') && response.includes('MAHKEMESİ')) {
-        setGeneratedPetition({
-          content: response,
-          metadata: {
-            generatedAt: new Date().toISOString(),
-            aiModel: 'Gemini',
-            wordCount: response.split(' ').length,
-            chatHistory: [...chatMessages, userMessage, assistantMessage]
-          }
-        });
-        setActiveTab('preview');
-      }
-      
-    } catch (error) {
-      console.error('Chat hatası:', error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
-        timestamp: new Date().toISOString()
-      };
-      setChatMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsGenerating(false);
-    }
+    // AI ile dilekçe oluştur
+    await generatePetitionWithAI(userMessage.content);
   };
 
   // Sesli yazım başlat/durdur
