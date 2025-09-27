@@ -51,57 +51,41 @@ const FileConverter: React.FC = () => {
     return result.value;
   };
 
-  // Metni gerçek Word formatına dönüştürme
+  // Metni Word formatına dönüştürme - Basit ve güvenilir
   const createWordDocument = async (text: string, filename: string): Promise<Blob> => {
     try {
-      // Metni paragraflara böl
-      const paragraphs = text.split('\n').filter(line => line.trim() !== '');
-      
-      if (paragraphs.length === 0) {
+      // Metni temizle ve paragraflara böl
+      const cleanText = text.trim();
+      if (!cleanText) {
         throw new Error('Boş metin içeriği');
       }
       
-      // Word belgesi oluştur - Word uyumlu format
+      // Basit Word belgesi oluştur - Minimal yapı
       const doc = new Document({
         sections: [{
-          properties: {
-            page: {
-              size: {
-                orientation: 'portrait',
-                width: 595, // A4 width in points
-                height: 842  // A4 height in points
-              }
-            }
-          },
-          children: paragraphs.map((paragraph, index) => {
-            // İlk paragraf başlık olarak ayarla
-            if (index === 0) {
-              return new Paragraph({
-                children: [new TextRun({
-                  text: paragraph,
-                  bold: true,
-                  size: 28, // 14pt - Word uyumlu
-                  font: 'Arial'
-                })],
-                heading: HeadingLevel.HEADING_1,
-                spacing: {
-                  after: 200
-                }
-              });
-            }
-            
-            // Diğer paragraflar normal metin
-            return new Paragraph({
+          properties: {},
+          children: [
+            // Başlık
+            new Paragraph({
               children: [new TextRun({
-                text: paragraph,
-                size: 24, // 12pt - Word uyumlu
-                font: 'Arial'
+                text: filename.replace(/\.[^/.]+$/, ""), // Uzantıyı kaldır
+                bold: true,
+                size: 32
               })],
-              spacing: {
-                after: 120
-              }
-            });
-          }),
+              heading: HeadingLevel.HEADING_1,
+            }),
+            // Boş satır
+            new Paragraph({
+              children: [new TextRun({ text: "" })],
+            }),
+            // Ana metin
+            new Paragraph({
+              children: [new TextRun({
+                text: cleanText,
+                size: 24
+              })],
+            })
+          ],
         }],
       });
 
@@ -112,10 +96,11 @@ const FileConverter: React.FC = () => {
       });
     } catch (error) {
       console.error('Word belgesi oluşturma hatası:', error);
-      // Hata durumunda RTF formatı döndür (Word'de daha iyi açılır)
+      // Hata durumunda RTF formatı döndür
       const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
 {\\colortbl;\\red0\\green0\\blue0;}
-\\f0\\fs24 ${text.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
+\\f0\\fs24\\b ${filename.replace(/\.[^/.]+$/, "")}\\b0\\par\\par
+${text.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
 }`;
       
       return new Blob([rtfContent], { type: 'application/rtf' });
@@ -510,23 +495,14 @@ Versiyon: 1.0`);
           outputName = `${baseName}.udf`;
           break;
         case 'pdf-to-word':
-          try {
-            outputBlob = await createWordDocument(extractedText, baseName);
-            // RTF formatı döndürülürse uzantıyı ayarla
-            if (outputBlob.type === 'application/rtf') {
-              outputName = `${baseName}.rtf`;
-            } else {
-              outputName = `${baseName}.docx`;
-            }
-          } catch (wordError) {
-            console.warn('Word dönüştürme hatası, RTF formatı kullanılıyor:', wordError);
-            const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+          // Basit Word dönüştürme - Her zaman RTF formatı kullan
+          const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
 {\\colortbl;\\red0\\green0\\blue0;}
-\\f0\\fs24 ${extractedText.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
+\\f0\\fs24\\b ${baseName}\\b0\\par\\par
+${extractedText.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
 }`;
-            outputBlob = new Blob([rtfContent], { type: 'application/rtf' });
-            outputName = `${baseName}.rtf`;
-          }
+          outputBlob = new Blob([rtfContent], { type: 'application/rtf' });
+          outputName = `${baseName}.rtf`;
           break;
         case 'word-to-pdf':
           try {
