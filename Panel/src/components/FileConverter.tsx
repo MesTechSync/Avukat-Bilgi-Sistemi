@@ -61,10 +61,18 @@ const FileConverter: React.FC = () => {
         throw new Error('Boş metin içeriği');
       }
       
-      // Word belgesi oluştur
+      // Word belgesi oluştur - Word uyumlu format
       const doc = new Document({
         sections: [{
-          properties: {},
+          properties: {
+            page: {
+              size: {
+                orientation: 'portrait',
+                width: 595, // A4 width in points
+                height: 842  // A4 height in points
+              }
+            }
+          },
           children: paragraphs.map((paragraph, index) => {
             // İlk paragraf başlık olarak ayarla
             if (index === 0) {
@@ -72,9 +80,13 @@ const FileConverter: React.FC = () => {
                 children: [new TextRun({
                   text: paragraph,
                   bold: true,
-                  size: 32, // 16pt
+                  size: 28, // 14pt - Word uyumlu
+                  font: 'Arial'
                 })],
                 heading: HeadingLevel.HEADING_1,
+                spacing: {
+                  after: 200
+                }
               });
             }
             
@@ -82,8 +94,12 @@ const FileConverter: React.FC = () => {
             return new Paragraph({
               children: [new TextRun({
                 text: paragraph,
-                size: 24, // 12pt
+                size: 24, // 12pt - Word uyumlu
+                font: 'Arial'
               })],
+              spacing: {
+                after: 120
+              }
             });
           }),
         }],
@@ -96,25 +112,13 @@ const FileConverter: React.FC = () => {
       });
     } catch (error) {
       console.error('Word belgesi oluşturma hatası:', error);
-      // Hata durumunda basit HTML formatı döndür
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${filename}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-            p { margin-bottom: 10px; }
-          </style>
-        </head>
-        <body>
-          ${text.split('\n').map(line => `<p>${line}</p>`).join('')}
-        </body>
-        </html>
-      `;
+      // Hata durumunda RTF formatı döndür (Word'de daha iyi açılır)
+      const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+{\\colortbl;\\red0\\green0\\blue0;}
+\\f0\\fs24 ${text.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
+}`;
       
-      return new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      return new Blob([rtfContent], { type: 'application/rtf' });
     }
   };
 
@@ -349,41 +353,44 @@ Versiyon: 1.0`);
     }
   };
 
-  // Basit UDF formatı (fallback)
+  // Basit tek UDF dosyası oluşturma (Word uyumlu)
   const createSimpleUDFDocument = (text: string, filename: string, originalFormat: string): Blob => {
-    const udfContent = `UDF DOCUMENT FORMAT v1.0
-=====================================
+    // Word'de açılabilir basit UDF formatı
+    const udfContent = `<?xml version="1.0" encoding="UTF-8"?>
+<udf:document xmlns:udf="http://www.udf.org/schema/1.0" 
+              version="1.0" 
+              id="udf_${Date.now()}" 
+              created="${new Date().toISOString()}" 
+              modified="${new Date().toISOString()}">
+  <udf:metadata>
+    <udf:title>${filename}</udf:title>
+    <udf:author>Avukat Bilgi Sistemi</udf:author>
+    <udf:description>Dönüştürülen dosya: ${originalFormat}</udf:description>
+    <udf:originalFormat>${originalFormat}</udf:originalFormat>
+    <udf:conversionDate>${new Date().toISOString()}</udf:conversionDate>
+    <udf:documentId>doc_${Date.now()}</udf:documentId>
+    <udf:version>1.0</udf:version>
+    <udf:encoding>UTF-8</udf:encoding>
+    <udf:language>tr-TR</udf:language>
+    <udf:security>
+      <udf:encryption>none</udf:encryption>
+      <udf:accessLevel>public</udf:accessLevel>
+    </udf:security>
+  </udf:metadata>
+  <udf:content>
+    <udf:text>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</udf:text>
+  </udf:content>
+  <udf:technical>
+    <udf:format>Universal Document Format</udf:format>
+    <udf:compatibility>Cross-platform</udf:compatibility>
+    <udf:compression>none</udf:compression>
+    <udf:createdBy>Avukat Bilgi Sistemi AI Converter</udf:createdBy>
+    <udf:lastModified>${new Date().toISOString()}</udf:lastModified>
+    <udf:checksum>${calculateChecksum(text)}</udf:checksum>
+  </udf:technical>
+</udf:document>`;
 
-METADATA:
-- Original File: ${filename}
-- Original Format: ${originalFormat.toUpperCase()}
-- Conversion Date: ${new Date().toISOString()}
-- Document ID: ${Date.now()}
-- Version: 1.0
-- Encoding: UTF-8
-- Language: tr-TR
-- Security: None
-- Access Level: Public
-
-CONTENT:
-=====================================
-
-${text}
-
-=====================================
-END OF UDF DOCUMENT
-
-TECHNICAL INFO:
-- Format: Universal Document Format (UDF)
-- Compatibility: Cross-platform
-- Security: None
-- Compression: None
-- Created by: Avukat Bilgi Sistemi AI Converter
-- Last Modified: ${new Date().toISOString()}
-- Checksum: ${calculateChecksum(text)}
-`;
-
-    return new Blob([udfContent], { type: 'application/udf' });
+    return new Blob([udfContent], { type: 'application/xml' });
   };
 
   // Checksum hesaplama
@@ -498,24 +505,27 @@ TECHNICAL INFO:
       
       switch (conversionType) {
         case 'to-udf':
-          // Tüm formatları UDF'ye dönüştür
-          try {
-            outputBlob = await createRealUDFDocument(extractedText, file.name, originalFormat);
-            outputName = `${baseName}.udf.zip`;
-          } catch (udfError) {
-            console.warn('UDF dönüştürme hatası, basit format kullanılıyor:', udfError);
-            outputBlob = createSimpleUDFDocument(extractedText, file.name, originalFormat);
-            outputName = `${baseName}.udf`;
-          }
+          // Tüm formatları UDF'ye dönüştür - Basit tek dosya formatı
+          outputBlob = createSimpleUDFDocument(extractedText, file.name, originalFormat);
+          outputName = `${baseName}.udf`;
           break;
         case 'pdf-to-word':
           try {
             outputBlob = await createWordDocument(extractedText, baseName);
-            outputName = `${baseName}.docx`;
+            // RTF formatı döndürülürse uzantıyı ayarla
+            if (outputBlob.type === 'application/rtf') {
+              outputName = `${baseName}.rtf`;
+            } else {
+              outputName = `${baseName}.docx`;
+            }
           } catch (wordError) {
-            console.warn('Word dönüştürme hatası, HTML format kullanılıyor:', wordError);
-            outputBlob = createHTMLDocument(extractedText, baseName);
-            outputName = `${baseName}.html`;
+            console.warn('Word dönüştürme hatası, RTF formatı kullanılıyor:', wordError);
+            const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+{\\colortbl;\\red0\\green0\\blue0;}
+\\f0\\fs24 ${extractedText.replace(/\n/g, '\\par ').replace(/&/g, '\\&').replace(/\\/g, '\\\\')}
+}`;
+            outputBlob = new Blob([rtfContent], { type: 'application/rtf' });
+            outputName = `${baseName}.rtf`;
           }
           break;
         case 'word-to-pdf':
