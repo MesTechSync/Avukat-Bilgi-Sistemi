@@ -19,7 +19,7 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '🔧 Merhaba! Avukat Bilgi Sistemi Teknik Destek Asistanına hoş geldiniz.\n\nSistem arızalarınızı çözmek için buradayım. Hangi sorunla karşılaşıyorsunuz?\n\n🚨 **Yaygın Sorunlar:**\n• Dava ekleme butonu çalışmıyor\n• Veri yüklenmiyor veya kaydedilmiyor\n• Sistem yavaş çalışıyor\n• API bağlantı hatası alıyorum\n• Sayfa açılmıyor veya donuyor\n\nSorununuzu detaylı açıklayın, derin analiz yapıp çözüm sunacağım!',
+      text: '🔧 Merhaba! Avukat Bilgi Sistemi Teknik Destek Asistanına hoş geldiniz.\n\nSistem arızalarınızı çözmek için buradayım. Hangi sorunla karşılaşıyorsunuz?\n\n🚨 **Yaygın Teknik Sorunlar:**\n• Dava ekleme butonu çalışmıyor\n• Veri yüklenmiyor veya kaydedilmiyor\n• Sistem yavaş çalışıyor\n• API bağlantı hatası alıyorum\n• Sayfa açılmıyor veya donuyor\n\nSorununuzu detaylı açıklayın, derin analiz yapıp çözüm sunacağım!\n\n⚠️ **NOT:** Bu sistem sadece teknik destek sağlar. Hukuki konular için lütfen hukuk danışmanınıza başvurun.',
       sender: 'support',
       timestamp: new Date(),
       type: 'system'
@@ -59,7 +59,13 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
 
   const getAISupportResponse = async (userMessage: string): Promise<string> => {
     try {
-      // Teknik destek odaklı prompt
+      // Önce ChatGPT API'yi dene
+      const chatGPTResponse = await getChatGPTResponse(userMessage);
+      if (chatGPTResponse) {
+        return chatGPTResponse;
+      }
+
+      // ChatGPT başarısız olursa Gemini'yi dene
       const supportPrompt = `Sen Avukat Bilgi Sistemi'nin TEKNİK DESTEK asistanısın. SADECE sistem arızaları ve teknik sorunlar hakkında konuş.
 
 Kullanıcı Sorunu: "${userMessage}"
@@ -116,11 +122,101 @@ YANIT FORMATI:
 SADECE teknik destek ver. Hukuki konular hakkında konuşma.`;
 
       const response = await geminiService.analyzeText(supportPrompt);
-      return response || 'Sorununuzu daha detaylı açıklayabilir misiniz?';
+      
+      // Eğer Gemini hukuki konular hakkında konuşuyorsa, manuel yanıt ver
+      if (response && (response.includes('hukuki') || response.includes('dilekçe') || response.includes('boşanma'))) {
+        return getManualTechnicalResponse(userMessage);
+      }
+      
+      return response || getManualTechnicalResponse(userMessage);
     } catch (error) {
       console.error('AI yanıt hatası:', error);
-      return 'Teknik bir sorun oluştu. Lütfen sayfayı yenileyin ve tekrar deneyin.';
+      return getManualTechnicalResponse(userMessage);
     }
+  };
+
+  // ChatGPT API entegrasyonu
+  const getChatGPTResponse = async (userMessage: string): Promise<string | null> => {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer sk-proj-1234567890abcdef' // ChatGPT API Key
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'Sen Avukat Bilgi Sistemi\'nin TEKNİK DESTEK asistanısın. SADECE sistem arızaları ve teknik sorunlar hakkında konuş. Hukuki konular hakkında KONUŞMA.'
+            },
+            {
+              role: 'user',
+              content: userMessage
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('ChatGPT API hatası');
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || null;
+    } catch (error) {
+      console.error('ChatGPT API hatası:', error);
+      return null;
+    }
+  };
+
+  // Manuel teknik yanıt sistemi
+  const getManualTechnicalResponse = (userMessage: string): string => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    if (lowerMessage.includes('dava') && lowerMessage.includes('buton')) {
+      return `🔍 Sorun: Dava ekleme butonu çalışmıyor
+💡 Çözüm:
+1. Tarayıcı konsolu kontrol et (F12 → Console)
+2. Sayfayı yenile (Ctrl+F5)
+3. JavaScript aktif mi kontrol et
+4. Form alanları dolu mu kontrol et
+🛠️ Alternatif: Farklı tarayıcı dene veya cache temizle`;
+    }
+    
+    if (lowerMessage.includes('veri') && (lowerMessage.includes('yüklen') || lowerMessage.includes('kaydet'))) {
+      return `🔍 Sorun: Veri yüklenmiyor veya kaydedilmiyor
+💡 Çözüm:
+1. Network sekmesinde hata var mı kontrol et (F12 → Network)
+2. Backend servisi çalışıyor mu? (http://127.0.0.1:9000)
+3. İnternet bağlantısı kontrol et
+🛠️ Alternatif: Backend'i yeniden başlat`;
+    }
+    
+    if (lowerMessage.includes('yavaş') || lowerMessage.includes('performans')) {
+      return `🔍 Sorun: Sistem yavaş çalışıyor
+💡 Çözüm:
+1. Tarayıcı cache temizle (Ctrl+Shift+Delete)
+2. İnternet hızını kontrol et
+3. Diğer sekmeleri kapat
+🛠️ Alternatif: Farklı tarayıcı kullan`;
+    }
+    
+    if (lowerMessage.includes('api') && lowerMessage.includes('hatası')) {
+      return `🔍 Sorun: API bağlantı hatası
+💡 Çözüm:
+1. Backend'i başlat: python -m uvicorn panel_backend_enterprise:app --host 127.0.0.1 --port 9000
+2. Port 9000'in açık olduğunu kontrol et
+3. Firewall ayarlarını kontrol et
+🛠️ Alternatif: Backend'i yeniden kur`;
+    }
+    
+    return `🔍 Sorun: ${userMessage}
+💡 Çözüm: Sorununuzu daha detaylı açıklayabilir misiniz?
+🛠️ Alternatif: Teknik destek ekibiyle iletişime geçin`;
   };
 
   const handleSendMessage = async () => {
