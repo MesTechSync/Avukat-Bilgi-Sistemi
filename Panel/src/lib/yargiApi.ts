@@ -6,7 +6,7 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
   
   try {
     // CORS proxy kullanarak Yargıtay sitesine istek gönder
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = 'https://corsproxy.io/?';
     const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
     
     const formData = new FormData();
@@ -17,10 +17,10 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + encodeURIComponent(yargitayUrl), {
+    const response = await fetch(proxyUrl + yargitayUrl, {
       method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
@@ -49,7 +49,7 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
   
   try {
     // CORS proxy kullanarak UYAP sitesine istek gönder
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = 'https://corsproxy.io/?';
     const uyapUrl = `https://emsal.uyap.gov.tr/`;
     
     const formData = new FormData();
@@ -60,7 +60,7 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + encodeURIComponent(uyapUrl), {
+    const response = await fetch(proxyUrl + uyapUrl, {
       method: 'GET',
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -307,7 +307,7 @@ async function parseRealUyapHTML(html: string, query: string, page: number): Pro
       const durum = cells[4]?.textContent?.trim() || '';
       
       if (daire && esas && karar) {
-        results.push({
+      results.push({
           id: `uyap-real-${page}-${index}`,
           title: `${daire} ${esas} Esas ${karar} Karar`,
           court: daire,
