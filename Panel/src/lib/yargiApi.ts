@@ -71,7 +71,7 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters, p
     // Backend proxy ile gerçek UYAP sitesinden veri çek
     const response = await fetch(`${getBackendBase()}/api/proxy/uyap_html`, {
       method: 'POST',
-      headers: {
+        headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -571,7 +571,7 @@ function generateFallbackYargitayData(query: string, page: number): IctihatResul
     });
   }
   
-  return results;
+    return results;
 }
 
 // ÇOKLU SAYFA YARGITAY VERİSİ ÇEKME  

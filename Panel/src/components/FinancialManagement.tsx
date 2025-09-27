@@ -1,8 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Calculator, TrendingUp, TrendingDown, CreditCard, Receipt, PieChart, Calendar, Plus, Filter, Download, Eye, User, FileText, Clock, AlertCircle, CheckCircle, DollarSign, BarChart3, Target, Zap, Users, Building, Phone, Mail, MapPin, Edit, Trash2, Save, X } from 'lucide-react';
 import { useSupabase } from '../hooks/useSupabase';
 import { useDictation } from '../hooks/useDictation';
 import DictationButton from './DictationButton';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import './FinancialManagement.css';
 
 interface FinancialManagementProps {
@@ -116,6 +118,100 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
     startDate: '',
     frequency: 'monthly' as 'monthly' | 'weekly' | 'quarterly'
   });
+
+  // PDF export için ref
+  const pdfRef = useRef<HTMLDivElement>(null);
+  
+  // PDF export fonksiyonları
+  const exportToPDF = async (type: 'overview' | 'clients' | 'reports' | 'all') => {
+    if (!pdfRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      const fileName = `Mali_Isler_Raporu_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('PDF export hatası:', error);
+      alert('PDF oluşturulurken hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const exportClientReportToPDF = async (client: ClientAdvance) => {
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Başlık
+      pdf.setFontSize(20);
+      pdf.text('MÜVEKKİL MALİ RAPORU', 105, 20, { align: 'center' });
+      
+      // Müvekkil bilgileri
+      pdf.setFontSize(14);
+      pdf.text(`Müvekkil: ${client.clientName}`, 20, 40);
+      pdf.text(`Telefon: ${client.clientPhone || 'Belirtilmemiş'}`, 20, 50);
+      pdf.text(`E-posta: ${client.clientEmail || 'Belirtilmemiş'}`, 20, 60);
+      pdf.text(`Dava: ${client.caseTitle}`, 20, 70);
+      
+      // Mali bilgiler
+      pdf.setFontSize(12);
+      pdf.text('MALİ BİLGİLER', 20, 90);
+      pdf.text(`Toplam Tutar: ${client.totalAmount.toLocaleString('tr-TR')} TL`, 20, 100);
+      pdf.text(`Avans Tutarı: ${client.advanceAmount.toLocaleString('tr-TR')} TL`, 20, 110);
+      pdf.text(`Ödenen Tutar: ${client.paidAmount.toLocaleString('tr-TR')} TL`, 20, 120);
+      pdf.text(`Kalan Tutar: ${client.remainingAmount.toLocaleString('tr-TR')} TL`, 20, 130);
+      
+      // Tarih bilgileri
+      pdf.text('TARİH BİLGİLERİ', 20, 150);
+      pdf.text(`Avans Tarihi: ${new Date(client.advanceDate).toLocaleDateString('tr-TR')}`, 20, 160);
+      pdf.text(`Vade Tarihi: ${client.dueDate ? new Date(client.dueDate).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}`, 20, 170);
+      
+      // Durum
+      pdf.text(`Durum: ${client.status === 'active' ? 'Aktif' : client.status === 'completed' ? 'Tamamlandı' : client.status === 'overdue' ? 'Vadesi Geçti' : 'İptal'}`, 20, 190);
+      
+      // Notlar
+      if (client.notes) {
+        pdf.text('NOTLAR:', 20, 210);
+        const splitNotes = pdf.splitTextToSize(client.notes, 170);
+        pdf.text(splitNotes, 20, 220);
+      }
+      
+      // Tarih ve imza
+      pdf.text(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, 20, 270);
+      
+      const fileName = `Muvekkil_Raporu_${client.clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Müvekkil PDF export hatası:', error);
+      alert('PDF oluşturulurken hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
 
   // Müvekkil verilerini ClientManagement'dan al ve avans verilerine dönüştür
   useEffect(() => {
@@ -442,6 +538,130 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
 
   return (
     <div className="space-y-6">
+      {/* PDF Export Butonları */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">PDF Raporları</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={() => exportToPDF('overview')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Genel Rapor
+            </button>
+            <button
+              onClick={() => exportToPDF('clients')}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Müvekkil Raporu
+            </button>
+            <button
+              onClick={() => exportToPDF('all')}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Tüm Raporlar
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Mali işler verilerinizi PDF formatında indirebilirsiniz. Genel rapor, müvekkil bazlı raporlar veya tüm verileri içeren kapsamlı rapor seçenekleri mevcuttur.
+        </p>
+      </div>
+
+      {/* PDF Export için Gizli Container */}
+      <div ref={pdfRef} className="hidden">
+        <div className="bg-white p-8">
+          <h1 className="text-2xl font-bold text-center mb-8">MALİ İŞLER RAPORU</h1>
+          <p className="text-center text-gray-600 mb-8">Rapor Tarihi: {new Date().toLocaleDateString('tr-TR')}</p>
+          
+          {/* Genel Özet */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">GENEL ÖZET</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border p-4 rounded">
+                <p className="font-medium">Toplam Gelir</p>
+                <p className="text-lg font-bold text-green-600">₺{financialData.totalRevenue.toLocaleString()}</p>
+              </div>
+              <div className="border p-4 rounded">
+                <p className="font-medium">Toplam Gider</p>
+                <p className="text-lg font-bold text-red-600">₺{financialData.totalExpenses.toLocaleString()}</p>
+              </div>
+              <div className="border p-4 rounded">
+                <p className="font-medium">Net Kar</p>
+                <p className="text-lg font-bold text-blue-600">₺{financialData.netProfit.toLocaleString()}</p>
+              </div>
+              <div className="border p-4 rounded">
+                <p className="font-medium">Aylık Büyüme</p>
+                <p className="text-lg font-bold text-purple-600">%{financialData.monthlyGrowth}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Müvekkil Listesi */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">MÜVEKKİL LİSTESİ</h2>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 p-2 text-left">Müvekkil</th>
+                  <th className="border border-gray-300 p-2 text-left">Dava</th>
+                  <th className="border border-gray-300 p-2 text-left">Toplam Tutar</th>
+                  <th className="border border-gray-300 p-2 text-left">Ödenen</th>
+                  <th className="border border-gray-300 p-2 text-left">Kalan</th>
+                  <th className="border border-gray-300 p-2 text-left">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientAdvances.map((client) => (
+                  <tr key={client.id}>
+                    <td className="border border-gray-300 p-2">{client.clientName}</td>
+                    <td className="border border-gray-300 p-2">{client.caseTitle}</td>
+                    <td className="border border-gray-300 p-2">₺{client.totalAmount.toLocaleString()}</td>
+                    <td className="border border-gray-300 p-2">₺{client.paidAmount.toLocaleString()}</td>
+                    <td className="border border-gray-300 p-2">₺{client.remainingAmount.toLocaleString()}</td>
+                    <td className="border border-gray-300 p-2">
+                      {client.status === 'active' ? 'Aktif' : 
+                       client.status === 'completed' ? 'Tamamlandı' : 
+                       client.status === 'overdue' ? 'Vadesi Geçti' : 'İptal'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Son İşlemler */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">SON İŞLEMLER</h2>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 p-2 text-left">Tarih</th>
+                  <th className="border border-gray-300 p-2 text-left">Açıklama</th>
+                  <th className="border border-gray-300 p-2 text-left">Tutar</th>
+                  <th className="border border-gray-300 p-2 text-left">Tür</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentTransactions.map((tx) => (
+                  <tr key={tx.id}>
+                    <td className="border border-gray-300 p-2">{new Date(tx.date).toLocaleDateString('tr-TR')}</td>
+                    <td className="border border-gray-300 p-2">{tx.description}</td>
+                    <td className="border border-gray-300 p-2">₺{tx.amount.toLocaleString()}</td>
+                    <td className="border border-gray-300 p-2">
+                      {tx.type === 'income' ? 'Gelir' : 'Gider'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Financial Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -644,14 +864,11 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
 
                     <div className="flex gap-2">
                       <button
-                        onClick={() => {
-                          const report = generateClientReport(advance);
-                          generatePDFReport(report);
-                        }}
+                        onClick={() => exportClientReportToPDF(advance)}
                         className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 flex items-center justify-center gap-1"
                       >
-                        <FileText className="w-4 h-4" />
-                        Rapor
+                        <Download className="w-4 h-4" />
+                        PDF İndir
                       </button>
                       <button
                         onClick={() => {
@@ -672,16 +889,6 @@ const FinancialManagement: React.FC<FinancialManagementProps> = ({ onNavigate })
                         title="Düzenle"
                       >
                         <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const report = generateClientReport(advance);
-                          generatePDFReport(report);
-                        }}
-                        className="px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                        title="PDF İndir"
-                      >
-                        <Download className="w-4 h-4" />
                       </button>
                     </div>
 
