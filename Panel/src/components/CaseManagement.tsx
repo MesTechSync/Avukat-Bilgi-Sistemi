@@ -25,6 +25,8 @@ export default function CaseManagement() {
     title: '',
     client_id: '',
     case_type: '',
+    yargi_turu: '',
+    yargi_birimi: '',
     status: 'Beklemede',
     deadline: '',
     priority: 'Orta',
@@ -36,6 +38,8 @@ export default function CaseManagement() {
     title: '',
     client_id: '',
     case_type: '',
+    yargi_turu: '',
+    yargi_birimi: '',
     status: 'Beklemede',
     deadline: '',
     priority: 'Orta',
@@ -118,6 +122,72 @@ export default function CaseManagement() {
     return () => window.removeEventListener('cases-action', handler);
   }, []);
 
+  // Yargı türleri
+  const yargiTurleri = [
+    'Ceza',
+    'Hukuk', 
+    'İcra',
+    'İdari Yargı',
+    'Satış Memurluğu',
+    'Arabuluculuk',
+    'Cbs',
+    'Tazminat Komisyonu Başkanlığı'
+  ];
+
+  // Yargı birimleri - türlere göre
+  const yargiBirimleri = {
+    'Ceza': [
+      'AĞIR CEZA MAHKEMESİ',
+      'ASLİYE CEZA MAHKEMESİ',
+      'Bölge Adliye Mah. Ceza Dairesi',
+      'ÇOCUK AĞIR CEZA MAHKEMESİ',
+      'ÇOCUK MAHKEMESİ',
+      'FİKRİ VE SINAI HAKLAR CEZA MAHKEMESİ',
+      'İCRA CEZA HAKİMLİĞİ',
+      'İNFAZ HAKİMLİĞİ',
+      'İSTİNAF CEZA DAİRESİ (İLK DERECE)',
+      'SULH CEZA HAKIMLIGI',
+      'TRAFİK MAHKEMESİ',
+      'YARGITAY CEZA DAİRESİ (İLK DERECE)'
+    ],
+    'Hukuk': [
+      'AİLE MAHKEMESİ',
+      'ASLİYE HUKUK MAHKEMESİ',
+      'ASLİYE TİCARET MAHKEMESİ',
+      'BAM Hukuk Dairesi(İlk Derece)',
+      'Bölge Adliye Mah. Hukuk Dairesi',
+      'FİKRİ VE SINAI HAKLAR HUKUK MAHKEMESİ',
+      'İCRA HUKUK MAHKEMESİ',
+      'İŞ MAHKEMESİ',
+      'KADASTRO MAHKEMESİ',
+      'KADASTRO MAHKEMESİ(MÜS)',
+      'SULH HUKUK MAHKEMESİ'
+    ],
+    'İdari Yargı': [
+      'BÖLGE İDARE MAHKEMESİ',
+      'İDARE MAHKEMESİ',
+      'VERGİ MAHKEMESİ'
+    ],
+    'İcra': [
+      'İCRA DAİRESİ',
+      'İCRA MAHKEMESİ',
+      'İFLAS DAİRESİ'
+    ],
+    'Satış Memurluğu': [
+      'SATIŞ MEMURLUĞU'
+    ],
+    'Arabuluculuk': [
+      'ARABULUCULUK MERKEZİ'
+    ],
+    'Cbs': [
+      'CBS MERKEZİ'
+    ],
+    'Tazminat Komisyonu Başkanlığı': [
+      'TAZMİNAT KOMİSYONU'
+    ]
+  };
+
+  // Eski caseTypes array'ini koruyalım (geriye dönük uyumluluk için)
   const caseTypes = [
     'Ticari Hukuk', 'İş Hukuku', 'Aile Hukuku', 'Ceza Hukuku',
     'İdare Hukuku', 'Medeni Hukuk', 'Borçlar Hukuku', 'Miras Hukuku'
@@ -168,8 +238,12 @@ export default function CaseManagement() {
       alert('Müvekkil seçimi gereklidir!');
       return;
     }
-    if (!newCase.case_type) {
-      alert('Dava türü seçimi gereklidir!');
+    if (!newCase.yargi_turu) {
+      alert('Yargı türü seçimi gereklidir!');
+      return;
+    }
+    if (!newCase.yargi_birimi) {
+      alert('Yargı birimi seçimi gereklidir!');
       return;
     }
     
@@ -200,6 +274,8 @@ export default function CaseManagement() {
       const caseData = {
         title: newCase.title,
         case_type: newCase.case_type,
+        yargi_turu: newCase.yargi_turu,
+        yargi_birimi: newCase.yargi_birimi,
         status: newCase.status,
         priority: newCase.priority,
         amount: newCase.amount ? parseFloat(newCase.amount.toString()) : null,
@@ -232,6 +308,8 @@ export default function CaseManagement() {
         title: '',
         client_id: '',
         case_type: '',
+        yargi_turu: '',
+        yargi_birimi: '',
         status: 'Beklemede',
         deadline: '',
         priority: 'Orta',
@@ -260,6 +338,8 @@ export default function CaseManagement() {
       title: case_.title,
       client_id: clientId,
       case_type: case_.case_type || '',
+      yargi_turu: case_.yargi_turu || '',
+      yargi_birimi: case_.yargi_birimi || '',
       status: case_.status,
       deadline: case_.deadline || '',
       priority: case_.priority,
@@ -381,7 +461,10 @@ export default function CaseManagement() {
                     {case_.status}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {case_.case_type}
+                    {case_.yargi_turu && case_.yargi_birimi ? 
+                      `${case_.yargi_turu} - ${case_.yargi_birimi}` : 
+                      case_.case_type || 'Belirtilmemiş'
+                    }
                   </span>
                 </div>
               </div>
@@ -518,17 +601,41 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Dava Türü *
+                    Yargı Türü *
                   </label>
                   <select
                     required
-                    value={newCase.case_type}
-                    onChange={(e) => setNewCase({...newCase, case_type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava türü" aria-label="Dava türü"
+                    value={newCase.yargi_turu}
+                    onChange={(e) => {
+                      setNewCase({...newCase, yargi_turu: e.target.value, yargi_birimi: ''});
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Yargı türü"
+                    aria-label="Yargı türü"
                   >
-                    <option value="">Dava Türü Seçin</option>
-                    {caseTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    <option value="">Yargı Türü Seçin</option>
+                    {yargiTurleri.map(tur => (
+                      <option key={tur} value={tur}>{tur}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Yargı Birimi *
+                  </label>
+                  <select
+                    required
+                    value={newCase.yargi_birimi}
+                    onChange={(e) => setNewCase({...newCase, yargi_birimi: e.target.value})}
+                    disabled={!newCase.yargi_turu}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Yargı birimi"
+                    aria-label="Yargı birimi"
+                  >
+                    <option value="">Seçiniz</option>
+                    {newCase.yargi_turu && yargiBirimleri[newCase.yargi_turu]?.map(birim => (
+                      <option key={birim} value={birim}>{birim}</option>
                     ))}
                   </select>
                 </div>
@@ -785,17 +892,41 @@ export default function CaseManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Dava Türü *
+                    Yargı Türü *
                   </label>
                   <select
                     required
-                    value={editCase.case_type}
-                    onChange={(e) => setEditCase({...editCase, case_type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" title="Dava türü" aria-label="Dava türü"
+                    value={editCase.yargi_turu}
+                    onChange={(e) => {
+                      setEditCase({...editCase, yargi_turu: e.target.value, yargi_birimi: ''});
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    title="Yargı türü"
+                    aria-label="Yargı türü"
                   >
-                    <option value="">Dava Türü Seçin</option>
-                    {caseTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    <option value="">Yargı Türü Seçin</option>
+                    {yargiTurleri.map(tur => (
+                      <option key={tur} value={tur}>{tur}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Yargı Birimi *
+                  </label>
+                  <select
+                    required
+                    value={editCase.yargi_birimi}
+                    onChange={(e) => setEditCase({...editCase, yargi_birimi: e.target.value})}
+                    disabled={!editCase.yargi_turu}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Yargı birimi"
+                    aria-label="Yargı birimi"
+                  >
+                    <option value="">Seçiniz</option>
+                    {editCase.yargi_turu && yargiBirimleri[editCase.yargi_turu]?.map(birim => (
+                      <option key={birim} value={birim}>{birim}</option>
                     ))}
                   </select>
                 </div>
