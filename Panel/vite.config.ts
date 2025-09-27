@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
   return {
   plugins: [react(), devHealthPlugin],
   envPrefix: 'VITE_',
+    define: {
+      global: 'globalThis',
+    },
     test: {
       environment: 'jsdom',
     },
@@ -34,6 +37,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: undefined,
         },
+        external: [],
       },
     },
     preview: {
