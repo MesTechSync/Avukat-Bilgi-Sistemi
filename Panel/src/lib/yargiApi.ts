@@ -68,33 +68,41 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters, p
   console.log(`🌐 Gerçek UYAP sitesinden veri çekiliyor (Sayfa: ${page})...`);
   
   try {
-    // Backend proxy ile gerçek UYAP sitesinden veri çek
-    const response = await fetch(`${getBackendBase()}/api/proxy/uyap_html`, {
+    // Python API'den UYAP verisi çek
+    const response = await fetch('http://localhost:8001/search/uyap', {
       method: 'POST',
-        headers: {
+      headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query: query,
-        courtType: filters?.court || '',
-        fromISO: filters?.dateFrom || '',
-        toISO: filters?.dateTo || '',
-        page: page
+        max_pages: 1
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Backend UYAP proxy hata: ${response.status} - ${response.statusText}`);
+      throw new Error(`Python API UYAP hatası: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
     
-    if (!data.success || !data.html) {
-      throw new Error('UYAP HTML verisi alınamadı');
+    if (!data.success || !data.results) {
+      throw new Error('Python API UYAP verisi alınamadı');
     }
 
-    // HTML'i parse et ve gerçek veriyi çıkar
-    return await parseRealUyapHTML(data.html, query, page);
+    // Python API formatını frontend formatına çevir
+    return data.results.map((item: any) => ({
+      id: `uyap_${Date.now()}_${Math.random()}`,
+      title: item.title,
+      content: item.content,
+      court: item.court,
+      date: item.date,
+      number: item.case_number,
+      summary: item.content.substring(0, 200) + '...',
+      url: item.url,
+      source: 'uyap',
+      relevanceScore: 0.9
+    }));
     
   } catch (error) {
     console.error('❌ UYAP gerçek veri çekme hatası:', error);
@@ -443,33 +451,41 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
   console.log(`🌐 Gerçek Yargıtay sitesinden veri çekiliyor (Sayfa: ${page})...`);
   
   try {
-    // Backend proxy ile gerçek Yargıtay sitesinden veri çek
-    const response = await fetch(`${getBackendBase()}/api/proxy/yargitay_html`, {
+    // Python API'den Yargıtay verisi çek
+    const response = await fetch('http://localhost:8001/search/yargitay', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query: query,
-        courtType: filters?.court || 'all',
-        fromISO: filters?.dateFrom || '',
-        toISO: filters?.dateTo || '',
-        page: page
+        max_pages: 1
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Backend Yargıtay proxy hata: ${response.status} - ${response.statusText}`);
+      throw new Error(`Python API Yargıtay hatası: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
     
-    if (!data.success || !data.html) {
-      throw new Error('Yargıtay HTML verisi alınamadı');
+    if (!data.success || !data.results) {
+      throw new Error('Python API Yargıtay verisi alınamadı');
     }
 
-    // HTML'i parse et ve gerçek veriyi çıkar
-    return await parseRealYargitayHTML(data.html, query, page);
+    // Python API formatını frontend formatına çevir
+    return data.results.map((item: any) => ({
+      id: `yargitay_${Date.now()}_${Math.random()}`,
+      title: item.title,
+      content: item.content,
+      court: item.court,
+      date: item.date,
+      number: item.case_number,
+      summary: item.content.substring(0, 200) + '...',
+      url: item.url,
+      source: 'yargitay',
+      relevanceScore: 0.9
+    }));
     
   } catch (error) {
     console.error('❌ Yargıtay gerçek veri çekme hatası:', error);
