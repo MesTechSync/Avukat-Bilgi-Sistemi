@@ -53,6 +53,62 @@ export class GeminiService {
     return this.generateLocalResponse(instruction, context);
   }
 
+  // Derin düşünme özellikli hukuki analiz
+  async analyzeLegalQuestion(question: string, userInfo: any): Promise<string> {
+    if (!this.model) {
+      return this.getFallbackResponse(question);
+    }
+
+    try {
+      // Derin düşünme için özel prompt
+      const deepThinkingPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver.
+
+SORU: ${question}
+
+DERİN DÜŞÜNME SÜRECİ:
+1. Önce soruyu analiz et ve hukuki kategorisini belirle
+2. İlgili Türk hukuku mevzuatını düşün
+3. Yargıtay içtihatlarını göz önünde bulundur
+4. Pratik çözüm önerileri geliştir
+5. Dikkat edilmesi gereken noktaları belirle
+
+YANIT FORMATI:
+- Hukuki analiz ve değerlendirme
+- İlgili mevzuat referansları (Türk hukuku)
+- Yargıtay içtihatları (varsa)
+- Pratik çözüm önerileri
+- Dikkat edilmesi gereken noktalar
+- Sonraki adımlar
+
+ÖNEMLİ: Sadece Türk hukuku odaklı yanıt ver. Başka konulara girmeyin.`;
+
+      const result = await this.model.generateContent(deepThinkingPrompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Gemini hukuki analiz hatası:', error);
+      return this.getFallbackResponse(question);
+    }
+  }
+
+  // Fallback yanıt (API çalışmazsa)
+  private getFallbackResponse(question: string): string {
+    return `🤖 **Gemini AI Hukuki Analiz**
+
+**Sorunuz:** ${question}
+
+**Hukuki Değerlendirme:**
+Bu konuda detaylı analiz için Gemini AI servisi şu anda kullanılamıyor. Lütfen Claude AI'yi deneyin veya sistem yöneticisi ile iletişime geçin.
+
+**Genel Bilgi:**
+Türk hukuku kapsamında bu tür sorular için Yargıtay kararları ve ilgili mevzuat incelenmelidir.
+
+**Öneri:**
+- Claude AI'yi kullanmayı deneyin
+- İlgili mevzuatı manuel olarak araştırın
+- Sistem yöneticisi ile iletişime geçin`;
+  }
+
   // Alternatif model dene
   private async tryAlternativeModel(instruction: string, context?: string): Promise<string> {
     const alternativeModels = [

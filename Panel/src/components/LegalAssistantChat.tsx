@@ -3,6 +3,7 @@ import { Bot, Send, Copy, ThumbsUp, ThumbsDown, Trash2, Zap, Scale, FileText, Se
 import ReactMarkdown from 'react-markdown';
 import { DeepChat } from 'deep-chat-react';
 import { geminiService } from '../services/geminiService';
+import { legalAIService } from '../services/legalAIService';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { petitionTemplates, petitionCategories, searchPetitions } from '../data/petitions/petitionDatabase';
@@ -374,25 +375,14 @@ Aşağıda en uygun sözleşme şablonları gösteriliyor. Detaylı sözleşme y
         }
       }
 
-      // AI yanıtı al
-      const aiPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver. 
-
-Soru: ${messageToSend}
-
-${actionData ? `Panel Entegrasyonu: ${panelResponse}` : ''}
-
-Yanıtında şunları dahil et:
-1. Hukuki analiz ve değerlendirme
-2. İlgili mevzuat referansları
-3. Pratik çözüm önerileri
-4. Dikkat edilmesi gereken noktalar
-5. Sonraki adımlar
-
-${actionData ? 'Panel entegrasyonu ile ilgili bilgileri de dahil et.' : ''}
-
-Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name} için özelleştirilmiş öneriler sun.`;
-
-      const response = await geminiService.analyzeText(aiPrompt, messageToSend);
+      // AI yanıtı al - Derin düşünme özellikli
+      const aiResponse = await legalAIService.analyzeLegalQuestion(messageToSend, selectedModel);
+      let response = aiResponse.response;
+      
+      // Panel entegrasyonu varsa ekle
+      if (actionData && panelResponse) {
+        response += `\n\n---\n\n${panelResponse}`;
+      }
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -400,8 +390,8 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
         content: response,
         timestamp: new Date().toISOString(),
         model: selectedModel,
-        confidence: 0.95,
-        thinking: thinkingProcess,
+        confidence: aiResponse.confidence,
+        thinking: aiResponse.thinkingProcess.join('\n'),
         action: actionType ? {
           type: actionType,
           data: actionData
@@ -922,6 +912,11 @@ Hangi konuda yardıma ihtiyacınız var?`,
                         {message.confidence && (
                           <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
                             %{Math.round(message.confidence * 100)} Güven
+                          </span>
+                        )}
+                        {message.model && (
+                          <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
+                            {message.model === 'gemini' ? 'Gemini AI' : message.model === 'claude' ? 'Claude AI' : 'AI'}
                           </span>
                         )}
                       </div>

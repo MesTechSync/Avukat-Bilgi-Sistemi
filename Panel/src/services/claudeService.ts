@@ -1,142 +1,94 @@
-// Claude API Service for Advanced Legal Analysis
-// Avukat Bilgi Sistemi - Claude Entegrasyonu
+import Anthropic from '@anthropic-ai/sdk';
 
-interface ClaudeResponse {
-  content: Array<{
-    text: string;
-  }>;
-}
-
-interface ClaudeRequest {
-  prompt: string;
-  maxTokens?: number;
-}
-
+// Claude AI servisi
 class ClaudeService {
-  private apiKey: string | null = null;
-  private baseUrl: string = 'https://api.anthropic.com/v1';
+  private claude: Anthropic;
+  private isInitialized = false;
 
-  initialize(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor() {
+    // API anahtarını environment'dan al
+    const apiKey = import.meta.env.VITE_CLAUDE_API_KEY || 'sk-ant-api03-1234567890abcdef';
+    
+    if (apiKey && apiKey !== 'sk-ant-api03-1234567890abcdef') {
+      this.claude = new Anthropic({
+        apiKey: apiKey,
+      });
+      this.isInitialized = true;
+    } else {
+      console.warn('Claude API anahtarı bulunamadı. Claude servisi devre dışı.');
+    }
   }
 
-  isInitialized(): boolean {
-    return this.apiKey !== null;
-  }
-
-  private async makeRequest(prompt: string, maxTokens: number = 2000): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Claude API key başlatılmamış. Lütfen API key girin.');
+  // Derin düşünme özellikli hukuki analiz
+  async analyzeLegalQuestion(question: string, userInfo: any): Promise<string> {
+    if (!this.isInitialized) {
+      return this.getFallbackResponse(question);
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: maxTokens,
-          messages: [
-            {
-              role: 'user',
-              content: `Sen Türkiye'de çalışan deneyimli bir avukatsın. Türk hukuk sistemine uygun, profesyonel ve detaylı analizler yapıyorsun. Analizlerini Türkçe yazıyorsun ve Türk mevzuatına uygun şekilde düzenliyorsun.
-
-${prompt}`
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Claude API hatası: ${response.status} - ${errorData.error?.message || 'Bilinmeyen hata'}`);
-      }
-
-      const data: ClaudeResponse = await response.json();
-      
-      if (!data.content || data.content.length === 0) {
-        throw new Error('Claude\'dan geçerli yanıt alınamadı');
-      }
-
-      return data.content[0].text;
-    } catch (error) {
-      console.error('Claude analiz hatası:', error);
-      throw new Error(`Claude analiz sırasında hata oluştu: ${(error as Error).message}`);
-    }
-  }
-
-  async analyzeLegalCase(caseDescription: string): Promise<string> {
-    const prompt = `
-Aşağıdaki hukuki davayı analiz et ve detaylı bir değerlendirme yap:
-
-DAVA AÇIKLAMASI:
-${caseDescription}
-
-Lütfen şu konularda analiz yap:
-1. Hukuki durum değerlendirmesi
-2. İlgili mevzuat ve içtihatlar
-3. Güçlü ve zayıf yönler
-4. Strateji önerileri
-5. Risk analizi
-6. Sonuç tahmini
-
-Analizi maddeler halinde, açık ve anlaşılır bir şekilde sun.
-`;
-
-    return await this.makeRequest(prompt, 3000);
-  }
-
-  async generateLegalOpinion(question: string, context?: string): Promise<string> {
-    const prompt = `
-Aşağıdaki hukuki soruya detaylı bir görüş yazısı hazırla:
+      // Derin düşünme için özel prompt
+      const deepThinkingPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver.
 
 SORU: ${question}
 
-${context ? `BAĞLAM: ${context}` : ''}
+DERİN DÜŞÜNME SÜRECİ:
+1. Önce soruyu analiz et ve hukuki kategorisini belirle
+2. İlgili Türk hukuku mevzuatını düşün
+3. Yargıtay içtihatlarını göz önünde bulundur
+4. Pratik çözüm önerileri geliştir
+5. Dikkat edilmesi gereken noktaları belirle
 
-Lütfen şu başlıkları içeren kapsamlı bir görüş yazısı hazırla:
-1. Sorunun hukuki analizi
-2. İlgili mevzuat ve içtihatlar
-3. Hukuki değerlendirme
-4. Pratik öneriler
-5. Dikkat edilmesi gereken noktalar
+YANIT FORMATI:
+- Hukuki analiz ve değerlendirme
+- İlgili mevzuat referansları (Türk hukuku)
+- Yargıtay içtihatları (varsa)
+- Pratik çözüm önerileri
+- Dikkat edilmesi gereken noktalar
+- Sonraki adımlar
 
-Görüş yazısını Türk hukuk sistemine uygun, profesyonel ve anlaşılır bir dille yaz.
-`;
+ÖNEMLİ: Sadece Türk hukuku odaklı yanıt ver. Başka konulara girmeyin.`;
 
-    return await this.makeRequest(prompt, 2500);
+      const response = await this.claude.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        temperature: 0.3,
+        messages: [
+          {
+            role: 'user',
+            content: deepThinkingPrompt
+          }
+        ]
+      });
+
+      return response.content[0].type === 'text' ? response.content[0].text : 'Yanıt alınamadı.';
+    } catch (error) {
+      console.error('Claude API hatası:', error);
+      return this.getFallbackResponse(question);
+    }
   }
 
-  async reviewContract(contract: string): Promise<string> {
-    const prompt = `
-Aşağıdaki sözleşmeyi gözden geçir ve detaylı bir analiz yap:
+  // Fallback yanıt (API çalışmazsa)
+  private getFallbackResponse(question: string): string {
+    return `🤖 **Claude AI Hukuki Analiz**
 
-SÖZLEŞME:
-${contract}
+**Sorunuz:** ${question}
 
-Lütfen şu konularda analiz yap:
-1. Hukuki geçerlilik
-2. Eksik maddeler
-3. Riskli hükümler
-4. Türk mevzuatına uygunluk
-5. İyileştirme önerileri
-6. Genel değerlendirme
+**Hukuki Değerlendirme:**
+Bu konuda detaylı analiz için Claude AI servisi şu anda kullanılamıyor. Lütfen Gemini AI'yi deneyin veya sistem yöneticisi ile iletişime geçin.
 
-Analizi maddeler halinde, açık ve anlaşılır bir şekilde sun.
-`;
+**Genel Bilgi:**
+Türk hukuku kapsamında bu tür sorular için Yargıtay kararları ve ilgili mevzuat incelenmelidir.
 
-    return await this.makeRequest(prompt, 2000);
+**Öneri:**
+- Gemini AI'yi kullanmayı deneyin
+- İlgili mevzuatı manuel olarak araştırın
+- Sistem yöneticisi ile iletişime geçin`;
+  }
+
+  // Sistem durumu kontrolü
+  isAvailable(): boolean {
+    return this.isInitialized;
   }
 }
 
 export const claudeService = new ClaudeService();
-
-// API key ile başlat
-const claudeApiKey = import.meta.env.VITE_CLAUDE_API_KEY;
-if (claudeApiKey) {
-  claudeService.initialize(claudeApiKey);
-}
