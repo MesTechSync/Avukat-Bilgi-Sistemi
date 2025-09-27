@@ -18,8 +18,7 @@ export class GeminiService {
       
       // Farklı model adlarını dene
       const modelNames = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro", 
+        "gemini-1.5-pro",
         "gemini-pro",
         "gemini-1.0-pro"
       ];
@@ -48,46 +47,38 @@ export class GeminiService {
 
   // Metin analizi yap
   async analyzeText(instruction: string, context?: string): Promise<string> {
-    // Geçici olarak Gemini API'yi devre dışı bırak ve yerel yanıt döndür
-    console.log('Gemini API geçici olarak devre dışı, yerel yanıt döndürülüyor');
-    return this.generateLocalResponse(instruction, context);
-  }
+    if (!this.model) {
+      console.log('Gemini model başlatılmamış, yerel yanıt döndürülüyor');
+      return this.generateLocalResponse(instruction, context);
+    }
 
-  // Alternatif model dene
-  private async tryAlternativeModel(instruction: string, context?: string): Promise<string> {
-    const alternativeModels = [
-      "gemini-1.5-pro",
-      "gemini-pro", 
-      "gemini-1.0-pro"
-    ];
-
-    for (const modelName of alternativeModels) {
-      try {
-        console.log(`Alternatif model deneniyor: ${modelName}`);
-        const altModel = this.genAI!.getGenerativeModel({ model: modelName });
-        
-        const prompt = `
-Sen Türkiye'de çalışan deneyimli bir avukat asistanısın. Aşağıdaki talimatı takip et:
+    try {
+      const prompt = `
+Sen deneyimli bir hukuk asistanısın. Aşağıdaki talimatı takip et:
 
 ${instruction}
 
 ${context ? `BAĞLAM: ${context}` : ''}
 
-Lütfen talimatı takip ederek Türkçe yanıt ver, Türk hukuk sistemine uygun terminoloji kullan ve pratik öneriler sun.
-`;
+Yanıtında:
+- Doğal ve samimi bir dil kullan
+- Gereksiz formalite yapma
+- Direkt ve pratik çözümler sun
+- Hukuki terimleri açıkla ama abartma
+- Gerçekçi öneriler ver
 
-        const result = await altModel.generateContent(prompt);
-        const response = await result.response;
-        console.log(`Alternatif model başarılı: ${modelName}`);
-        return response.text();
-      } catch (altError) {
-        console.warn(`Alternatif model ${modelName} başarısız:`, altError);
-        continue;
-      }
+Türkçe, anlaşılır ve samimi bir dille yanıt ver.`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Gemini hukuki analiz hatası:', error);
+      console.log('Gemini API hatası, yerel yanıt döndürülüyor');
+      return this.generateLocalResponse(instruction, context);
     }
-
-    throw new Error('Tüm alternatif modeller başarısız oldu');
   }
+
 
   // Yerel yanıt oluştur
   private generateLocalResponse(instruction: string, context?: string): string {
@@ -215,7 +206,7 @@ Lütfen ihtiyacınızı açıklayın, size adım adım yardımcı olayım.`;
   }
 
   // Boşanma dilekçesi oluştur
-  private generateDivorcePetition(message: string): string {
+  private generateDivorcePetition(_message: string): string {
     return `T.C.
 ANTAKYA AİLE MAHKEMESİ
 
@@ -261,7 +252,7 @@ EK: 1. Nüfus kayıt örneği
   }
 
   // İcra takibi itiraz dilekçesi oluştur
-  private generateExecutionObjectionPetition(message: string): string {
+  private generateExecutionObjectionPetition(_message: string): string {
     return `T.C.
 ANTAKYA İCRA DAİRESİ
 
@@ -307,7 +298,7 @@ EK: 1. T.C. Kimlik belgesi
   }
 
   // Tazminat davası dilekçesi oluştur
-  private generateCompensationPetition(message: string): string {
+  private generateCompensationPetition(_message: string): string {
     return `T.C.
 ANTAKYA ASLİYE HUKUK MAHKEMESİ
 
@@ -355,7 +346,7 @@ EK: 1. T.C. Kimlik belgesi
   }
 
   // İş hukuku dilekçesi oluştur
-  private generateLaborLawPetition(message: string): string {
+  private generateLaborLawPetition(_message: string): string {
     return `T.C.
 ANTAKYA İŞ MAHKEMESİ
 
@@ -429,7 +420,7 @@ EK: 1. T.C. Kimlik belgesi
   }
 
   // Dosya içeriğini analiz et
-  async analyzeFile(instruction: string, fileContent: string, fileName: string): Promise<string> {
+  async analyzeFile(instruction: string, _fileContent: string, fileName: string): Promise<string> {
     // Geçici olarak Gemini API'yi devre dışı bırak
     console.log('Gemini API geçici olarak devre dışı, yerel dosya analizi döndürülüyor');
     return `Dosya analizi geçici olarak devre dışı. 
