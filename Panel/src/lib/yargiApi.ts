@@ -6,7 +6,7 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
   
   try {
     // CORS proxy kullanarak Yargıtay sitesine istek gönder
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
     const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
     
     const formData = new FormData();
@@ -17,9 +17,8 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + yargitayUrl, {
-      method: 'POST',
-      body: formData,
+    const response = await fetch(proxyUrl + encodeURIComponent(yargitayUrl), {
+      method: 'GET',
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
@@ -49,7 +48,7 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
   
   try {
     // CORS proxy kullanarak UYAP sitesine istek gönder
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
     const uyapUrl = `https://emsal.uyap.gov.tr/`;
     
     const formData = new FormData();
@@ -60,20 +59,19 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
     formData.append('Tarih', '');
     formData.append('Siralama', 'Esas No\'ya Göre');
     
-    const response = await fetch(proxyUrl + uyapUrl, {
-      method: 'POST',
-      body: formData,
+    const response = await fetch(proxyUrl + encodeURIComponent(uyapUrl), {
+      method: 'GET',
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`UYAP sitesi yanıt vermedi: ${response.status}`);
     }
-    
+
     const html = await response.text();
     console.log(`✅ UYAP HTML alındı: ${html.length} karakter`);
     
@@ -167,12 +165,12 @@ function parseUyapHTML(html: string, query: string, page: number): IctihatResult
           const court = cells[3]?.textContent?.trim() || 'Bölge Adliye Mahkemesi';
           
           if (title && title.toLowerCase().includes(query.toLowerCase())) {
-            results.push({
+          results.push({
               id: `uyap_${Date.now()}_${index}`,
-              title: title,
+            title: title,
               content: `${title} - ${court} tarafından verilen karar. ${query} konusunda hukuki değerlendirme yapılmıştır.`,
-              court: court,
-              date: date,
+            court: court,
+            date: date,
               number: caseNumber,
               summary: `${title} - ${court}`,
               url: `https://emsal.uyap.gov.tr${url}`,
@@ -337,7 +335,7 @@ function generateFallbackUyapData(query: string, page: number): IctihatResultIte
   ];
   
   fallbackDecisions.forEach((decision, index) => {
-    results.push({
+      results.push({
       id: `uyap_fallback_${Date.now()}_${index}`,
       title: decision.title,
       content: decision.content,
@@ -550,7 +548,7 @@ export async function searchUyapEmsalMultiPage(query: string, filters?: IctihatF
     court: 'UYAP Emsal Karar Sistemi',
     courtName: 'UYAP',
     courtType: 'uyap',
-    date: new Date().toLocaleDateString('tr-TR'),
+        date: new Date().toLocaleDateString('tr-TR'),
     subject: `${query} emsal kararları`,
     summary: `Gerçek UYAP sitesinden "${query}" araması sonucunda ${maxPages} sayfa tarandı, ${allResults.length} karar alındı.`,
     content: `UYAP EMSAL KARAR ARAMA SİSTEMİ
@@ -640,7 +638,7 @@ Türkiye Cumhuriyeti yargı organlarının elektronik ortamdaki kararları.
 Kaynak: emsal.uyap.gov.tr`,
     url: `https://emsal.uyap.gov.tr/index`,
     source: 'UYAP Emsal Karar',
-    relevanceScore: 1.0
+        relevanceScore: 1.0
   });
   
   // Gerçek format UYAP kararları
