@@ -21,6 +21,7 @@
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.57.4",
     "archiver": "^7.0.1",
+    "deep-chat-react": "^2.2.2",
     "docx": "^9.5.1",
     "docx-pdf": "^0.0.1",
     "dotenv": "^17.2.2",

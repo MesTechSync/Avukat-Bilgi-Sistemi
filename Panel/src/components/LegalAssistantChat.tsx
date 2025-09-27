@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, Copy, ThumbsUp, ThumbsDown, Trash2, Zap, Scale, FileText, Search, BookOpen, Mic, Paperclip, ArrowUp, ChevronUp, Brain, Lightbulb, Target, Clock, Shield, Users, Gavel, ExternalLink, Plus, MessageSquare, History, Star, Settings, MoreVertical, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { DeepChat } from 'deep-chat-react';
 import { geminiService } from '../services/geminiService';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
@@ -57,6 +58,7 @@ const LegalAssistantChat: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showQuickStart, setShowQuickStart] = useState(true);
+  const [useDeepChat, setUseDeepChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { isListening, startDictation, stopDictation, interimText } = useDictation();
 
@@ -460,6 +462,192 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
     setShowQuickStart(true);
   };
 
+  // Deep Chat için özel yanıt işleyici
+  const handleDeepChatResponse = async (message: any) => {
+    const userMessage = message.text || message;
+    
+    // Hukuki analiz için özel prompt
+    const legalPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver.
+
+Soru: ${userMessage}
+
+Yanıtında şunları dahil et:
+1. Hukuki analiz ve değerlendirme
+2. İlgili mevzuat referansları
+3. Pratik çözüm önerileri
+4. Dikkat edilmesi gereken noktalar
+5. Sonraki adımlar
+
+Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name} için özelleştirilmiş öneriler sun.`;
+
+    try {
+      const response = await geminiService.analyzeText(legalPrompt, userMessage);
+      return response;
+    } catch (error) {
+      console.error('Deep Chat yanıt hatası:', error);
+      return 'Üzgünüm, şu anda bir hata oluştu. Lütfen tekrar deneyin.';
+    }
+  };
+
+  // Deep Chat konfigürasyonu - Hukuk Asistanı için özelleştirilmiş
+  const deepChatConfig = {
+    // Hukuki asistan için özel handler
+    request: {
+      handler: async (request: any) => {
+        const userMessage = request.body?.message || request.body;
+        
+        // Hukuki analiz için özel prompt
+        const legalPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver.
+
+Soru: ${userMessage}
+
+Yanıtında şunları dahil et:
+1. Hukuki analiz ve değerlendirme
+2. İlgili mevzuat referansları
+3. Pratik çözüm önerileri
+4. Dikkat edilmesi gereken noktalar
+5. Sonraki adımlar
+
+Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name} için özelleştirilmiş öneriler sun.`;
+
+        try {
+          const response = await geminiService.analyzeText(legalPrompt, userMessage);
+          return { text: response };
+        } catch (error) {
+          console.error('Deep Chat yanıt hatası:', error);
+          return { text: 'Üzgünüm, şu anda bir hata oluştu. Lütfen tekrar deneyin.' };
+        }
+      }
+    },
+    // Modern hukuki tema
+    style: {
+      borderRadius: '16px',
+      fontSize: '14px',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      backgroundColor: '#0f172a',
+      color: '#f8fafc',
+      border: '1px solid #334155',
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+    },
+    // Gelişmiş input tasarımı
+    textInput: {
+      placeholder: 'Hukuki sorunuzu yazın...',
+      backgroundColor: '#1e293b',
+      color: '#f8fafc',
+      border: '1px solid #475569',
+      borderRadius: '12px',
+      fontSize: '14px',
+      padding: '12px 16px'
+    },
+    // Modern gönder butonu
+    submitButton: {
+      backgroundColor: '#3b82f6',
+      color: '#ffffff',
+      borderRadius: '12px',
+      fontSize: '14px',
+      fontWeight: '500',
+      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+      hover: {
+        backgroundColor: '#2563eb',
+        boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)'
+      }
+    },
+    // Mesaj balonları
+    message: {
+      user: {
+        backgroundColor: '#3b82f6',
+        color: '#ffffff',
+        borderRadius: '18px 18px 6px 18px',
+        fontSize: '14px',
+        padding: '12px 16px',
+        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)'
+      },
+      ai: {
+        backgroundColor: '#1e293b',
+        color: '#f8fafc',
+        borderRadius: '18px 18px 18px 6px',
+        fontSize: '14px',
+        padding: '12px 16px',
+        border: '1px solid #334155',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+      }
+    },
+    // Avatar tasarımı
+    avatar: {
+      user: {
+        backgroundColor: '#3b82f6',
+        color: '#ffffff',
+        borderRadius: '50%',
+        fontSize: '12px',
+        fontWeight: '600'
+      },
+      ai: {
+        backgroundColor: '#8b5cf6',
+        color: '#ffffff',
+        borderRadius: '50%',
+        fontSize: '12px',
+        fontWeight: '600'
+      }
+    },
+    // Hoş geldin mesajı
+    introMessage: {
+      text: `Merhaba ${userInfo.name}! 👋
+
+Ben sizin hukuki asistanınızım. Size şu konularda yardımcı olabilirim:
+
+⚖️ **Hukuki Danışmanlık**
+📚 **Mevzuat Araştırması** 
+📄 **Dilekçe Hazırlama**
+📋 **Sözleşme Düzenleme**
+🔍 **İçtihat Arama**
+💼 **Dava Stratejisi**
+
+Hangi konuda yardıma ihtiyacınız var?`,
+      backgroundColor: '#1e293b',
+      color: '#f8fafc',
+      borderRadius: '16px',
+      border: '1px solid #334155',
+      padding: '20px',
+      fontSize: '14px',
+      lineHeight: '1.6'
+    },
+    // Hata mesajları
+    errorMessages: {
+      displayServiceErrorMessages: true,
+      backgroundColor: '#dc2626',
+      color: '#ffffff',
+      borderRadius: '12px'
+    },
+    // Genel ayarlar
+    height: '100%',
+    streaming: true,
+    // Gelişmiş özellikler
+    fileUpload: {
+      disabled: false,
+      maxFiles: 5,
+      acceptedFormats: '.pdf,.doc,.docx,.txt',
+      maxFileSize: 10485760 // 10MB
+    },
+    // Ses özellikleri
+    speechToText: {
+      disabled: false,
+      language: 'tr-TR'
+    },
+    textToSpeech: {
+      disabled: false,
+      language: 'tr-TR',
+      voice: 'tr-TR-EmelNeural'
+    },
+    // Görsel özellikler
+    images: {
+      disabled: false,
+      maxFiles: 3,
+      acceptedFormats: '.jpg,.jpeg,.png,.gif,.webp',
+      maxFileSize: 5242880 // 5MB
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white overflow-hidden">
       {/* Sol Sidebar - Sohbet Geçmişi */}
@@ -591,6 +779,17 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
             </div>
             
             <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setUseDeepChat(!useDeepChat)}
+                className={`p-2 rounded-lg transition-colors ${
+                  useDeepChat 
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
+                    : 'hover:bg-gray-700/50'
+                }`}
+                title={useDeepChat ? 'Deep Chat Aktif' : 'Deep Chat\'i Aktifleştir'}
+              >
+                <Brain className="w-5 h-5" />
+              </button>
               <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
                 <Settings className="w-5 h-5" />
               </button>
@@ -608,8 +807,48 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
 
         {/* Ana İçerik */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Hoş Geldin Mesajı */}
-          {messages.length === 0 && showQuickStart && (
+          {/* Deep Chat Modu */}
+          {useDeepChat ? (
+            <div className="flex-1 p-4">
+              <div className="h-full rounded-xl overflow-hidden border border-gray-700/50 bg-gray-800/30 backdrop-blur-sm shadow-2xl">
+                <div className="h-full flex flex-col">
+                  {/* Deep Chat Header */}
+                  <div className="p-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                          <Brain className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">Deep Chat Hukuk Asistanı</h3>
+                          <p className="text-sm text-gray-400">Gelişmiş AI destekli hukuki danışmanlık</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-green-400">Aktif</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Deep Chat Component */}
+                  <div className="flex-1 p-4">
+                    <DeepChat 
+                      {...deepChatConfig}
+                      style={{
+                        ...deepChatConfig.style,
+                        height: '100%',
+                        borderRadius: '12px'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Hoş Geldin Mesajı */}
+              {messages.length === 0 && showQuickStart && (
             <div className="flex-1 flex flex-col items-center justify-center p-8">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-2xl shadow-cyan-500/25">
@@ -888,49 +1127,51 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
       </div>
           )}
 
-          {/* Input Alanı */}
-          <div className="p-4 border-t border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
-            <div className="max-w-4xl mx-auto">
-              <div className="relative">
-          <textarea 
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Hukuki sorunuzu yazın..."
-                  className="w-full px-4 py-3 pr-12 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm resize-none"
-                  rows={1}
-                  style={{ minHeight: '48px', maxHeight: '120px' }}
-                />
-                
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                  <button
-                    onClick={isListening ? stopDictation : startDictation}
-                    className={`p-2 rounded-lg transition-all ${
-                      isListening 
-                        ? 'text-red-400 bg-red-500/20 border border-red-500/30 animate-pulse' 
-                        : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10'
-                    }`}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
+              {/* Input Alanı */}
+              <div className="p-4 border-t border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
+                <div className="max-w-4xl mx-auto">
+                  <div className="relative">
+            <textarea 
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Hukuki sorunuzu yazın..."
+                    className="w-full px-4 py-3 pr-12 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm resize-none"
+                    rows={1}
+                    style={{ minHeight: '48px', maxHeight: '120px' }}
+                  />
                   
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={!input.trim() || isLoading}
-                    className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                    <button
+                      onClick={isListening ? stopDictation : startDictation}
+                      className={`p-2 rounded-lg transition-all ${
+                        isListening 
+                          ? 'text-red-400 bg-red-500/20 border border-red-500/30 animate-pulse' 
+                          : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10'
+                      }`}
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                    
+                    <button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isLoading}
+                      className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+                
+                {interimText && (
+                  <div className="mt-2 text-sm text-gray-400">
+                    <span className="text-blue-400">Dinleniyor:</span> {interimText}
+                  </div>
+                )}
               </div>
-              
-              {interimText && (
-                <div className="mt-2 text-sm text-gray-400">
-                  <span className="text-blue-400">Dinleniyor:</span> {interimText}
-                </div>
-              )}
             </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
