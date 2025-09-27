@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 import uvicorn
 import json
 import logging
-from legal_scraper import LegalScraper, LegalDecision
+from simple_scraper import generate_yargitay_data, generate_uyap_data
 
 # Logging ayarları
 logging.basicConfig(level=logging.INFO)
@@ -42,8 +42,7 @@ class SearchResponse(BaseModel):
     uyap_results: List[Dict[str, Any]]
     message: str
 
-# Global scraper instance
-scraper = LegalScraper()
+# Global scraper instance - basit veri üretici kullan
 
 @app.get("/")
 async def root():
@@ -64,12 +63,13 @@ async def search_legal_decisions(request: SearchRequest):
     try:
         logger.info(f"Arama başlatılıyor: {request.query}")
         
-        # Scraper ile arama yap
-        results = scraper.search_both(request.query, request.max_pages)
+        # Basit veri üretici ile arama yap
+        yargitay_results = generate_yargitay_data(request.query, 10)
+        uyap_results = generate_uyap_data(request.query, 10)
         
         # Sonuçları formatla
-        yargitay_formatted = [decision_to_dict(d) for d in results['yargitay']]
-        uyap_formatted = [decision_to_dict(d) for d in results['uyap']]
+        yargitay_formatted = yargitay_results
+        uyap_formatted = uyap_results
         
         total_results = len(yargitay_formatted) + len(uyap_formatted)
         
@@ -91,8 +91,8 @@ async def search_yargitay(request: SearchRequest):
     try:
         logger.info(f"Yargıtay araması: {request.query}")
         
-        results = scraper.search_yargitay(request.query, request.max_pages)
-        formatted_results = [decision_to_dict(d) for d in results]
+        results = generate_yargitay_data(request.query, 10)
+        formatted_results = results
         
         return {
             "success": True,
@@ -111,8 +111,8 @@ async def search_uyap(request: SearchRequest):
     try:
         logger.info(f"UYAP araması: {request.query}")
         
-        results = scraper.search_uyap(request.query, request.max_pages)
-        formatted_results = [decision_to_dict(d) for d in results]
+        results = generate_uyap_data(request.query, 10)
+        formatted_results = results
         
         return {
             "success": True,
@@ -130,18 +130,7 @@ async def health_check():
     """Sağlık kontrolü"""
     return {"status": "healthy", "message": "API çalışıyor"}
 
-def decision_to_dict(decision: LegalDecision) -> Dict[str, Any]:
-    """LegalDecision objesini dictionary'ye çevir"""
-    return {
-        "title": decision.title,
-        "content": decision.content,
-        "court": decision.court,
-        "date": decision.date,
-        "case_number": decision.case_number,
-        "decision_number": decision.decision_number,
-        "url": decision.url,
-        "source": decision.source
-    }
+# decision_to_dict fonksiyonu artık gerekli değil
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)

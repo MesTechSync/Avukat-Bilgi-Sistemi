@@ -115,30 +115,33 @@ class LegalScraper:
     def _parse_yargitay_row(self, row, base_url: str) -> Optional[LegalDecision]:
         """Yargıtay karar satırını parse et"""
         try:
+            # Önce tüm td'leri bul
             cells = row.find_all('td')
-            if len(cells) < 4:
+            if len(cells) < 2:
                 return None
-                
-            # Karar başlığı
+            
+            # İlk hücrede link var mı kontrol et
             title_cell = cells[0]
             title_link = title_cell.find('a')
-            if not title_link:
+            
+            if title_link:
+                title = title_link.get_text(strip=True)
+                detail_url = base_url + title_link.get('href', '')
+            else:
+                # Link yoksa hücrenin kendisini kullan
+                title = title_cell.get_text(strip=True)
+                detail_url = ""
+            
+            if not title:
                 return None
-                
-            title = title_link.get_text(strip=True)
-            detail_url = base_url + title_link.get('href', '')
             
-            # Karar numarası
+            # Diğer bilgileri al
             case_number = cells[1].get_text(strip=True) if len(cells) > 1 else ""
-            
-            # Karar tarihi
             date = cells[2].get_text(strip=True) if len(cells) > 2 else ""
-            
-            # Daire
             court = cells[3].get_text(strip=True) if len(cells) > 3 else "Yargıtay"
             
             # Karar içeriğini çek
-            content = self._get_yargitay_detail(detail_url)
+            content = self._get_yargitay_detail(detail_url) if detail_url else title
             
             return LegalDecision(
                 title=title,
