@@ -389,7 +389,7 @@ Derin düşünme modunda çalış ve en kaliteli dilekçeyi hazırla!`;
                 <BookOpen className="w-5 h-5" />
                 Şablonlar
                   </button>
-            </div>
+          </div>
         </div>
       </div>
 
@@ -407,7 +407,7 @@ Derin düşünme modunda çalış ve en kaliteli dilekçeyi hazırla!`;
                     <h3 className="text-xl font-bold">AI Asistan ile Dilekçe Yazımı</h3>
                     <p className="text-indigo-100">Sohbet ederek dilekçenizi oluşturun</p>
                   </div>
-                </div>
+              </div>
             </div>
 
               {/* Modern Chat Container */}
@@ -458,7 +458,7 @@ Derin düşünme modunda çalış ve en kaliteli dilekçeyi hazırla!`;
                               )}
                             </div>
                           </div>
-                        </div>
+                  </div>
                     </div>
                 </div>
               ))}
@@ -889,7 +889,7 @@ Derin düşünme modunda çalış ve en kaliteli dilekçeyi hazırla!`;
                       <MessageCircle className="w-4 h-4" />
                       AI Chat'e Git
                     </button>
-                  </div>
+              </div>
                 )}
             </div>
           </div>

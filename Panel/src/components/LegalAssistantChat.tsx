@@ -3,7 +3,6 @@ import { Bot, Send, Copy, ThumbsUp, ThumbsDown, Trash2, Zap, Scale, FileText, Se
 import ReactMarkdown from 'react-markdown';
 import { DeepChat } from 'deep-chat-react';
 import { geminiService } from '../services/geminiService';
-import { legalAIService } from '../services/legalAIService';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { petitionTemplates, petitionCategories, searchPetitions } from '../data/petitions/petitionDatabase';
@@ -70,52 +69,52 @@ const LegalAssistantChat: React.FC = () => {
     initials: 'MZ'
   };
 
-  // Hızlı başlat seçenekleri - Neon gradient'lerle
+  // Hızlı başlat seçenekleri - Gerçekçi hukuki senaryolar
   const quickStartOptions: QuickStartOption[] = [
-    {
-      id: 'legal-support',
-      title: 'Hukuki Destek Ver',
-      description: 'Genel hukuki danışmanlık',
-      icon: <Scale className="w-6 h-6" />,
-      prompt: 'Senetteki imzanın geçersizliği halinde, ciro silsilesinde imzası bulunan cirantaların sorumluluğu devam eder mi?',
-      category: 'genel',
-      gradient: 'from-cyan-400 via-blue-500 to-purple-600'
-    },
     {
       id: 'lawsuit-petition',
       title: 'Dava Dilekçesi Hazırla',
-      description: 'Dava açmak için dilekçe',
+      description: 'Tahliye davası dilekçesi',
       icon: <FileText className="w-6 h-6" />,
-      prompt: 'Dava dilekçesi hazırlamak istiyorum. Hangi tür dava açacağımı belirleyip, profesyonel bir dilekçe hazırlayabilir misin?',
+      prompt: 'Müvekkil Antalya ilinde bulunan taşınmazını 25.01.2023 tarihinde Ali\'ye kiralamıştır. Müvekkilin oğlunun Antalya\'da bir işe girmiş olması ve ev ihtiyacı olduğundan taşınmazın ihtiyaç sebebiyle tahliyesini istiyoruz. Dava dilekçesi hazırlar mısın?',
       category: 'dilekçe',
       gradient: 'from-emerald-400 via-teal-500 to-cyan-600'
     },
     {
       id: 'response-petition',
       title: 'Cevap Dilekçesi Hazırla',
-      description: 'Davalı olarak cevap',
+      description: 'Tahliye davasına cevap',
       icon: <FileText className="w-6 h-6" />,
-      prompt: 'Bana açılan davaya cevap dilekçesi hazırlamak istiyorum. Savunma stratejisi ve hukuki argümanlar önerebilir misin?',
+      prompt: 'Müvekkilim Ayşegül Antalya ilinde bulunan taşınmazını 17/11/2019 tarihinde Hüseyin adlı şahıstan kiralamıştır. Ancak, karşı taraf oğlunun taşınmaza ihtiyaç olduğu nedeniyle taşınmazın tahliyesi davası açmıştır. Karşı tarafın iddiaları doğru değildir. Karşı tarafın oğlunun ihtiyacı yoktur. Tahliye istemesinin tek sebebi taşınmazı daha yüksek fiyatla kiraya vermek istemesidir. Müvekkilimiz bu iddiaları kabul etmiyor. Bu sebeplerle davanın reddini talep ediyoruz. Cevap dilekçesi hazırlar mısın?',
       category: 'dilekçe',
       gradient: 'from-orange-400 via-red-500 to-pink-600'
     },
     {
       id: 'contract-prepare',
       title: 'Sözleşme Hazırla',
-      description: 'Hukuki sözleşme düzenleme',
+      description: 'Kira sözleşmesi düzenleme',
       icon: <FileText className="w-6 h-6" />,
-      prompt: 'Hukuki bir sözleşme hazırlamak istiyorum. Sözleşme türünü belirleyip, tüm hukuki gereklilikleri içeren profesyonel bir sözleşme hazırlayabilir misin?',
+      prompt: 'Müvekkilim için kiralama sözleşmesi hazırlamanı istiyorum. Müvekkilim Fatma ile Harun arasında Edirne ilinde bulunan taşınmaz üzerine yapılan kira sözleşmesi. Sözleşmenin başlama tarihi 19 Mart 2024 ve bitiş tarihi 19 Mart 2025 olarak belirlenmiştir. Kiranın miktarı 20.000 TL olarak belirlenmiş olup, ödeme şekli aylık şeklindedir.',
       category: 'sözleşme',
       gradient: 'from-violet-400 via-purple-500 to-indigo-600'
     },
     {
       id: 'appeal-petition',
-      title: 'İstinaf/Temyiz Dilekçesi Hazırla',
-      description: 'Üst mahkemeye başvuru',
+      title: 'İstinaf Dilekçesi Hazırla',
+      description: 'Tazminat kararına itiraz',
       icon: <FileText className="w-6 h-6" />,
-      prompt: 'Mahkeme kararına karşı istinaf/temyiz dilekçesi hazırlamak istiyorum. Hukuki gerekçeler ve prosedür hakkında bilgi verebilir misin?',
+      prompt: 'Lütfen 2023/100 E. ve 2023/200 K. sayılı, ... Mahkemesi\'nin verdiği, tazminat talebimi reddeden kararın, kusur oranının yanlış hesaplanması ve delillerin yeterince değerlendirilmemesi gerekçeleriyle iptal edilmesini ve tazminat talebimin kabul edilmesini talep eden bir istinaf dilekçesi hazırlayın.',
       category: 'dilekçe',
       gradient: 'from-amber-400 via-yellow-500 to-orange-600'
+    },
+    {
+      id: 'expert-objection',
+      title: 'Bilirkişi Raporuna İtiraz',
+      description: 'Trafik kazası bilirkişi itirazı',
+      icon: <FileText className="w-6 h-6" />,
+      prompt: 'Dava konusu kazanın meydana gelme şekli ve aracın hasar durumu ile ilgili olarak bilirkişi raporunun 3. maddesinde belirtilen görüşlerin, kazanın tanık anlatımları ve olay yeri inceleme raporundaki tespitler ile örtüşmediğini, bu nedenle bilirkişi raporunun bu kısmının hatalı olduğunu belirterek bilirkişi raporuna itiraz ediyorum. Bu maddede yer alan hatalı görüşlerin düzeltilmesini ve eksik kalan yönlerin giderilmesini talep ediyorum. Bu konuda bilirkişi raporuna itiraz dilekçesi hazırlar mısın?',
+      category: 'dilekçe',
+      gradient: 'from-slate-400 via-gray-500 to-zinc-600'
     },
     {
       id: 'case-law-search',
@@ -136,13 +135,13 @@ const LegalAssistantChat: React.FC = () => {
       gradient: 'from-green-400 via-emerald-500 to-teal-600'
     },
     {
-      id: 'expert-objection',
-      title: 'Bilirkişi Raporuna İtiraz Dilekçesi Hazırla',
-      description: 'Bilirkişi raporuna itiraz',
-      icon: <FileText className="w-6 h-6" />,
-      prompt: 'Bilirkişi raporuna itiraz dilekçesi hazırlamak istiyorum. Rapordaki hataları ve eksiklikleri belirleyip, hukuki itiraz gerekçeleri sunabilir misin?',
-      category: 'dilekçe',
-      gradient: 'from-slate-400 via-gray-500 to-zinc-600'
+      id: 'legal-support',
+      title: 'Hukuki Destek',
+      description: 'Genel hukuki danışmanlık',
+      icon: <Scale className="w-6 h-6" />,
+      prompt: 'Hukuki bir sorunum var ve profesyonel destek istiyorum. Detaylı analiz ve çözüm önerileri sunabilir misin?',
+      category: 'genel',
+      gradient: 'from-cyan-400 via-blue-500 to-purple-600'
     }
   ];
 
@@ -375,14 +374,25 @@ Aşağıda en uygun sözleşme şablonları gösteriliyor. Detaylı sözleşme y
         }
       }
 
-      // AI yanıtı al - Derin düşünme özellikli
-      const aiResponse = await legalAIService.analyzeLegalQuestion(messageToSend, selectedModel);
-      let response = aiResponse.response;
-      
-      // Panel entegrasyonu varsa ekle
-      if (actionData && panelResponse) {
-        response += `\n\n---\n\n${panelResponse}`;
-      }
+      // AI yanıtı al - Gerçekçi ve doğal
+      const aiPrompt = `Sen deneyimli bir hukuk asistanısın. ${userInfo.name} ile çalışıyorsun. 
+
+Soru: ${messageToSend}
+
+${actionData ? `Panel Entegrasyonu: ${panelResponse}` : ''}
+
+Yanıtında:
+- Doğal ve samimi bir dil kullan
+- Gereksiz formalite yapma
+- Direkt ve pratik çözümler sun
+- Hukuki terimleri açıkla ama abartma
+- Gerçekçi öneriler ver
+
+${actionData ? 'Panel entegrasyonu bilgilerini de dahil et.' : ''}
+
+Türkçe, anlaşılır ve samimi bir dille yanıt ver.`;
+
+      const response = await geminiService.analyzeText(aiPrompt, messageToSend);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -390,8 +400,8 @@ Aşağıda en uygun sözleşme şablonları gösteriliyor. Detaylı sözleşme y
         content: response,
         timestamp: new Date().toISOString(),
         model: selectedModel,
-        confidence: aiResponse.confidence,
-        thinking: aiResponse.thinkingProcess.join('\n'),
+        confidence: 0.95,
+        thinking: thinkingProcess,
         action: actionType ? {
           type: actionType,
           data: actionData
@@ -486,19 +496,19 @@ Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name
       handler: async (request: any) => {
         const userMessage = request.body?.message || request.body;
         
-        // Hukuki analiz için özel prompt
-        const legalPrompt = `Sen Türkiye'nin en deneyimli hukuk asistanısın. ${userInfo.name} adlı avukata profesyonel, detaylı ve pratik bir yanıt ver.
+        // Hukuki analiz için özel prompt - Gerçekçi ve doğal
+        const legalPrompt = `Sen deneyimli bir hukuk asistanısın. ${userInfo.name} ile çalışıyorsun.
 
 Soru: ${userMessage}
 
-Yanıtında şunları dahil et:
-1. Hukuki analiz ve değerlendirme
-2. İlgili mevzuat referansları
-3. Pratik çözüm önerileri
-4. Dikkat edilmesi gereken noktalar
-5. Sonraki adımlar
+Yanıtında:
+- Doğal ve samimi bir dil kullan
+- Gereksiz formalite yapma
+- Direkt ve pratik çözümler sun
+- Hukuki terimleri açıkla ama abartma
+- Gerçekçi öneriler ver
 
-Yanıtını Türkçe, anlaşılır ve profesyonel bir dille ver. ${userInfo.name} için özelleştirilmiş öneriler sun.`;
+Türkçe, anlaşılır ve samimi bir dille yanıt ver.`;
 
         try {
           const response = await geminiService.analyzeText(legalPrompt, userMessage);
@@ -912,11 +922,6 @@ Hangi konuda yardıma ihtiyacınız var?`,
                         {message.confidence && (
                           <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
                             %{Math.round(message.confidence * 100)} Güven
-                          </span>
-                        )}
-                        {message.model && (
-                          <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full border border-blue-500/30">
-                            {message.model === 'gemini' ? 'Gemini AI' : message.model === 'claude' ? 'Claude AI' : 'AI'}
                           </span>
                         )}
                       </div>
