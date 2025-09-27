@@ -38,8 +38,9 @@ async function fetchRealYargitayData(query: string, page: number = 1): Promise<I
     
   } catch (error) {
     console.error('❌ Yargıtay veri çekme hatası:', error);
-    // Fallback veri döndür
-    return generateFallbackYargitayData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ Yargıtay sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
@@ -80,8 +81,9 @@ async function fetchRealUyapData(query: string, page: number = 1): Promise<Ictih
     
   } catch (error) {
     console.error('❌ UYAP veri çekme hatası:', error);
-    // Fallback veri döndür
-    return generateFallbackUyapData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ UYAP sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
@@ -134,7 +136,9 @@ function parseYargitayHTML(html: string, query: string, page: number): IctihatRe
     
   } catch (error) {
     console.error('❌ Yargıtay HTML parse hatası:', error);
-    return generateFallbackYargitayData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ Yargıtay HTML parse edilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
@@ -187,173 +191,13 @@ function parseUyapHTML(html: string, query: string, page: number): IctihatResult
     
   } catch (error) {
     console.error('❌ UYAP HTML parse hatası:', error);
-    return generateFallbackUyapData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ UYAP HTML parse edilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
-function generateFallbackYargitayData(query: string, page: number): IctihatResultItem[] {
-  const results: IctihatResultItem[] = [];
-  
-  // Gerçek Yargıtay kararları - sabit veriler
-  const realDecisions = [
-    {
-      title: "Borçlar Hukuku Genel Hükümleri",
-      daire: "2. Hukuk Dairesi",
-      esesNo: "2023/1234",
-      kararNo: "2023/5678",
-      date: "15.03.2023",
-      content: "Borçlar Kanunu'nun 125. maddesi uyarınca borçlunun temerrüdü halinde alacaklının hakları ve yükümlülükleri belirlenmiştir."
-    },
-    {
-      title: "Ticaret Hukuku Sözleşmeleri",
-      daire: "11. Hukuk Dairesi", 
-      esesNo: "2023/2345",
-      kararNo: "2023/6789",
-      date: "22.04.2023",
-      content: "Ticaret Kanunu'nun 18. maddesi gereğince ticari işlemlerde sözleşme serbestisi ilkesi uygulanmıştır."
-    },
-    {
-      title: "İş Hukuku İşçi Hakları",
-      daire: "9. Hukuk Dairesi",
-      esesNo: "2023/3456", 
-      kararNo: "2023/7890",
-      date: "08.05.2023",
-      content: "İş Kanunu'nun 25. maddesi uyarınca işçinin fesih hakkı ve işverenin yükümlülükleri değerlendirilmiştir."
-    },
-    {
-      title: "Aile Hukuku Boşanma",
-      daire: "2. Hukuk Dairesi",
-      esesNo: "2023/4567",
-      kararNo: "2023/8901", 
-      date: "12.06.2023",
-      content: "Türk Medeni Kanunu'nun 166. maddesi gereğince boşanma davalarında kusur tespiti yapılmıştır."
-    },
-    {
-      title: "Gayrimenkul Hukuku Tapu",
-      daire: "6. Hukuk Dairesi",
-      esesNo: "2023/5678",
-      kararNo: "2023/9012",
-      date: "18.07.2023", 
-      content: "Tapu Kanunu'nun 7. maddesi uyarınca tapu iptali davalarında zamanaşımı süreleri belirlenmiştir."
-    },
-    {
-      title: "Miras Hukuku Mirasçılık",
-      daire: "2. Hukuk Dairesi",
-      esesNo: "2023/6789",
-      kararNo: "2023/0123",
-      date: "25.08.2023",
-      content: "Türk Medeni Kanunu'nun 495. maddesi gereğince mirasçılık sıfatının kazanılması koşulları incelenmiştir."
-    },
-    {
-      title: "Sözleşme Hukuku İfa",
-      daire: "2. Hukuk Dairesi", 
-      esesNo: "2023/7890",
-      kararNo: "2023/1234",
-      date: "03.09.2023",
-      content: "Borçlar Kanunu'nun 117. maddesi uyarınca sözleşmenin ifa edilmemesi halinde tazminat yükümlülüğü belirlenmiştir."
-    },
-    {
-      title: "Tazminat Hukuku Zarar",
-      daire: "4. Hukuk Dairesi",
-      esesNo: "2023/8901", 
-      kararNo: "2023/2345",
-      date: "14.10.2023",
-      content: "Borçlar Kanunu'nun 49. maddesi gereğince maddi ve manevi tazminat hesaplama yöntemleri açıklanmıştır."
-    },
-    {
-      title: "Ceza Hukuku Suç Unsurları",
-      daire: "1. Ceza Dairesi",
-      esesNo: "2023/9012",
-      kararNo: "2023/3456", 
-      date: "28.11.2023",
-      content: "Türk Ceza Kanunu'nun 21. maddesi uyarınca suçun unsurları ve ceza ehliyeti değerlendirilmiştir."
-    },
-    {
-      title: "İdare Hukuku İptal Davası",
-      daire: "6. Daire",
-      esesNo: "2023/0123",
-      kararNo: "2023/4567",
-      date: "05.12.2023",
-      content: "İdari Yargılama Usulü Kanunu'nun 2. maddesi gereğince idari işlemlerin iptali koşulları belirlenmiştir."
-    }
-  ];
-  
-  for (let i = 0; i < Math.min(10, realDecisions.length); i++) {
-    const decision = realDecisions[i];
-    
-    const result: IctihatResultItem = {
-      id: `yargitay_${Date.now()}_${i}`,
-      title: decision.title,
-      content: decision.content,
-      court: decision.daire,
-      date: decision.date,
-      number: decision.esesNo,
-      summary: `${decision.title} - Yargıtay ${decision.daire}`,
-      url: `https://karararama.yargitay.gov.tr/karar/${decision.esesNo}`,
-      source: 'yargitay',
-      relevanceScore: 0.9
-    };
-    
-    results.push(result);
-  }
-  
-  return results;
-}
 
-function generateFallbackUyapData(query: string, page: number): IctihatResultItem[] {
-  const results: IctihatResultItem[] = [];
-  
-  // Fallback UYAP kararları
-  const fallbackDecisions = [
-    {
-      title: `${query} konulu karar`,
-      mahkeme: "İstanbul Bölge Adliye Mahkemesi 1. Hukuk Dairesi",
-      esesNo: "2023/1001",
-      kararNo: "2023/2001",
-      date: "15.03.2023",
-      status: "KESİNLEŞTİ",
-      content: `T.C. İSTANBUL BÖLGE ADLİYE MAHKEMESİ 1. HUKUK DAİRESİ ESAS NO: 2023/1001 KARAR NO: 2023/2001 DAVANIN KONUSU: ${query} İSTİNAF KARAR TARİHİ: 15/03/2023 ${query} konusunda yapılan değerlendirme sonucunda karar verilmiştir.`
-    },
-    {
-      title: `${query} konulu karar`,
-      mahkeme: "Ankara Bölge Adliye Mahkemesi 2. Hukuk Dairesi",
-      esesNo: "2023/1002",
-      kararNo: "2023/2002",
-      date: "22.04.2023",
-      status: "KESİNLEŞTİ",
-      content: `T.C. ANKARA BÖLGE ADLİYE MAHKEMESİ 2. HUKUK DAİRESİ ESAS NO: 2023/1002 KARAR NO: 2023/2002 DAVANIN KONUSU: ${query} İSTİNAF KARAR TARİHİ: 22/04/2023 ${query} konusunda yapılan değerlendirme sonucunda karar verilmiştir.`
-    },
-    {
-      title: `${query} konulu karar`,
-      mahkeme: "İzmir Bölge Adliye Mahkemesi 3. Hukuk Dairesi",
-      esesNo: "2023/1003",
-      kararNo: "2023/2003",
-      date: "08.05.2023",
-      status: "KESİNLEŞTİ",
-      content: `T.C. İZMİR BÖLGE ADLİYE MAHKEMESİ 3. HUKUK DAİRESİ ESAS NO: 2023/1003 KARAR NO: 2023/2003 DAVANIN KONUSU: ${query} İSTİNAF KARAR TARİHİ: 08/05/2023 ${query} konusunda yapılan değerlendirme sonucunda karar verilmiştir.`
-    }
-  ];
-  
-  fallbackDecisions.forEach((decision, index) => {
-      results.push({
-      id: `uyap_fallback_${Date.now()}_${index}`,
-      title: decision.title,
-      content: decision.content,
-      court: decision.mahkeme,
-      date: decision.date,
-      number: decision.esesNo,
-      summary: `${decision.title} - ${decision.mahkeme} - ${decision.status}`,
-      url: `https://emsal.uyap.gov.tr/karar/${decision.esesNo}`,
-      source: 'uyap',
-      relevanceScore: 0.8,
-      caseNumber: decision.esesNo,
-      decisionNumber: decision.kararNo,
-      status: decision.status
-    });
-  });
-  
-  return results;
-}
 
 // Interface'ler
 interface IctihatFilters {
@@ -431,8 +275,9 @@ export async function searchUyapEmsal(query: string, filters?: IctihatFilters, p
   } catch (error) {
     console.error('❌ UYAP gerçek veri çekme hatası:', error);
     
-    // Fallback: Gerçek site formatında örnek veri
-    return generateFallbackUyapData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ UYAP sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
@@ -737,8 +582,9 @@ export async function searchYargitayReal(query: string, filters?: IctihatFilters
   } catch (error) {
     console.error('❌ Yargıtay gerçek veri çekme hatası:', error);
     
-    // Fallback: Gerçek site formatında örnek veri
-    return generateFallbackYargitayData(query, page);
+    // Hata durumunda boş sonuç döndür
+    console.log('⚠️ Yargıtay sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    return [];
   }
 }
 
@@ -2216,10 +2062,10 @@ export async function searchMevzuat(query: string, filters: MevzuatFilters = {})
       }));
     }
     
-    // Fallback: Gerçek API'ler çalışmadığında simüle edilmiş veri döndür
-    console.log('❌ Gerçek Mevzuat API\'si başarısız oldu. Simüle edilmiş veri döndürülüyor...');
+    // Fallback: Gerçek API'ler çalışmadığında boş sonuç döndür
+    console.log('❌ Gerçek Mevzuat API\'si başarısız oldu. Boş sonuç döndürülüyor...');
     
-    return generateMevzuatSimulatedResults(query, filters);
+    return [];
     
     // Eski demo veri kodu kaldırıldı
     // Demo veri kodu kaldırıldı - gerçek API'ler kullanılacak
@@ -2272,191 +2118,9 @@ export async function getMevzuatArticleContent(documentId: string, articleId: st
   }
 }
 
-// Simüle edilmiş UYAP sonuçları oluşturma
-function generateUyapSimulatedResults(query: string, _filters?: IctihatFilters): IctihatResultItem[] {
-  // Simüle edilmiş UYAP sonuçları - gerçekçi veriler
-  const simulatedResults = [
-    {
-      id: `uyap-${query}-1`,
-      title: `"${query}" ile ilgili UYAP Emsal Kararı - 2024/1234`,
-      court: 'UYAP Emsal',
-      date: '2024-01-15',
-      number: '2024/1234',
-      summary: `"${query}" konusunda UYAP Emsal veritabanında bulunan karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili detaylı karar içeriği:\n\n1. "${query}" konusunda temel hukuki prensipler\n2. Yargıtay'ın "${query}" hakkındaki görüşü\n3. "${query}" ile ilgili uygulama örnekleri\n4. "${query}" konusunda dikkat edilmesi gereken hususlar\n\nBu karar "${query}" konusunda önemli bir emsal teşkil etmektedir.`,
-      url: 'https://emsal.uyap.gov.tr',
-      source: 'UYAP Emsal (Simüle)',
-      relevanceScore: 0.95
-    },
-    {
-      id: `uyap-${query}-2`,
-      title: `"${query}" hakkında UYAP Emsal Kararı - 2024/1233`,
-      court: 'UYAP Emsal',
-      date: '2024-01-10',
-      number: '2024/1233',
-      summary: `"${query}" konusunda UYAP Emsal veritabanında bulunan karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili detaylı karar içeriği:\n\n1. "${query}" konusunda temel hukuki prensipler\n2. Yargıtay'ın "${query}" hakkındaki görüşü\n3. "${query}" ile ilgili uygulama örnekleri\n4. "${query}" konusunda dikkat edilmesi gereken hususlar\n\nBu karar "${query}" konusunda önemli bir emsal teşkil etmektedir.`,
-      url: 'https://emsal.uyap.gov.tr',
-      source: 'UYAP Emsal (Simüle)',
-      relevanceScore: 0.90
-    },
-    {
-      id: `uyap-${query}-3`,
-      title: `"${query}" konusunda UYAP Emsal Kararı - 2024/1232`,
-      court: 'UYAP Emsal',
-      date: '2024-01-05',
-      number: '2024/1232',
-      summary: `"${query}" konusunda UYAP Emsal veritabanında bulunan karar. Bu karar "${query}" ile ilgili önemli hukuki prensipleri içermektedir.`,
-      content: `"${query}" ile ilgili detaylı karar içeriği:\n\n1. "${query}" konusunda temel hukuki prensipler\n2. Yargıtay'ın "${query}" hakkındaki görüşü\n3. "${query}" ile ilgili uygulama örnekleri\n4. "${query}" konusunda dikkat edilmesi gereken hususlar\n\nBu karar "${query}" konusunda önemli bir emsal teşkil etmektedir.`,
-      url: 'https://emsal.uyap.gov.tr',
-      source: 'UYAP Emsal (Simüle)',
-      relevanceScore: 0.85
-    }
-  ];
-  
-  return simulatedResults;
-}
 
-// Simüle edilmiş Yargıtay sonuçları oluşturma
-function generateYargitaySimulatedResults(query: string, _filters?: IctihatFilters): IctihatResultItem[] {
-  console.log('⚠️ Son çare: Gerçek formatta simüle veri oluşturuluyor...');
-  
-  // Gerçek Yargıtay dairelerini taklit eden simüle veriler
-  const daireler = [
-    'İstanbul Bölge Adliye Mahkemesi 45. Hukuk Dairesi',
-    'Ankara Bölge Adliye Mahkemesi 23. Hukuk Dairesi', 
-    'İzmir Bölge Adliye Mahkemesi 20. Hukuk Dairesi',
-    'Bursa Bölge Adliye Mahkemesi 7. Hukuk Dairesi',
-    'Antalya Bölge Adliye Mahkemesi 3. Hukuk Dairesi'
-  ];
-  
-  const simulatedResults: IctihatResultItem[] = [];
-  const currentDate = new Date();
-  
-  // İlk öğe: Açıklama
-  simulatedResults.push({
-    id: 'simulated-warning',
-    title: `⚠️ BEKLENMEDİK VERİ - "${query}" araması için örnek ${Math.floor(Math.random() * 100000 + 300000).toLocaleString('tr-TR')} adet karar`,
-    court: 'Sistem Bilgisi',
-    courtName: 'Avukat Bilgi Sistemi', 
-    courtType: 'yargitay',
-    date: new Date().toLocaleDateString('tr-TR'),
-    subject: `${query} - Bağlantı sorunu`,
-    summary: `Gerçek Yargıtay verilerine erişimde sorun - Örnek format gösteriliyor.`,
-    content: `YARGITAY KARAR ARAMA SİSTEMİ UYARISI
-
-⚠️ GERİ YÜKLEME MODU AKTİF
-
-Arama: "${query}"
-Durum: Gerçek veriye erişim başarısız
-Gösterilen: Örnek format
-
-NEDEN GÖRÜYORSUNUZ?
-• Backend API bağlantı hatası (500)
-• CORS proxy'leri engellenmiş
-• İnternet erişim sorunu
-
-ÇÖZÜMLERİ:
-1. Sayfayı yenile → F5
-2. Farklı arama dene
-3. Direkt: karararama.yargitay.gov.tr
-
-⬇️ Aşağıda örnek format gösterilmektedir`,
-    url: 'https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/',
-    source: '⚠️ Sistem Uyarısı',
-    relevanceScore: 1.0
-  });
-  
-  for (let i = 0; i < 12; i++) {
-    const daire = daireler[i % daireler.length];
-    const esas = `2020/${10 + i}`;
-    const karar = `2020/${i + 1}`;
-    const tarih = new Date(currentDate.getTime() - Math.random() * 365 * 24 * 60 * 60 * 1000);
-    const kararTarihi = tarih.toLocaleDateString('tr-TR');
-    const kararDurumu = Math.random() > 0.5 ? 'KESİNLEŞTİ' : 'TEMYIZDE';
-    
-    simulatedResults.push({
-      id: `yargitay-sim-${Date.now()}-${i}`,
-      title: `${daire} - ${esas}/${karar}`,
-      court: daire,
-      courtName: daire,
-      courtType: 'yargitay',
-      caseNumber: esas,
-      number: karar,
-      date: kararTarihi,
-      subject: `${query} - ${daire.split(' ')[0]}`,
-      summary: `${daire} - ${esas}/${karar} (${kararDurumu})`,
-      content: `T.C.
-${daire.toUpperCase()}
-
-ESAS NO: ${esas}
-KARAR NO: ${karar} 
-KARAR TARİHİ: ${kararTarihi}
-KARAR DURUMU: ${kararDurumu}
-
-⚠️ BU ÖRNEK BİR VERİDİR
-
-Gerçek: karararama.yargitay.gov.tr
-Mahkeme: ${daire}
-Esas: ${esas} | Karar: ${karar}
-Tarih: ${kararTarihi}
-Durum: ${kararDurumu}
-
-"${query}" araması örnek format.`,
-      url: 'https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/',
-      source: '⚠️ Örnek Veri',
-      relevanceScore: 0.9 - (i * 0.01)
-    });
-  }
-  
-  return simulatedResults;
-}
 
   
-// Simüle edilmiş Mevzuat sonuçları oluşturma
-function generateMevzuatSimulatedResults(query: string, _filters?: MevzuatFilters): MevzuatResultItem[] {
-  // Simüle edilmiş Mevzuat sonuçları - gerçekçi veriler
-  const simulatedResults = [
-    {
-      id: `mevzuat-${query}-1`,
-      title: `"${query}" ile ilgili Kanun - Türk Medeni Kanunu`,
-      category: 'Kanun',
-      institution: 'TBMM',
-      publishDate: '2024-01-01',
-      url: 'https://mevzuat.gov.tr',
-      summary: `"${query}" konusunda Türk Medeni Kanunu'nda yer alan hükümler.`,
-      content: `"${query}" ile ilgili mevzuat:\n\nTÜRK MEDENİ KANUNU\nKanun No: 4721\nKabul Tarihi: 22.11.2001\n\n"${query}" konusunda ilgili maddeler:\n\nMadde X: "${query}" ile ilgili temel hükümler...\nMadde Y: "${query}" konusunda özel durumlar...\nMadde Z: "${query}" ile ilgili yaptırımlar...`,
-      relevanceScore: 0.95,
-      highlight: query
-    },
-    {
-      id: `mevzuat-${query}-2`,
-      title: `"${query}" ile ilgili Yönetmelik`,
-      category: 'Yönetmelik',
-      institution: 'Bakanlık',
-      publishDate: '2024-01-01',
-      url: 'https://mevzuat.gov.tr',
-      summary: `"${query}" konusunda yönetmelikte yer alan hükümler.`,
-      content: `"${query}" ile ilgili yönetmelik:\n\n"${query}" HAKKINDA YÖNETMELİK\n\n"${query}" konusunda ilgili maddeler:\n\nMadde 1: "${query}" ile ilgili tanımlar...\nMadde 2: "${query}" konusunda uygulamalar...\nMadde 3: "${query}" ile ilgili prosedürler...`,
-      relevanceScore: 0.90,
-      highlight: query
-    },
-    {
-      id: `mevzuat-${query}-3`,
-      title: `"${query}" ile ilgili Tebliğ`,
-      category: 'Tebliğ',
-      institution: 'Bakanlık',
-      publishDate: '2024-01-01',
-      url: 'https://mevzuat.gov.tr',
-      summary: `"${query}" konusunda tebliğde yer alan hükümler.`,
-      content: `"${query}" ile ilgili tebliğ:\n\n"${query}" HAKKINDA TEBLİĞ\n\n"${query}" konusunda ilgili maddeler:\n\nMadde 1: "${query}" ile ilgili açıklamalar...\nMadde 2: "${query}" konusunda uygulamalar...\nMadde 3: "${query}" ile ilgili detaylar...`,
-      relevanceScore: 0.85,
-      highlight: query
-    }
-  ];
-  
-  return simulatedResults;
-}
 // COMMENT KALDIRILDI
 
 // Geçici: Diğer mahkeme veri kaynakları bu sürümde devre dışı
