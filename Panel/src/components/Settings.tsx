@@ -523,11 +523,72 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          AI Destek
+          AI Destek & Sistem Tanıtımı
         </h3>
         <p className="text-gray-600 dark:text-gray-400">
-          Yapay zeka destek asistanımızla anında iletişime geçin. Sorularınızı yanıtlamak için buradayız.
+          Yapay zeka destek asistanımızla anında iletişime geçin. Sistem arızalarını gidermek ve sorularınızı yanıtlamak için buradayız.
         </p>
+      </div>
+
+      {/* System Overview */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+            <Code className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200">Sistem Tanıtımı</h4>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">🏛️ Ana Modüller:</h5>
+            <ul className="space-y-1 text-blue-700 dark:text-blue-300">
+              <li>• Dava Yönetimi (Case Management)</li>
+              <li>• Müvekkil Takibi (Client Management)</li>
+              <li>• Randevu Sistemi (Appointment)</li>
+              <li>• Mali Yönetim (Financial)</li>
+              <li>• Hukuki Arama (Legal Search)</li>
+              <li>• AI Asistan (AI Assistant)</li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">🔧 Teknik Özellikler:</h5>
+            <ul className="space-y-1 text-blue-700 dark:text-blue-300">
+              <li>• React + TypeScript Frontend</li>
+              <li>• FastAPI Backend</li>
+              <li>• Supabase Database</li>
+              <li>• Gemini AI Entegrasyonu</li>
+              <li>• Gerçek Zamanlı Veri</li>
+              <li>• Güvenli API Bağlantıları</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Deep Thinking */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          </div>
+          <h4 className="font-semibold text-purple-800 dark:text-purple-200">🧠 Derin Düşünme AI</h4>
+        </div>
+        <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+          AI asistanımız karmaşık sorunları analiz eder, çözüm önerileri sunar ve sistem arızalarını otomatik olarak tespit eder.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
+            <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-1">🔍 Problem Analizi</h5>
+            <p className="text-xs text-purple-600 dark:text-purple-400">Sorunları derinlemesine analiz eder</p>
+          </div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
+            <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-1">💡 Çözüm Önerileri</h5>
+            <p className="text-xs text-purple-600 dark:text-purple-400">Adım adım çözüm sunar</p>
+          </div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-purple-200 dark:border-purple-700">
+            <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-1">🛠️ Otomatik Düzeltme</h5>
+            <p className="text-xs text-purple-600 dark:text-purple-400">Bazı sorunları otomatik çözer</p>
+          </div>
+        </div>
       </div>
 
       {/* Support Status */}
@@ -537,7 +598,7 @@ export default function Settings() {
           <h4 className="font-semibold text-green-800 dark:text-green-200">AI Destek Asistanı Aktif</h4>
         </div>
         <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-          Ortalama yanıt süresi: Anında • 7/24 hizmet
+          Ortalama yanıt süresi: Anında • 7/24 hizmet • Derin düşünme modu aktif
         </p>
         <button
           onClick={() => setShowLiveSupport(true)}
@@ -586,18 +647,30 @@ export default function Settings() {
 
       {/* FAQ Section */}
       <div className="bg-white dark:bg-gray-700 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
-        <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Sık Sorulan Sorular</h4>
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Sık Sorulan Sorular & Sistem Arızaları</h4>
         <div className="space-y-3">
           <div className="border-l-4 border-blue-500 pl-4">
             <h5 className="font-medium text-gray-900 dark:text-white">Sistem nasıl çalışır?</h5>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Avukat Bilgi Sistemi, hukuki süreçlerinizi dijitalleştiren kapsamlı bir platformdur.
+              Avukat Bilgi Sistemi, hukuki süreçlerinizi dijitalleştiren kapsamlı bir platformdur. React frontend, FastAPI backend ve Supabase veritabanı ile çalışır.
+            </p>
+          </div>
+          <div className="border-l-4 border-red-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">🚨 Sistem arızası nasıl çözerim?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              AI Destek'e sorununuzu detaylı açıklayın. Sistem otomatik tanı koyar ve çözüm önerir. Örnek: "Dava ekleme butonu çalışmıyor" veya "Veri yüklenmiyor"
             </p>
           </div>
           <div className="border-l-4 border-green-500 pl-4">
             <h5 className="font-medium text-gray-900 dark:text-white">Verilerim güvende mi?</h5>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Tüm verileriniz şifrelenerek saklanır ve güvenlik protokolleri ile korunur.
+              Tüm verileriniz şifrelenerek saklanır ve güvenlik protokolleri ile korunur. Supabase güvenlik standartları kullanılır.
+            </p>
+          </div>
+          <div className="border-l-4 border-yellow-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">⚠️ Yavaş çalışma sorunu?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              AI Destek'e "Sistem yavaş çalışıyor" yazın. Tarayıcı cache temizleme, internet bağlantısı kontrolü ve sistem optimizasyonu önerileri alın.
             </p>
           </div>
           <div className="border-l-4 border-purple-500 pl-4">
@@ -605,6 +678,42 @@ export default function Settings() {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Sistem otomatik yedekleme yapar, manuel yedekleme için Ayarlar &gt; Sistem bölümünü kullanın.
             </p>
+          </div>
+          <div className="border-l-4 border-indigo-500 pl-4">
+            <h5 className="font-medium text-gray-900 dark:text-white">🔧 API bağlantı hatası?</h5>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              "API bağlantı hatası" yazın. Backend servis durumu, CORS ayarları ve network bağlantısı kontrol edilir.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Troubleshooting Guide */}
+      <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg p-6 border border-orange-200 dark:border-orange-800">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          </div>
+          <h4 className="font-semibold text-orange-800 dark:text-orange-200">🛠️ Hızlı Sorun Giderme</h4>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <h5 className="font-medium text-orange-900 dark:text-orange-100 mb-2">Yaygın Sorunlar:</h5>
+            <ul className="space-y-1 text-orange-700 dark:text-orange-300">
+              <li>• Sayfa yüklenmiyor → Tarayıcı yenile</li>
+              <li>• Veri kaydedilmiyor → İnternet kontrolü</li>
+              <li>• Buton çalışmıyor → JavaScript aktif mi?</li>
+              <li>• Yavaş performans → Cache temizle</li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-medium text-orange-900 dark:text-orange-100 mb-2">AI'ya Sorabilecekleriniz:</h5>
+            <ul className="space-y-1 text-orange-700 dark:text-orange-300">
+              <li>• "Sistem çöktü, ne yapmalıyım?"</li>
+              <li>• "Veri kaybettim, kurtarılabilir mi?"</li>
+              <li>• "Bu hata ne anlama geliyor?"</li>
+              <li>• "Nasıl optimize edebilirim?"</li>
+            </ul>
           </div>
         </div>
       </div>

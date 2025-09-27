@@ -19,7 +19,7 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Merhaba! Avukat Bilgi Sistemi AI destek hizmetine hoş geldiniz. Size nasıl yardımcı olabilirim?',
+      text: '🧠 Merhaba! Avukat Bilgi Sistemi AI destek hizmetine hoş geldiniz. Derin düşünme modu aktif!\n\nSistem arızalarınızı detaylı açıklayın:\n• "Dava ekleme butonu çalışmıyor"\n• "Veri yüklenmiyor"\n• "Sistem yavaş çalışıyor"\n• "API bağlantı hatası"\n\nSorununuzu analiz edip çözüm önereceğim!',
       sender: 'support',
       timestamp: new Date(),
       type: 'system'
@@ -59,23 +59,44 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
 
   const getAISupportResponse = async (userMessage: string): Promise<string> => {
     try {
-      const supportPrompt = `Sen destek asistanısın. Çok kısa ve doğal yanıt ver.
+      // Derin düşünme modu için gelişmiş prompt
+      const supportPrompt = `Sen Avukat Bilgi Sistemi'nin gelişmiş AI destek asistanısın. Kullanıcının sorununu derinlemesine analiz et ve çözüm öner.
 
-Kullanıcı: "${userMessage}"
+Kullanıcı Sorunu: "${userMessage}"
 
-Kurallar:
-- Maksimum 2 cümle
-- Doğal konuş
-- Teknik sorunlara çözüm öner
-- Uzun açıklama yapma
+Sistem Bilgileri:
+- React + TypeScript Frontend
+- FastAPI Backend (port 9000)
+- Supabase Database
+- Gemini AI Entegrasyonu
+- Gerçek zamanlı veri çekme (Yargıtay, UYAP)
+- Playwright ile web scraping
 
-Yanıt:`;
+Analiz Süreci:
+1. Sorunun türünü belirle (UI, Backend, Database, Network, API)
+2. Olası nedenleri listele
+3. Adım adım çözüm öner
+4. Alternatif çözümler sun
+
+Yanıt Formatı:
+- Sorun türü: [Kategori]
+- Analiz: [Kısa analiz]
+- Çözüm: [Adım adım çözüm]
+- Alternatif: [Yedek çözüm]
+
+Örnekler:
+- "Dava ekleme butonu çalışmıyor" → UI/JavaScript sorunu
+- "Veri yüklenmiyor" → Backend/API sorunu  
+- "Sistem yavaş" → Performance/Network sorunu
+- "Hata mesajı alıyorum" → Error handling
+
+Kısa ve net yanıt ver, teknik detayları açıkla.`;
 
       const response = await geminiService.analyzeText(supportPrompt);
-      return response || 'Tekrar dener misin?';
+      return response || 'Sorununuzu daha detaylı açıklayabilir misiniz?';
     } catch (error) {
       console.error('AI yanıt hatası:', error);
-      return 'Hata oluştu.';
+      return 'Teknik bir sorun oluştu. Lütfen sayfayı yenileyin ve tekrar deneyin.';
     }
   };
 
