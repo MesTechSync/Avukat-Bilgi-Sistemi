@@ -6,7 +6,6 @@ import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import JSZip from 'jszip';
-import { XMLBuilder } from 'xmlbuilder2';
 
 const FileConverter: React.FC = () => {
   type UiState = 'idle' | 'uploading' | 'converting' | 'ready' | 'error';
@@ -57,6 +56,10 @@ const FileConverter: React.FC = () => {
     try {
       // Metni paragraflara böl
       const paragraphs = text.split('\n').filter(line => line.trim() !== '');
+      
+      if (paragraphs.length === 0) {
+        throw new Error('Boş metin içeriği');
+      }
       
       // Word belgesi oluştur
       const doc = new Document({
@@ -229,55 +232,45 @@ startxref
     return new Blob([htmlContent], { type: 'text/html' });
   };
 
-  // Gerçek UDF formatı oluşturma
+  // Basitleştirilmiş UDF formatı oluşturma
   const createRealUDFDocument = async (text: string, filename: string, originalFormat: string): Promise<Blob> => {
     try {
-      // UDF XML yapısı oluştur
-      const xmlBuilder = new XMLBuilder({ 
-        version: '1.0', 
-        encoding: 'UTF-8',
-        prettyPrint: true 
-      });
-      
-      const udfXml = xmlBuilder
-        .ele('udf:document', {
-          'xmlns:udf': 'http://www.udf.org/schema/1.0',
-          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-          'xsi:schemaLocation': 'http://www.udf.org/schema/1.0 udf.xsd',
-          'version': '1.0',
-          'id': `udf_${Date.now()}`,
-          'created': new Date().toISOString(),
-          'modified': new Date().toISOString()
-        })
-        .ele('udf:metadata')
-          .ele('udf:title').txt(filename).up()
-          .ele('udf:author').txt('Avukat Bilgi Sistemi').up()
-          .ele('udf:description').txt(`Dönüştürülen dosya: ${originalFormat}`).up()
-          .ele('udf:originalFormat').txt(originalFormat).up()
-          .ele('udf:conversionDate').txt(new Date().toISOString()).up()
-          .ele('udf:documentId').txt(`doc_${Date.now()}`).up()
-          .ele('udf:version').txt('1.0').up()
-          .ele('udf:encoding').txt('UTF-8').up()
-          .ele('udf:language').txt('tr-TR').up()
-          .ele('udf:security')
-            .ele('udf:encryption').txt('none').up()
-            .ele('udf:accessLevel').txt('public').up()
-          .up()
-        .up()
-        .ele('udf:content')
-          .ele('udf:text')
-            .dat(text)
-          .up()
-        .up()
-        .ele('udf:technical')
-          .ele('udf:format').txt('Universal Document Format').up()
-          .ele('udf:compatibility').txt('Cross-platform').up()
-          .ele('udf:compression').txt('none').up()
-          .ele('udf:createdBy').txt('Avukat Bilgi Sistemi AI Converter').up()
-          .ele('udf:lastModified').txt(new Date().toISOString()).up()
-          .ele('udf:checksum').txt(calculateChecksum(text)).up()
-        .up()
-        .end({ prettyPrint: true });
+      // Basit XML yapısı oluştur
+      const udfXml = `<?xml version="1.0" encoding="UTF-8"?>
+<udf:document xmlns:udf="http://www.udf.org/schema/1.0" 
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.udf.org/schema/1.0 udf.xsd"
+              version="1.0" 
+              id="udf_${Date.now()}" 
+              created="${new Date().toISOString()}" 
+              modified="${new Date().toISOString()}">
+  <udf:metadata>
+    <udf:title><![CDATA[${filename}]]></udf:title>
+    <udf:author><![CDATA[Avukat Bilgi Sistemi]]></udf:author>
+    <udf:description><![CDATA[Dönüştürülen dosya: ${originalFormat}]]></udf:description>
+    <udf:originalFormat><![CDATA[${originalFormat}]]></udf:originalFormat>
+    <udf:conversionDate><![CDATA[${new Date().toISOString()}]]></udf:conversionDate>
+    <udf:documentId><![CDATA[doc_${Date.now()}]]></udf:documentId>
+    <udf:version><![CDATA[1.0]]></udf:version>
+    <udf:encoding><![CDATA[UTF-8]]></udf:encoding>
+    <udf:language><![CDATA[tr-TR]]></udf:language>
+    <udf:security>
+      <udf:encryption><![CDATA[none]]></udf:encryption>
+      <udf:accessLevel><![CDATA[public]]></udf:accessLevel>
+    </udf:security>
+  </udf:metadata>
+  <udf:content>
+    <udf:text><![CDATA[${text}]]></udf:text>
+  </udf:content>
+  <udf:technical>
+    <udf:format><![CDATA[Universal Document Format]]></udf:format>
+    <udf:compatibility><![CDATA[Cross-platform]]></udf:compatibility>
+    <udf:compression><![CDATA[none]]></udf:compression>
+    <udf:createdBy><![CDATA[Avukat Bilgi Sistemi AI Converter]]></udf:createdBy>
+    <udf:lastModified><![CDATA[${new Date().toISOString()}]]></udf:lastModified>
+    <udf:checksum><![CDATA[${calculateChecksum(text)}]]></udf:checksum>
+  </udf:technical>
+</udf:document>`;
 
       // ZIP arşivi oluştur
       const zip = new JSZip();
@@ -313,68 +306,6 @@ startxref
       // İçerik dosyası
       zip.file('content.txt', text);
       
-      // UDF şema dosyası
-      zip.file('schema.xsd', `<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-           xmlns:udf="http://www.udf.org/schema/1.0"
-           targetNamespace="http://www.udf.org/schema/1.0"
-           elementFormDefault="qualified">
-  
-  <xs:element name="document">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="metadata" type="udf:metadataType"/>
-        <xs:element name="content" type="udf:contentType"/>
-        <xs:element name="technical" type="udf:technicalType"/>
-      </xs:sequence>
-      <xs:attribute name="version" type="xs:string" use="required"/>
-      <xs:attribute name="id" type="xs:string" use="required"/>
-      <xs:attribute name="created" type="xs:dateTime" use="required"/>
-      <xs:attribute name="modified" type="xs:dateTime" use="required"/>
-    </xs:complexType>
-  </xs:element>
-  
-  <xs:complexType name="metadataType">
-    <xs:sequence>
-      <xs:element name="title" type="xs:string"/>
-      <xs:element name="author" type="xs:string"/>
-      <xs:element name="description" type="xs:string"/>
-      <xs:element name="originalFormat" type="xs:string"/>
-      <xs:element name="conversionDate" type="xs:dateTime"/>
-      <xs:element name="documentId" type="xs:string"/>
-      <xs:element name="version" type="xs:string"/>
-      <xs:element name="encoding" type="xs:string"/>
-      <xs:element name="language" type="xs:string"/>
-      <xs:element name="security" type="udf:securityType"/>
-    </xs:sequence>
-  </xs:complexType>
-  
-  <xs:complexType name="contentType">
-    <xs:sequence>
-      <xs:element name="text" type="xs:string"/>
-    </xs:sequence>
-  </xs:complexType>
-  
-  <xs:complexType name="technicalType">
-    <xs:sequence>
-      <xs:element name="format" type="xs:string"/>
-      <xs:element name="compatibility" type="xs:string"/>
-      <xs:element name="compression" type="xs:string"/>
-      <xs:element name="createdBy" type="xs:string"/>
-      <xs:element name="lastModified" type="xs:dateTime"/>
-      <xs:element name="checksum" type="xs:string"/>
-    </xs:sequence>
-  </xs:complexType>
-  
-  <xs:complexType name="securityType">
-    <xs:sequence>
-      <xs:element name="encryption" type="xs:string"/>
-      <xs:element name="accessLevel" type="xs:string"/>
-    </xs:sequence>
-  </xs:complexType>
-  
-</xs:schema>`);
-      
       // README dosyası
       zip.file('README.txt', `UDF (Universal Document Format) Dosyası
 =====================================
@@ -385,7 +316,6 @@ DOSYA İÇERİĞİ:
 - document.udf: Ana UDF XML dosyası
 - metadata.json: Dosya metadata bilgileri
 - content.txt: Dönüştürülen metin içeriği
-- schema.xsd: UDF XML şema tanımı
 - README.txt: Bu açıklama dosyası
 
 KULLANIM:
@@ -552,6 +482,11 @@ TECHNICAL INFO:
         throw new Error('Desteklenmeyen dosya formatı');
       }
       
+      // Metin çıkarma kontrolü
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('Dosyadan metin çıkarılamadı. Dosya boş olabilir veya korumalı olabilir.');
+      }
+      
       setProgress(70);
       setMessage('Format dönüştürülüyor...');
       
@@ -564,16 +499,34 @@ TECHNICAL INFO:
       switch (conversionType) {
         case 'to-udf':
           // Tüm formatları UDF'ye dönüştür
-          outputBlob = await createRealUDFDocument(extractedText, file.name, originalFormat);
-          outputName = `${baseName}.udf.zip`;
+          try {
+            outputBlob = await createRealUDFDocument(extractedText, file.name, originalFormat);
+            outputName = `${baseName}.udf.zip`;
+          } catch (udfError) {
+            console.warn('UDF dönüştürme hatası, basit format kullanılıyor:', udfError);
+            outputBlob = createSimpleUDFDocument(extractedText, file.name, originalFormat);
+            outputName = `${baseName}.udf`;
+          }
           break;
         case 'pdf-to-word':
-          outputBlob = await createWordDocument(extractedText, baseName);
-          outputName = `${baseName}.docx`;
+          try {
+            outputBlob = await createWordDocument(extractedText, baseName);
+            outputName = `${baseName}.docx`;
+          } catch (wordError) {
+            console.warn('Word dönüştürme hatası, HTML format kullanılıyor:', wordError);
+            outputBlob = createHTMLDocument(extractedText, baseName);
+            outputName = `${baseName}.html`;
+          }
           break;
         case 'word-to-pdf':
-          outputBlob = await createPDFDocument(extractedText, baseName);
-          outputName = `${baseName}.pdf`;
+          try {
+            outputBlob = await createPDFDocument(extractedText, baseName);
+            outputName = `${baseName}.pdf`;
+          } catch (pdfError) {
+            console.warn('PDF dönüştürme hatası, HTML format kullanılıyor:', pdfError);
+            outputBlob = createHTMLDocument(extractedText, baseName);
+            outputName = `${baseName}.html`;
+          }
           break;
         case 'word-to-html':
           outputBlob = createHTMLDocument(extractedText, baseName);
