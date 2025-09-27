@@ -19,7 +19,7 @@ const LiveSupport: React.FC<LiveSupportProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '🔧 Merhaba! Avukat Bilgi Sistemi Teknik Destek Asistanına hoş geldiniz.\n\nSistem arızalarınızı çözmek için buradayım. Hangi sorunla karşılaşıyorsunuz?\n\n🚨 **Yaygın Teknik Sorunlar:**\n• Dava ekleme butonu çalışmıyor\n• Veri yüklenmiyor veya kaydedilmiyor\n• Sistem yavaş çalışıyor\n• API bağlantı hatası alıyorum\n• Sayfa açılmıyor veya donuyor\n\nSorununuzu detaylı açıklayın, derin analiz yapıp çözüm sunacağım!\n\n⚠️ **NOT:** Bu sistem sadece teknik destek sağlar. Hukuki konular için lütfen hukuk danışmanınıza başvurun.',
+      text: '🔧 Merhaba! Avukat Bilgi Sistemi Teknik Destek Asistanına hoş geldiniz.\n\nSistem sorunlarınızı çözmek için buradayım. Hangi sorunla karşılaşıyorsunuz?\n\n🚨 **Sık Karşılaşılan Sorunlar:**\n• Dava ekleme butonu çalışmıyor\n• Veri yüklenmiyor veya kaydedilmiyor\n• Sistem yavaş çalışıyor\n• Bağlantı hatası alıyorum\n• Sayfa açılmıyor veya donuyor\n\nSorununuzu açıklayın, size adım adım yardımcı olayım!\n\n⚠️ **NOT:** Bu sistem sadece teknik destek sağlar. Hukuki konular için lütfen hukuk danışmanınıza başvurun.',
       sender: 'support',
       timestamp: new Date(),
       type: 'system'
@@ -72,54 +72,50 @@ Kullanıcı Sorunu: "${userMessage}"
 
 ÖNEMLİ: Hukuki konular, dilekçe yazma, hukuk danışmanlığı hakkında KONUŞMA. Sadece teknik destek ver.
 
-Sistem Teknik Detayları:
-- Frontend: React + TypeScript (Vite build)
-- Backend: FastAPI (port 9000) - panel_backend_enterprise.py
-- Database: Supabase
-- AI: Gemini API
-- Veri Kaynakları: Yargıtay, UYAP (Playwright scraping)
-
-TEKNİK SORUN ÇÖZÜMLERİ:
+KULLANICI DOSTU ÇÖZÜMLER:
 
 1. "Dava ekleme butonu çalışmıyor" → 
-   🔍 Sorun: JavaScript hatası, form validation veya event handler sorunu
-   💡 Çözüm: 
-   - Tarayıcı konsolu kontrol et (F12 → Console)
-   - Sayfayı yenile (Ctrl+F5)
-   - JavaScript aktif mi kontrol et
-   - Form alanları dolu mu kontrol et
-   🛠️ Alternatif: Farklı tarayıcı dene
+   🔍 Sorun: Dava ekleme butonu çalışmıyor
+   💡 Çözüm:
+   1. Sayfayı yenileyin (Ctrl+F5 tuşlarına basın)
+   2. Tüm form alanlarının dolu olduğundan emin olun
+   3. Farklı bir tarayıcı deneyin (Chrome, Firefox, Edge)
+   4. Tarayıcı geçmişini temizleyin
+   🛠️ Hala çalışmıyorsa: İnternet bağlantınızı kontrol edin, bilgisayarınızı yeniden başlatın
 
 2. "Veri yüklenmiyor" → 
-   🔍 Sorun: Backend bağlantısı (port 9000) veya API hatası
+   🔍 Sorun: Veri yüklenmiyor veya kaydedilmiyor
    💡 Çözüm:
-   - Network sekmesinde hata var mı kontrol et (F12 → Network)
-   - Backend servisi çalışıyor mu? (http://127.0.0.1:9000)
-   - İnternet bağlantısı kontrol et
-   🛠️ Alternatif: Backend'i yeniden başlat
+   1. İnternet bağlantınızı kontrol edin
+   2. Sayfayı yenileyin (F5 tuşuna basın)
+   3. Verilerinizi tekrar girmeyi deneyin
+   4. Farklı bir tarayıcı kullanın
+   🛠️ Hala çalışmıyorsa: Bilgisayarınızı yeniden başlatın, sistem yöneticisiyle iletişime geçin
 
 3. "Sistem yavaş çalışıyor" → 
-   🔍 Sorun: Network gecikmesi, büyük veri yükleme veya tarayıcı cache
+   🔍 Sorun: Sistem yavaş çalışıyor
    💡 Çözüm:
-   - Tarayıcı cache temizle (Ctrl+Shift+Delete)
-   - İnternet hızını kontrol et
-   - Diğer sekmeleri kapat
-   🛠️ Alternatif: Farklı tarayıcı kullan
+   1. Diğer sekmeleri kapatın
+   2. Tarayıcı geçmişini temizleyin
+   3. İnternet hızınızı kontrol edin
+   4. Bilgisayarınızı yeniden başlatın
+   🛠️ Hala yavaşsa: Farklı bir tarayıcı deneyin, antivirus programınızı kontrol edin
 
 4. "API bağlantı hatası" → 
-   🔍 Sorun: Backend servisi kapalı veya CORS hatası
+   🔍 Sorun: Bağlantı hatası
    💡 Çözüm:
-   - Backend'i başlat: python -m uvicorn panel_backend_enterprise:app --host 127.0.0.1 --port 9000
-   - Port 9000'in açık olduğunu kontrol et
-   - Firewall ayarlarını kontrol et
-   🛠️ Alternatif: Backend'i yeniden kur
+   1. İnternet bağlantınızı kontrol edin
+   2. Sayfayı yenileyin (F5 tuşuna basın)
+   3. Farklı bir tarayıcı deneyin
+   4. Bilgisayarınızı yeniden başlatın
+   🛠️ Hala çalışmıyorsa: İnternet sağlayıcınızla iletişime geçin, teknik destek ekibini arayın
 
 YANIT FORMATI:
-🔍 Sorun: [Teknik tanım]
-💡 Çözüm: [Adım adım teknik çözüm]
-🛠️ Alternatif: [Yedek teknik çözüm]
+🔍 Sorun: [Basit tanım]
+💡 Çözüm: [Adım adım basit çözüm]
+🛠️ Hala çalışmıyorsa: [Ek çözümler]
 
-SADECE teknik destek ver. Hukuki konular hakkında konuşma.`;
+Kullanıcı dostu, basit ve anlaşılır yanıtlar ver. Teknik jargon kullanma.`;
 
       const response = await geminiService.analyzeText(supportPrompt);
       
@@ -149,7 +145,7 @@ SADECE teknik destek ver. Hukuki konular hakkında konuşma.`;
           messages: [
             {
               role: 'system',
-              content: 'Sen Avukat Bilgi Sistemi\'nin TEKNİK DESTEK asistanısın. SADECE sistem arızaları ve teknik sorunlar hakkında konuş. Hukuki konular hakkında KONUŞMA.'
+              content: 'Sen Avukat Bilgi Sistemi\'nin TEKNİK DESTEK asistanısın. SADECE sistem arızaları ve teknik sorunlar hakkında konuş. Hukuki konular hakkında KONUŞMA. Kullanıcı dostu, basit ve anlaşılır çözümler ver. Teknik jargon kullanma. Adım adım açıkla.'
             },
             {
               role: 'user',
@@ -173,50 +169,95 @@ SADECE teknik destek ver. Hukuki konular hakkında konuşma.`;
     }
   };
 
-  // Manuel teknik yanıt sistemi
+  // Manuel teknik yanıt sistemi - Kullanıcı odaklı
   const getManualTechnicalResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
     
     if (lowerMessage.includes('dava') && lowerMessage.includes('buton')) {
       return `🔍 Sorun: Dava ekleme butonu çalışmıyor
+
 💡 Çözüm:
-1. Tarayıcı konsolu kontrol et (F12 → Console)
-2. Sayfayı yenile (Ctrl+F5)
-3. JavaScript aktif mi kontrol et
-4. Form alanları dolu mu kontrol et
-🛠️ Alternatif: Farklı tarayıcı dene veya cache temizle`;
+1. Sayfayı yenileyin (Ctrl+F5 tuşlarına basın)
+2. Tüm form alanlarının dolu olduğundan emin olun
+3. Farklı bir tarayıcı deneyin (Chrome, Firefox, Edge)
+4. Tarayıcı geçmişini temizleyin
+
+🛠️ Hala çalışmıyorsa:
+• İnternet bağlantınızı kontrol edin
+• Bilgisayarınızı yeniden başlatın
+• Sistem yöneticisiyle iletişime geçin`;
     }
     
     if (lowerMessage.includes('veri') && (lowerMessage.includes('yüklen') || lowerMessage.includes('kaydet'))) {
       return `🔍 Sorun: Veri yüklenmiyor veya kaydedilmiyor
+
 💡 Çözüm:
-1. Network sekmesinde hata var mı kontrol et (F12 → Network)
-2. Backend servisi çalışıyor mu? (http://127.0.0.1:9000)
-3. İnternet bağlantısı kontrol et
-🛠️ Alternatif: Backend'i yeniden başlat`;
+1. İnternet bağlantınızı kontrol edin
+2. Sayfayı yenileyin (F5 tuşuna basın)
+3. Verilerinizi tekrar girmeyi deneyin
+4. Farklı bir tarayıcı kullanın
+
+🛠️ Hala çalışmıyorsa:
+• Bilgisayarınızı yeniden başlatın
+• İnternet hızınızı kontrol edin
+• Sistem yöneticisiyle iletişime geçin`;
     }
     
     if (lowerMessage.includes('yavaş') || lowerMessage.includes('performans')) {
       return `🔍 Sorun: Sistem yavaş çalışıyor
+
 💡 Çözüm:
-1. Tarayıcı cache temizle (Ctrl+Shift+Delete)
-2. İnternet hızını kontrol et
-3. Diğer sekmeleri kapat
-🛠️ Alternatif: Farklı tarayıcı kullan`;
+1. Diğer sekmeleri kapatın
+2. Tarayıcı geçmişini temizleyin
+3. İnternet hızınızı kontrol edin
+4. Bilgisayarınızı yeniden başlatın
+
+🛠️ Hala yavaşsa:
+• Farklı bir tarayıcı deneyin
+• Antivirus programınızı kontrol edin
+• Sistem yöneticisiyle iletişime geçin`;
     }
     
     if (lowerMessage.includes('api') && lowerMessage.includes('hatası')) {
-      return `🔍 Sorun: API bağlantı hatası
+      return `🔍 Sorun: Bağlantı hatası
+
 💡 Çözüm:
-1. Backend'i başlat: python -m uvicorn panel_backend_enterprise:app --host 127.0.0.1 --port 9000
-2. Port 9000'in açık olduğunu kontrol et
-3. Firewall ayarlarını kontrol et
-🛠️ Alternatif: Backend'i yeniden kur`;
+1. İnternet bağlantınızı kontrol edin
+2. Sayfayı yenileyin (F5 tuşuna basın)
+3. Farklı bir tarayıcı deneyin
+4. Bilgisayarınızı yeniden başlatın
+
+🛠️ Hala çalışmıyorsa:
+• İnternet sağlayıcınızla iletişime geçin
+• Sistem yöneticisiyle iletişime geçin
+• Teknik destek ekibini arayın`;
+    }
+    
+    if (lowerMessage.includes('açılmıyor') || lowerMessage.includes('donuyor')) {
+      return `🔍 Sorun: Sayfa açılmıyor veya donuyor
+
+💡 Çözüm:
+1. Sayfayı yenileyin (F5 tuşuna basın)
+2. Farklı bir tarayıcı deneyin
+3. Tarayıcı geçmişini temizleyin
+4. Bilgisayarınızı yeniden başlatın
+
+🛠️ Hala çalışmıyorsa:
+• İnternet bağlantınızı kontrol edin
+• Antivirus programınızı kontrol edin
+• Sistem yöneticisiyle iletişime geçin`;
     }
     
     return `🔍 Sorun: ${userMessage}
-💡 Çözüm: Sorununuzu daha detaylı açıklayabilir misiniz?
-🛠️ Alternatif: Teknik destek ekibiyle iletişime geçin`;
+
+💡 Çözüm: 
+Sorununuzu daha detaylı açıklayabilir misiniz? Size daha iyi yardımcı olabilirim.
+
+🛠️ Genel Çözümler:
+• Sayfayı yenileyin (F5)
+• Farklı tarayıcı deneyin
+• Bilgisayarı yeniden başlatın
+• Sistem yöneticisiyle iletişime geçin`;
   };
 
   const handleSendMessage = async () => {
