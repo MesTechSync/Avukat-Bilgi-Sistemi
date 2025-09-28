@@ -1,0 +1,61 @@
+<div class="" id="detayAramaSonuc">
+	<div class="row">
+		<div class="col-lg-6">
+			<div class="card card-custom card-stretch">
+				<div class="card-body flip-scroll" style="display: block;">
+					<div class="alert bg-light"  >
+						<strong><span id="toplamSonuc"></span></strong> adet
+						karar bulundu.
+					</div>
+					<table id="detayAramaSonuclar"
+						class="table table-hover dt-responsive nowrap" style="width: 100%">
+						<thead>
+							<tr>
+								<th scope="col">Daire</th>
+								<th scope="col">Esas</th>
+								<th scope="col">Karar</th>
+								<th scope="col">Karar Tarihi</th>
+								<th scope="col">Karar Durumu</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-6">
+			<div class="card card-custom card-stretch" id="kararAlani">
+
+				<div class="card-body">
+					<div class="pr-5 d-flex justify-content-end">
+						<button
+							class="btn btn-secondary btn-sm font-weight-bold mr-2 btn-icon"
+							aria-label="Karar ekranını genişlet" onClick="fullScreen()">
+							<i class="fas fa-expand" id="fullScreenIcon"></i>
+						</button>
+						<a href="#"
+							class="btn btn-light-success btn-sm font-weight-bold mr-2" onclick="kararPrint();">Yazdır</a>
+						<a href="#"
+							class="btn btn-sm btn-light-primary btn-sm font-weight-bold" onclick="kararSavePdf();">PDF
+							Olarak Kaydet</a>
+					</div>
+					<div class="card-scroll pr-10" style="height: calc(100vh - 296px)">
+
+						
+					</div>
+					<div id="hidden-content" class="d-none">
+					</div>
+				</div>
+				<div
+					class="pr-5 py-2 d-flex justify-content-end bg-white position-sticky border"
+					style="bottom: 0; right: 10px">
+					<a href="#"
+						class="btn btn-outline-secondary btn-sm font-weight-bold mr-2" onclick="movePrev();">
+						<i class="fas fa-angle-left mr-1"></i>Önceki Karar
+					</a> <a href="#" class="btn btn-light-primary btn-sm font-weight-bold" onclick="moveNext();">Sonraki
+						Karar <i class="fas fa-angle-right ml-1"></i>
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

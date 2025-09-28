@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UYAP ve Yargıtay Karar Arama Test Paneli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .control-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .file-actions {
+            border-top: 1px solid #e9ecef;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .file-actions h4 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .results-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .results-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .status-text {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .progress-container {
+            flex: 1;
+            margin: 0 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            width: 0%;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .logs-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+        
+        .log-entry:last-child {
+            margin-bottom: 0;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ UYAP ve Yargıtay Karar Arama Test Paneli</h1>
+            <p>Hukuki kararları arayın ve detaylı bilgileri çekin</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="control-panel">
+                <h3>⚙️ Arama Ayarları</h3>
+                
+                <div class="form-group">
+                    <label for="keyword">Anahtar Kelime:</label>
+                    <input type="text" id="keyword" placeholder="Örn: tazminat, boşanma, icra" value="tazminat">
+                </div>
+                
+                <div class="form-group">
+                    <label for="limit">Sonuç Sayısı:</label>
+                    <input type="number" id="limit" min="1" max="50" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="system">Sistem:</label>
+                    <select id="system">
+                        <option value="Her İkisi">Her İkisi</option>
+                        <option value="UYAP">UYAP</option>
+                        <option value="Yargıtay">Yargıtay</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="headless" checked>
+                        <label for="headless">Headless Mod (Arka Planda)</label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" id="startBtn" onclick="startSearch()">
+                        🚀 Aramayı Başlat
+                    </button>
+                    <button class="btn btn-secondary" id="stopBtn" onclick="stopSearch()" disabled>
+                        ⏹️ Durdur
+                    </button>
+                </div>
+                
+                <div class="file-actions">
+                    <h4>📁 Dosya İşlemleri</h4>
+                    <button class="btn btn-success" onclick="downloadExcel()" style="width: 100%; margin-bottom: 10px;">
+                        📊 Excel Dosyasını İndir
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()" style="width: 100%;">
+                        🗑️ Sonuçları Temizle
+                    </button>
+                </div>
+            </div>
+            
+            <div class="results-panel">
+                <h3>📊 Sonuçlar ve Log</h3>
+                
+                <div class="status-bar">
+                    <div class="status-text" id="statusText">Hazır</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+                
+                <div class="logs-container" id="logsContainer">
+                    <div class="log-entry">Sistem hazır. Arama yapmak için ayarları belirleyin ve "Aramayı Başlat" butonuna tıklayın.</div>
+                </div>
+                
+                <div class="results-container" id="resultsContainer" style="margin-top: 20px; display: none;">
+                    <h4>📋 Karar Metinleri</h4>
+                    <div id="resultsContent" style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let statusInterval;
+
+        function updateUI() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Durum güncelle
+                    document.getElementById('statusText').textContent = data.status;
+                    
+                    // Progress güncelle
+                    const progressFill = document.getElementById('progressFill');
+                    const progressText = document.getElementById('progressText');
+                    progressFill.style.width = data.progress + '%';
+                    progressText.textContent = Math.round(data.progress) + '%';
+                    
+                    // Buton durumları
+                    const startBtn = document.getElementById('startBtn');
+                    const stopBtn = document.getElementById('stopBtn');
+                    
+                    if (data.is_running) {
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        isRunning = true;
+                    } else {
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        isRunning = false;
+                    }
+                    
+                    // Logları güncelle
+                    const logsContainer = document.getElementById('logsContainer');
+                    logsContainer.innerHTML = '';
+                    data.logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'log-entry';
+                        logEntry.textContent = log;
+                        logsContainer.appendChild(logEntry);
+                    });
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                    
+                    // Sonuçları göster
+                    if (data.results && data.results.length > 0) {
+                        const resultsContainer = document.getElementById('resultsContainer');
+                        const resultsContent = document.getElementById('resultsContent');
+                        resultsContainer.style.display = 'block';
+                        
+                        resultsContent.innerHTML = '';
+                        data.results.forEach((result, index) => {
+                            const resultDiv = document.createElement('div');
+                            resultDiv.style.marginBottom = '20px';
+                            resultDiv.style.padding = '15px';
+                            resultDiv.style.border = '1px solid #dee2e6';
+                            resultDiv.style.borderRadius = '8px';
+                            resultDiv.style.backgroundColor = '#fff';
+                            
+                            let content = `<h5 style="color: #495057; margin-bottom: 10px;">${index + 1}. ${result.esas_no || result.sira_no} - ${result.karar_no}</h5>`;
+                            content += `<p><strong>Daire:</strong> ${result.daire}</p>`;
+                            content += `<p><strong>Tarih:</strong> ${result.karar_tarihi || result.tarih}</p>`;
+                            
+                            if (result.karar_metni) {
+                                content += `<div style="margin-top: 15px;">`;
+                                content += `<h6 style="color: #6c757d;">Karar Metni:</h6>`;
+                                content += `<div style="background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${result.karar_metni}</div>`;
+                                content += `</div>`;
+                            }
+                            
+                            resultDiv.innerHTML = content;
+                            resultsContent.appendChild(resultDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Status güncelleme hatası:', error);
+                });
+        }
+
+        function startSearch() {
+            if (isRunning) return;
+            
+            const keyword = document.getElementById('keyword').value.trim();
+            const limit = parseInt(document.getElementById('limit').value);
+            const system = document.getElementById('system').value;
+            const headless = document.getElementById('headless').checked;
+            
+            if (!keyword) {
+                alert('Lütfen anahtar kelime girin!');
+                return;
+            }
+            
+            if (limit < 1 || limit > 50) {
+                alert('Sonuç sayısı 1-50 arasında olmalıdır!');
+                return;
+            }
+            
+            const data = {
+                keyword: keyword,
+                limit: limit,
+                system: system,
+                headless: headless
+            };
+            
+            fetch('/api/start_search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Status güncellemeyi başlat
+                    statusInterval = setInterval(updateUI, 1000);
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Arama başlatma hatası:', error);
+                alert('Arama başlatılamadı!');
+            });
+        }
+
+        function stopSearch() {
+            fetch('/api/stop_search', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    clearInterval(statusInterval);
+                    updateUI();
+                }
+            })
+            .catch(error => {
+                console.error('Arama durdurma hatası:', error);
+            });
+        }
+
+        function downloadExcel() {
+            fetch('/api/download_excel')
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Excel dosyası bulunamadı');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'karar_sonuclari.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                alert('Excel dosyası indirilemedi: ' + error.message);
+            });
+        }
+
+        function clearResults() {
+            if (confirm('Sonuçları temizlemek istediğinizden emin misiniz?')) {
+                fetch('/api/clear_results', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateUI();
+                    }
+                })
+                .catch(error => {
+                    console.error('Temizleme hatası:', error);
+                });
+            }
+        }
+
+        // Sayfa yüklendiğinde UI'yi güncelle
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+        });
+    </script>
+</body>
+</html>
