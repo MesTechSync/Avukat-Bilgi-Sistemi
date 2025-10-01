@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -46,7 +46,7 @@
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 1fr 3fr;
             gap: 30px;
             padding: 30px;
         }
@@ -263,6 +263,19 @@
             color: #0c5460;
         }
         
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+                margin: 10px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr 2fr;
+                gap: 20px;
+                padding: 20px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -276,6 +289,43 @@
             
             .button-group {
                 flex-direction: column;
+            }
+            
+            .pagination-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .pagination-info {
+                margin-bottom: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 5px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .table-responsive {
+                font-size: 12px;
+            }
+            
+            .pagination-controls {
+                flex-wrap: wrap;
+                justify-content: center;
             }
         }
     </style>
@@ -297,8 +347,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="limit">Sonuç Sayısı:</label>
-                    <input type="number" id="limit" min="1" max="50" value="5">
+                    <label for="limit">İlk Sayfa Sayısı:</label>
+                    <input type="number" id="limit" min="1" max="100" value="10" title="İlk kaç sayfa çekilecek (her sayfa 10 karar)">
+                    <small style="color: #6c757d; font-size: 12px;">Her sayfa 10 karar içerir. İlk 10 sayfa = 100 karar</small>
                 </div>
                 
                 <div class="form-group">
@@ -331,6 +382,9 @@
                     <button class="btn btn-success" onclick="downloadExcel()" style="width: 100%; margin-bottom: 10px;">
                         📊 Excel Dosyasını İndir
                     </button>
+                    <button class="btn btn-info" id="continueBtn" onclick="continueSearch()" style="width: 100%; margin-bottom: 10px;" disabled>
+                        ➕ Daha Fazla Sonuç Çek
+                    </button>
                     <button class="btn btn-secondary" onclick="clearResults()" style="width: 100%;">
                         🗑️ Sonuçları Temizle
                     </button>
@@ -355,8 +409,66 @@
                 </div>
                 
                 <div class="results-container" id="resultsContainer" style="margin-top: 20px; display: none;">
-                    <h4>📋 Karar Metinleri</h4>
-                    <div id="resultsContent" style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                    <!-- UYAP Style Result Header - Exact Match -->
+                    <div class="result-header" style="background: #f8f9fa; padding: 20px; margin-bottom: 20px; border: 1px solid #dee2e6; border-radius: 0;">
+                        <div class="row" style="display: flex; justify-content: space-between; align-items: center; margin: 0;">
+                            <div class="col-lg-6" style="padding: 0;">
+                                <div class="alert bg-light" style="margin: 0; padding: 12px 20px; background: #f8f9fa !important; border: 1px solid #e9ecef; border-radius: 0; font-size: 16px; color: #495057;">
+                                    <strong style="font-weight: 700; color: #212529;"><span id="totalResults">0</span></strong> adet karar bulundu.
+                                </div>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right; padding: 0;">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                    <select id="recordsPerPage" onchange="changePaginationSize()" style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; font-size: 14px; min-width: 60px;">
+                                        <option value="10" selected>10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span style="font-size: 14px; color: #495057; font-weight: 500;">kayıt göster</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UYAP Style Results Table - Exact Match -->
+                    <div class="table-responsive" style="background: white; border: 1px solid #dee2e6; overflow-x: auto; border-radius: 0;">
+                        <table class="table table-hover" style="margin: 0; width: 100%; border-collapse: collapse; min-width: 800px;">
+                            <thead style="background: #f8f9fa;">
+                                <tr>
+                                    <th scope="col" style="padding: 15px 12px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; text-align: left; font-size: 14px; min-width: 200px;">Daire</th>
+                                    <th scope="col" style="padding: 15px 12px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; text-align: left; font-size: 14px; min-width: 100px;">Esas</th>
+                                    <th scope="col" style="padding: 15px 12px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; text-align: left; font-size: 14px; min-width: 100px;">Karar</th>
+                                    <th scope="col" style="padding: 15px 12px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; text-align: left; font-size: 14px; min-width: 120px;">Karar Tarihi</th>
+                                    <th scope="col" style="padding: 15px 12px; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; text-align: left; font-size: 14px; min-width: 120px;">Karar Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody" style="background: white;">
+                                <!-- Results will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- UYAP Style Pagination - Exact Match -->
+                    <div class="pagination-container" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0; flex-wrap: wrap; gap: 10px;">
+                        <div class="pagination-info" style="flex: 1; min-width: 300px;">
+                            <span id="paginationInfo" style="font-size: 14px; color: #495057;">0 kayıt arasından 0 ile 0 arasındaki kayıtlar gösteriliyor</span>
+                        </div>
+                        <div class="pagination-controls" id="paginationControls" style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                            <!-- Pagination buttons will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Detail Modal -->
+                    <div id="detailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 80%; max-height: 80%; overflow-y: auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h4>Karar Detayı</h4>
+                                <button onclick="closeDetailModal()" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Kapat</button>
+                            </div>
+                            <div id="detailContent" style="line-height: 1.6; white-space: pre-wrap;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -365,80 +477,8 @@
     <script>
         let isRunning = false;
         let statusInterval;
-
-        function updateUI() {
-            fetch('/api/status')
-                .then(response => response.json())
-                .then(data => {
-                    // Durum güncelle
-                    document.getElementById('statusText').textContent = data.status;
-                    
-                    // Progress güncelle
-                    const progressFill = document.getElementById('progressFill');
-                    const progressText = document.getElementById('progressText');
-                    progressFill.style.width = data.progress + '%';
-                    progressText.textContent = Math.round(data.progress) + '%';
-                    
-                    // Buton durumları
-                    const startBtn = document.getElementById('startBtn');
-                    const stopBtn = document.getElementById('stopBtn');
-                    
-                    if (data.is_running) {
-                        startBtn.disabled = true;
-                        stopBtn.disabled = false;
-                        isRunning = true;
-                    } else {
-                        startBtn.disabled = false;
-                        stopBtn.disabled = true;
-                        isRunning = false;
-                    }
-                    
-                    // Logları güncelle
-                    const logsContainer = document.getElementById('logsContainer');
-                    logsContainer.innerHTML = '';
-                    data.logs.forEach(log => {
-                        const logEntry = document.createElement('div');
-                        logEntry.className = 'log-entry';
-                        logEntry.textContent = log;
-                        logsContainer.appendChild(logEntry);
-                    });
-                    logsContainer.scrollTop = logsContainer.scrollHeight;
-                    
-                    // Sonuçları göster
-                    if (data.results && data.results.length > 0) {
-                        const resultsContainer = document.getElementById('resultsContainer');
-                        const resultsContent = document.getElementById('resultsContent');
-                        resultsContainer.style.display = 'block';
-                        
-                        resultsContent.innerHTML = '';
-                        data.results.forEach((result, index) => {
-                            const resultDiv = document.createElement('div');
-                            resultDiv.style.marginBottom = '20px';
-                            resultDiv.style.padding = '15px';
-                            resultDiv.style.border = '1px solid #dee2e6';
-                            resultDiv.style.borderRadius = '8px';
-                            resultDiv.style.backgroundColor = '#fff';
-                            
-                            let content = `<h5 style="color: #495057; margin-bottom: 10px;">${index + 1}. ${result.esas_no || result.sira_no} - ${result.karar_no}</h5>`;
-                            content += `<p><strong>Daire:</strong> ${result.daire}</p>`;
-                            content += `<p><strong>Tarih:</strong> ${result.karar_tarihi || result.tarih}</p>`;
-                            
-                            if (result.karar_metni) {
-                                content += `<div style="margin-top: 15px;">`;
-                                content += `<h6 style="color: #6c757d;">Karar Metni:</h6>`;
-                                content += `<div style="background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${result.karar_metni}</div>`;
-                                content += `</div>`;
-                            }
-                            
-                            resultDiv.innerHTML = content;
-                            resultsContent.appendChild(resultDiv);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Status güncelleme hatası:', error);
-                });
-        }
+        let allResults = []; // Tüm sonuçları sakla
+        let currentPage = 1;
 
         function startSearch() {
             if (isRunning) return;
@@ -453,8 +493,8 @@
                 return;
             }
             
-            if (limit < 1 || limit > 50) {
-                alert('Sonuç sayısı 1-50 arasında olmalıdır!');
+            if (limit < 1 || limit > 100) {
+                alert('Sayfa sayısı 1-100 arasında olmalıdır!');
                 return;
             }
             
@@ -476,7 +516,7 @@
             .then(data => {
                 if (data.success) {
                     // Status güncellemeyi başlat
-                    statusInterval = setInterval(updateUI, 1000);
+                    statusInterval = setInterval(updateUI, 500);
                 } else {
                     alert('Hata: ' + data.message);
                 }
@@ -542,6 +582,256 @@
                     console.error('Temizleme hatası:', error);
                 });
             }
+        }
+
+        function continueSearch() {
+            if (isRunning) return;
+            
+            const keyword = document.getElementById('keyword').value.trim();
+            const system = document.getElementById('system').value;
+            const headless = document.getElementById('headless').checked;
+            
+            if (!keyword) {
+                alert('Lütfen anahtar kelime girin!');
+                return;
+            }
+            
+            const data = {
+                keyword: keyword,
+                limit: 10, // 10 sayfa daha çek (100 karar)
+                system: system,
+                headless: headless,
+                continue_search: true
+            };
+            
+            fetch('/api/continue_search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Status güncellemeyi başlat
+                    statusInterval = setInterval(updateUI, 500);
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Devam arama hatası:', error);
+                alert('Devam arama başlatılamadı!');
+            });
+        }
+
+        function updateUI() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Durum güncelle
+                    document.getElementById('statusText').textContent = data.status;
+                    
+                    // Progress güncelle
+                    const progressFill = document.getElementById('progressFill');
+                    const progressText = document.getElementById('progressText');
+                    progressFill.style.width = data.progress + '%';
+                    progressText.textContent = Math.round(data.progress) + '%';
+                    
+                    // Buton durumları
+                    const startBtn = document.getElementById('startBtn');
+                    const stopBtn = document.getElementById('stopBtn');
+                    const continueBtn = document.getElementById('continueBtn');
+                    
+                    if (data.is_running) {
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        continueBtn.disabled = true;
+                        isRunning = true;
+                    } else {
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        // Devam butonunu sadece sonuç varsa aktif et
+                        continueBtn.disabled = !(data.results && data.results.length > 0);
+                        isRunning = false;
+                    }
+                    
+                    // Logları güncelle
+                    const logsContainer = document.getElementById('logsContainer');
+                    logsContainer.innerHTML = '';
+                    data.logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'log-entry';
+                        logEntry.textContent = log;
+                        logsContainer.appendChild(logEntry);
+                    });
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                    
+                    // Sonuçları UYAP tarzında göster
+                    if (data.results && data.results.length > 0) {
+                        const resultsContainer = document.getElementById('resultsContainer');
+                        resultsContainer.style.display = 'block';
+                        
+                        // Tüm sonuçları sakla
+                        allResults = data.results;
+                        
+                        // Toplam sonuç sayısını güncelle (gerçek toplam sayıyı kullan)
+                        const totalCount = data.total_results || data.results.length;
+                        document.getElementById('totalResults').textContent = totalCount.toLocaleString('tr-TR');
+                        
+                        // Sayfalama ile sonuçları göster
+                        displayPage(currentPage);
+                    }
+                })
+                .catch(error => {
+                    console.error('Status güncelleme hatası:', error);
+                });
+        }
+
+        function displayPage(page) {
+            if (!allResults || allResults.length === 0) return;
+            
+            const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
+            const startIndex = (page - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, allResults.length);
+            const pageResults = allResults.slice(startIndex, endIndex);
+            
+            // Tablo gövdesini temizle
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+            
+            // Sayfa sonuçlarını UYAP tarzında tabloya ekle
+            pageResults.forEach((result, index) => {
+                            const row = document.createElement('tr');
+                            row.style.cursor = 'pointer';
+                            row.style.borderBottom = '1px solid #dee2e6';
+                            row.onclick = () => showDetail(result);
+                            
+                            // Hover efekti
+                            row.onmouseenter = () => {
+                                row.style.backgroundColor = '#f8f9fa';
+                            };
+                            row.onmouseleave = () => {
+                                row.style.backgroundColor = 'white';
+                            };
+                            
+                            row.innerHTML = `
+                                <td style="padding: 15px 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; vertical-align: middle;">${result.daire || 'N/A'}</td>
+                                <td style="padding: 15px 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; vertical-align: middle; font-weight: 500;">${result.esas_no || 'N/A'}</td>
+                                <td style="padding: 15px 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; vertical-align: middle; font-weight: 500;">${result.karar_no || 'N/A'}</td>
+                                <td style="padding: 15px 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; vertical-align: middle;">${result.karar_tarihi || result.tarih || 'N/A'}</td>
+                                <td style="padding: 15px 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; vertical-align: middle;">
+                                    <span style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+                                        ${result.karar_durumu || 'KESİNLEŞTİ'}
+                                    </span>
+                                </td>
+                            `;
+                            
+                            tableBody.appendChild(row);
+            });
+            
+            // Sayfalama bilgisini güncelle
+            const pageSize = parseInt(document.getElementById('recordsPerPage').value);
+            const totalCount = allResults.length;
+            updatePaginationInfo(totalCount, page, pageSize);
+            updatePaginationControls(totalCount, page);
+        }
+
+        // UYAP tarzı sayfalama fonksiyonları
+        function updatePaginationInfo(total, currentPage, recordsPerPage) {
+            const start = (currentPage - 1) * recordsPerPage + 1;
+            const end = Math.min(currentPage * recordsPerPage, total);
+            document.getElementById('paginationInfo').textContent = 
+                `${total.toLocaleString('tr-TR')} kayıt arasından ${start} ile ${end} arasındaki kayıtlar gösteriliyor`;
+        }
+
+        function updatePaginationControls(total, currentPage) {
+            const pageSize = parseInt(document.getElementById('recordsPerPage').value);
+            const totalPages = Math.ceil(total / pageSize);
+            const controls = document.getElementById('paginationControls');
+            
+            let html = '';
+            
+            // Önceki sayfa
+            if (currentPage > 1) {
+                html += `<button onclick="goToPage(${currentPage - 1})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #dee2e6; background: white; cursor: pointer; border-radius: 4px; font-size: 14px; color: #495057;">&lt;</button>`;
+            }
+            
+            // Sayfa numaraları
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                html += `<button onclick="goToPage(1)" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #dee2e6; background: white; cursor: pointer; border-radius: 4px; font-size: 14px; color: #495057;">1</button>`;
+                if (startPage > 2) {
+                    html += `<span style="padding: 8px 12px; margin: 0 2px; font-size: 14px; color: #6c757d;">...</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage;
+                html += `<button onclick="goToPage(${i})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #dee2e6; background: ${isActive ? '#007bff' : 'white'}; color: ${isActive ? 'white' : '#495057'}; cursor: pointer; border-radius: 4px; font-size: 14px; font-weight: ${isActive ? '600' : '400'};">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += `<span style="padding: 8px 12px; margin: 0 2px; font-size: 14px; color: #6c757d;">...</span>`;
+                }
+                html += `<button onclick="goToPage(${totalPages})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #dee2e6; background: white; cursor: pointer; border-radius: 4px; font-size: 14px; color: #495057;">${totalPages}</button>`;
+            }
+            
+            // Sonraki sayfa
+            if (currentPage < totalPages) {
+                html += `<button onclick="goToPage(${currentPage + 1})" style="padding: 8px 12px; margin: 0 2px; border: 1px solid #dee2e6; background: white; cursor: pointer; border-radius: 4px; font-size: 14px; color: #495057;">&gt;</button>`;
+            }
+            
+            controls.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || !allResults || allResults.length === 0) return;
+            
+            const pageSize = parseInt(document.getElementById('recordsPerPage').value);
+            const totalPages = Math.ceil(allResults.length / pageSize);
+            
+            if (page > totalPages) return;
+            
+            currentPage = page;
+            displayPage(currentPage);
+            console.log('Sayfa değiştiriliyor:', page);
+        }
+
+        function changePaginationSize() {
+            const pageSize = parseInt(document.getElementById('recordsPerPage').value);
+            console.log('Sayfalama boyutu değiştirildi:', pageSize);
+            // Sayfalama boyutu değiştiğinde 1. sayfaya dön ve tabloyu yeniden oluştur
+            currentPage = 1;
+            displayPage(currentPage);
+        }
+
+        function showDetail(result) {
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('detailContent');
+            
+            let detailText = `DAİRE: ${result.daire || 'N/A'}\n`;
+            detailText += `ESAS NO: ${result.esas_no || 'N/A'}\n`;
+            detailText += `KARAR NO: ${result.karar_no || 'N/A'}\n`;
+            detailText += `KARAR TARİHİ: ${result.karar_tarihi || result.tarih || 'N/A'}\n`;
+            detailText += `KARAR DURUMU: ${result.karar_durumu || 'KESİNLEŞTİ'}\n\n`;
+            
+            if (result.karar_metni) {
+                detailText += `KARAR METNİ:\n${result.karar_metni}`;
+            } else {
+                detailText += 'Karar metni bulunamadı.';
+            }
+            
+            content.textContent = detailText;
+            modal.style.display = 'block';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
         }
 
         // Sayfa yüklendiğinde UI'yi güncelle

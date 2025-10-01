@@ -1,88 +1,102 @@
 // API URL'leri
 
-// Gerçek veri çekme fonksiyonları
+// Gerçek veri çekme fonksiyonları - Python API kullanarak
 async function fetchRealYargitayData(query: string, page: number = 1): Promise<IctihatResultItem[]> {
-  console.log(`🌐 Yargıtay sitesinden gerçek veri çekiliyor: ${query}`);
+  console.log(`🌐 Python API üzerinden Yargıtay verisi çekiliyor: ${query}`);
   
   try {
-    // CORS proxy kullanarak Yargıtay sitesine istek gönder
-    const proxyUrl = 'https://corsproxy.io/?';
-    const yargitayUrl = `https://karararama.yargitay.gov.tr/YargitayBilgiBankasi/`;
-    
-    const formData = new FormData();
-    formData.append('AranacakKelime', query);
-    formData.append('Birimler', '');
-    formData.append('EsasNo', '');
-    formData.append('KararNo', '');
-    formData.append('Tarih', '');
-    formData.append('Siralama', 'Esas No\'ya Göre');
-    
-    const response = await fetch(proxyUrl + yargitayUrl, {
-      method: 'GET',
-        headers: {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+    const response = await fetch('http://localhost:4000/search/yargitay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: query,
+        max_pages: 3
+      })
     });
     
     if (!response.ok) {
-      throw new Error(`Yargıtay sitesi yanıt vermedi: ${response.status}`);
+      throw new Error(`Python API hatası: ${response.status}`);
     }
     
-    const html = await response.text();
-    console.log(`✅ Yargıtay HTML alındı: ${html.length} karakter`);
+    const data = await response.json();
+    console.log(`✅ Python API Yargıtay yanıtı alındı: ${data.results?.length || 0} karar`);
     
-    // HTML'i parse et
-    return parseYargitayHTML(html, query, page);
+    if (data.success && data.results) {
+      return data.results.map((item: any, index: number) => ({
+        id: `yargitay_${index}`,
+        subject: item.title || '',
+        content: item.content || '',
+        courtName: item.court || 'Yargıtay',
+        courtType: 'yargitay' as CourtType,
+        decisionDate: item.date || '',
+        caseNumber: item.case_number || '',
+        decisionNumber: item.decision_number || '',
+        url: item.url || '',
+        legalAreas: ['Hukuk'],
+        keywords: [query],
+        relevanceScore: 0.8,
+        highlight: query,
+        status: 'Aktif'
+      }));
+    }
+    
+    return [];
     
   } catch (error) {
-    console.error('❌ Yargıtay veri çekme hatası:', error);
-    // Hata durumunda boş sonuç döndür
-    console.log('⚠️ Yargıtay sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    console.error('❌ Python API Yargıtay veri çekme hatası:', error);
+    console.log('⚠️ Python API\'den veri çekilemedi, boş sonuç döndürülüyor');
     return [];
   }
 }
 
 async function fetchRealUyapData(query: string, page: number = 1): Promise<IctihatResultItem[]> {
-  console.log(`🌐 UYAP sitesinden gerçek veri çekiliyor: ${query}`);
+  console.log(`🌐 Python API üzerinden UYAP verisi çekiliyor: ${query}`);
   
   try {
-    // CORS proxy kullanarak UYAP sitesine istek gönder
-    const proxyUrl = 'https://corsproxy.io/?';
-    const uyapUrl = `https://emsal.uyap.gov.tr/`;
-    
-    const formData = new FormData();
-    formData.append('AranacakKelime', query);
-    formData.append('Birimler', '');
-    formData.append('EsasNo', '');
-    formData.append('KararNo', '');
-    formData.append('Tarih', '');
-    formData.append('Siralama', 'Esas No\'ya Göre');
-    
-    const response = await fetch(proxyUrl + uyapUrl, {
-      method: 'GET',
+    const response = await fetch('http://localhost:4000/search/uyap', {
+      method: 'POST',
       headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: query,
+        max_pages: 3
+      })
     });
 
     if (!response.ok) {
-      throw new Error(`UYAP sitesi yanıt vermedi: ${response.status}`);
+      throw new Error(`Python API hatası: ${response.status}`);
     }
 
-    const html = await response.text();
-    console.log(`✅ UYAP HTML alındı: ${html.length} karakter`);
+    const data = await response.json();
+    console.log(`✅ Python API UYAP yanıtı alındı: ${data.results?.length || 0} karar`);
     
-    // HTML'i parse et
-    return parseUyapHTML(html, query, page);
+    if (data.success && data.results) {
+      return data.results.map((item: any, index: number) => ({
+        id: `uyap_${index}`,
+        subject: item.title || '',
+        content: item.content || '',
+        courtName: item.court || 'Bölge Adliye Mahkemesi',
+        courtType: 'uyap' as CourtType,
+        decisionDate: item.date || '',
+        caseNumber: item.case_number || '',
+        decisionNumber: item.decision_number || '',
+        url: item.url || '',
+        legalAreas: ['Hukuk'],
+        keywords: [query],
+        relevanceScore: 0.8,
+        highlight: query,
+        status: 'Aktif'
+      }));
+    }
+    
+    return [];
     
   } catch (error) {
-    console.error('❌ UYAP veri çekme hatası:', error);
-    // Hata durumunda boş sonuç döndür
-    console.log('⚠️ UYAP sitesinden veri çekilemedi, boş sonuç döndürülüyor');
+    console.error('❌ Python API UYAP veri çekme hatası:', error);
+    console.log('⚠️ Python API\'den veri çekilemedi, boş sonuç döndürülüyor');
     return [];
   }
 }

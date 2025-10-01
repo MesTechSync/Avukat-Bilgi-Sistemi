@@ -30,29 +30,29 @@ else:
     try:
         from panel_backend_enterprise import app  # type: ignore
         _loaded = "enterprise"
-        print("✅ Enterprise (development) backend loaded")
+        print("Enterprise (development) backend loaded")
     except Exception as e:
         # Last resort: try production
         from panel_backend_production import app  # type: ignore
         _loaded = "production"
-        print(f"⚠️ Enterprise import failed ({e}); using production backend")
+        print(f"Enterprise import failed ({e}); using production backend")
 
 if __name__ == "__main__":
     banner_title = (
-        "🏛️ PANEL İÇTİHAT & MEVZUAT - " +
+        "PANEL ICTIHAT & MEVZUAT - " +
         ("PRODUCTION (Opus Patterns)" if _loaded == "production" else "DEVELOPMENT (Enterprise)")
     )
     banner = (
         "=" * 80 + "\n" +
         f"{banner_title}\n" +
         "=" * 80 + "\n" +
-        "🚀 Starting Legal Research System...\n" +
-        ("🛡️ Circuit Breaker + Tool Isolation + Auto-Recovery ACTIVE\n📦 Redis Caching + Process Isolation ENABLED\n"
+        "Starting Legal Research System...\n" +
+        ("Circuit Breaker + Tool Isolation + Auto-Recovery ACTIVE\nRedis Caching + Process Isolation ENABLED\n"
          if _loaded == "production" else
-         "💻 Dev-friendly backend (no Redis requirement)\n") +
-        "🌐 Access: http://localhost:9000\n" +
-        "📚 Docs: http://localhost:9000/docs\n" +
-        ("🔍 Health: http://localhost:9000/health/production\n" if _loaded == "production" else "") +
+         "Dev-friendly backend (no Redis requirement)\n") +
+        "Access: http://localhost:9000\n" +
+        "Docs: http://localhost:9000/docs\n" +
+        ("Health: http://localhost:9000/health/production\n" if _loaded == "production" else "") +
         "=" * 80
     )
     try:

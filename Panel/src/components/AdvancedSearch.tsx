@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Mic, MicOff, X, Download, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon, Sparkles } from 'lucide-react';
+import { Search, Mic, MicOff, X, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon, Sparkles, Download } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { useTheme } from '../contexts/ThemeContext';
@@ -41,7 +41,7 @@ const AdvancedSearch: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<Array<{query: string, type: string, date: string, results: number}>>([]);
 
   // Tab State'leri
-  const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics' | 'emotion'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'timeline' | 'analytics' | 'emotion' | 'data-scraping'>('search');
   
   // Sesli Arama State'leri
   const [isVoiceListening, setIsVoiceListening] = useState(false);
@@ -80,6 +80,18 @@ const AdvancedSearch: React.FC = () => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+
+  // Veri Çekme State'leri
+  const [scrapingKeyword, setScrapingKeyword] = useState('');
+  const [scrapingSystem, setScrapingSystem] = useState<'yargitay' | 'uyap' | 'mevzuat'>('yargitay');
+  const [scrapingLimit, setScrapingLimit] = useState(10); // 10 sayfa = 100 adet
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapingResults, setScrapingResults] = useState<any>(null);
+  const [selectedDecision, setSelectedDecision] = useState<any>(null);
+  const [showDecisionModal, setShowDecisionModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [allResults, setAllResults] = useState<any[]>([]);
 
   // Akıllı Arama Özellikleri
   const searchSuggestionsData = {
@@ -260,6 +272,65 @@ const AdvancedSearch: React.FC = () => {
     }
   }, []);
 
+  // Veri çekme fonksiyonları
+  const startDataScraping = useCallback(async () => {
+    if (!scrapingKeyword.trim()) return;
+
+    setIsScraping(true);
+    try {
+      const response = await fetch('http://localhost:9000/api/data-scraping/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          keyword: scrapingKeyword,
+          system: scrapingSystem,
+          limit: scrapingLimit,
+          save_format: 'none', // Kaydetme devre dışı - baştan arama
+          headless: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setScrapingResults(result);
+      
+      // Tüm sonuçları sakla ve sayfalama için hazırla
+      if (result.success && result.results_preview) {
+        setAllResults(result.results_preview);
+        setCurrentPage(1);
+      }
+
+
+    } catch (error) {
+      console.error('Veri çekme hatası:', error);
+      setScrapingResults({
+        success: false,
+        message: `Veri çekme başarısız: ${error}`,
+        total_results: 0
+      });
+    } finally {
+      setIsScraping(false);
+    }
+  }, [scrapingKeyword, scrapingSystem, scrapingLimit]);
+
+  // Karar detayını göster
+  const showDecisionDetail = useCallback((decision: any) => {
+    setSelectedDecision(decision);
+    setShowDecisionModal(true);
+  }, []);
+
+  // Modal'ı kapat
+  const closeDecisionModal = useCallback(() => {
+    setShowDecisionModal(false);
+    setSelectedDecision(null);
+  }, []);
+
+
   // Sesli arama sonucu işleme
   useEffect(() => {
     if (interimText && interimText.trim()) {
@@ -312,6 +383,7 @@ const AdvancedSearch: React.FC = () => {
     setTimelineData(timelineData);
   }, []);
 
+
   // Input değişikliklerinde önerileri güncelle
   useEffect(() => {
     if (query.length >= 2) {
@@ -329,65 +401,21 @@ const AdvancedSearch: React.FC = () => {
         ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black' 
         : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
     }`}>
-      {/* Header */}
-      <div className="mb-8">
-        <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border overflow-hidden ${
-          isDarkMode 
-            ? 'bg-gray-800/80 border-gray-700/50' 
-            : 'bg-white/80 border-white/20'
-        }`}>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className={`text-4xl font-bold bg-gradient-to-r bg-clip-text text-transparent ${
-                  isDarkMode 
-                    ? 'from-cyan-400 via-blue-500 to-purple-600' 
-                    : 'from-slate-800 via-blue-700 to-indigo-600'
-                }`}>
-                  İçtihat & Mevzuat
-                </h1>
-                <p className={`text-lg mt-2 ${
-                  isDarkMode ? 'text-gray-300' : 'text-slate-600'
-                }`}>
-                  AI Destekli Hukuki Araştırma Platformu
-                </p>
-                <div className={`h-1 w-32 bg-gradient-to-r rounded-full mt-3 ${
-                  isDarkMode 
-                    ? 'from-cyan-400 to-blue-500' 
-                    : 'from-blue-500 to-indigo-500'
-                }`}></div>
+      {/* Header - Sadece başlık */}
+      <div className="mb-6">
+        <div className="text-center">
+          <h1 className={`text-3xl font-bold mb-2 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            İçtihat & Mevzuat
+          </h1>
+          <p className={`text-lg ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Milyonlarca karar arasından arama yapın
+          </p>
         </div>
-                <button
-                onClick={toggleTheme}
-                className={`p-3 rounded-xl transition-all duration-300 ${
-                  isDarkMode 
-                    ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-300' 
-                    : 'bg-white/50 hover:bg-white/70 text-slate-600'
-                }`}
-              >
-                {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-                </button>
-              </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  backendStatus === 'ok' ? 'bg-emerald-500' : 
-                  backendStatus === 'degraded' ? 'bg-amber-500' : 
-                  backendStatus === 'down' ? 'bg-red-500' : 'bg-gray-400'
-                }`}></div>
-                <span className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                }`}>
-                  {backendStatus === 'ok' ? 'Sistem Aktif' : 
-                   backendStatus === 'degraded' ? 'Kısmi Hizmet' : 
-                   backendStatus === 'down' ? 'Sistem Kapalı' : 'Durum Bilinmiyor'}
-                </span>
-              </div>
-            </div>
-                      </div>
-                    </div>
-                  </div>
+      </div>
 
       {/* Tab Navigation */}
       <div className="mb-8">
@@ -401,7 +429,8 @@ const AdvancedSearch: React.FC = () => {
               { id: 'search', label: 'Akıllı Arama', icon: Search, color: 'blue' },
               { id: 'timeline', label: 'Hukuki Zaman Çizelgesi', icon: Calendar, color: 'emerald' },
               { id: 'analytics', label: 'Analitik', icon: BarChart3, color: 'purple' },
-              { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' }
+              { id: 'emotion', label: 'AI Duygu Analizi', icon: Brain, color: 'rose' },
+              { id: 'data-scraping', label: 'Veri Çekme', icon: Download, color: 'orange' }
             ].map(tab => (
                           <button
                 key={tab.id}
@@ -557,7 +586,7 @@ const AdvancedSearch: React.FC = () => {
                 >
                   <option value="ictihat">İçtihat</option>
                   <option value="mevzuat">Mevzuat</option>
-                  <option value="uyap">UYAP Emsal</option>
+                  <option value="uyap">Emsal Karar</option>
                 </select>
       </div>
 
@@ -577,7 +606,7 @@ const AdvancedSearch: React.FC = () => {
                   <option value="">Tüm Mahkemeler</option>
                   <option value="yargitay">Yargıtay</option>
                   <option value="danistay">Danıştay</option>
-                  <option value="uyap">UYAP Emsal</option>
+                  <option value="uyap">Emsal Karar</option>
                 </select>
           </div>
 
@@ -968,6 +997,428 @@ const AdvancedSearch: React.FC = () => {
         </div>
       )}
 
+      {/* Data Scraping Tab */}
+      {activeTab === 'data-scraping' && (
+        <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+          isDarkMode 
+            ? 'bg-gray-800/80 border-gray-700/50' 
+            : 'bg-white/80 border-white/20'
+        }`}>
+          <div className="text-center mb-8">
+            <h2 className={`text-3xl font-bold mb-2 ${
+              isDarkMode ? 'text-white' : 'text-slate-800'
+            }`}>
+              Veri Çekme Sistemi
+            </h2>
+            <p className={`text-lg ${
+              isDarkMode ? 'text-gray-300' : 'text-slate-600'
+            }`}>
+              Hukuki veritabanlarından toplu veri çekme ve analiz
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            {/* Veri Çekme Formu */}
+            <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+              isDarkMode 
+                ? 'bg-gray-700/60 border-gray-600' 
+                : 'bg-white/60 border-slate-200'
+            }`}>
+              <h3 className={`text-xl font-bold mb-6 ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}>Veri Çekme Ayarları</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Arama Terimi */}
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>
+                    Arama Terimi
+                  </label>
+                  <input
+                    type="text"
+                    value={scrapingKeyword}
+                    onChange={(e) => setScrapingKeyword(e.target.value)}
+                    placeholder="Örn: tazminat, boşanma, iş hukuku..."
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                      isDarkMode 
+                        ? 'border-gray-600 focus:ring-orange-500/20 focus:border-orange-500 bg-gray-700/50 text-white placeholder-gray-400' 
+                        : 'border-slate-200 focus:ring-orange-500/20 focus:border-orange-500 bg-white/50 text-slate-800 placeholder-slate-400'
+                    }`}
+                  />
+                </div>
+
+                {/* Hedef Sistem */}
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>
+                    Hedef Sistem
+                  </label>
+                  <select
+                    value={scrapingSystem}
+                    onChange={(e) => setScrapingSystem(e.target.value as any)}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-300 backdrop-blur-sm font-medium ${
+                      isDarkMode 
+                        ? 'border-gray-600 focus:ring-orange-500/20 focus:border-orange-500 bg-gray-700/50 text-white' 
+                        : 'border-slate-200 focus:ring-orange-500/20 focus:border-orange-500 bg-white/50 text-slate-800'
+                    }`}
+                  >
+                    <option value="yargitay">Yargıtay Karar Arama</option>
+                    <option value="uyap">Emsal Karar</option>
+                    <option value="mevzuat">Mevzuat Bilgi Sistemi</option>
+                  </select>
+                </div>
+
+                {/* Sayfa Sayısı - Sabit 10 Sayfa */}
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>
+                    Sayfa Sayısı (Sabit)
+                  </label>
+                  <div className={`w-full px-4 py-3 border-2 rounded-xl backdrop-blur-sm font-medium ${
+                    isDarkMode 
+                      ? 'border-gray-600 bg-gray-700/50 text-white' 
+                      : 'border-slate-200 bg-white/50 text-slate-800'
+                  }`}>
+                    10 sayfa = 100 adet karar
+                  </div>
+                  <p className={`text-xs mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                  }`}>
+                    İlk 10 sayfa (100 adet) çekilir, 11. sayfada devam eder
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Başlat Butonu */}
+              <div className="mt-6 text-center">
+                <button
+                  onClick={startDataScraping}
+                  disabled={isScraping || !scrapingKeyword.trim()}
+                  className={`px-8 py-4 rounded-xl font-semibold flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed mx-auto ${
+                    isDarkMode
+                      ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700'
+                      : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700'
+                  }`}
+                >
+                  {isScraping ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Veri Çekiliyor...</span>
+                    </>
+                   ) : (
+                     <>
+                       <Search className="w-5 h-5" />
+                       <span>Veri Çekmeyi Başlat</span>
+                     </>
+                   )}
+                </button>
+              </div>
+            </div>
+
+            {/* Sonuçlar */}
+            {scrapingResults && (
+              <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+                isDarkMode 
+                  ? 'bg-gray-700/60 border-gray-600' 
+                  : 'bg-white/60 border-slate-200'
+              }`}>
+                <h3 className={`text-xl font-bold mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}>Veri Çekme Sonuçları</h3>
+                
+                <div className={`p-4 rounded-xl ${
+                  scrapingResults.success 
+                    ? 'bg-emerald-100 text-emerald-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    {scrapingResults.success ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5" />
+                    )}
+                    <span className="font-semibold">
+                      {scrapingResults.success ? 'Başarılı' : 'Hata'}
+                    </span>
+                  </div>
+                  <p className="text-sm">{scrapingResults.message}</p>
+                  {scrapingResults.success && (
+                    <div className="mt-2 text-sm">
+                      <p>Toplam Sonuç: {scrapingResults.total_results}</p>
+                      <p>İşlem Süresi: {scrapingResults.processing_time?.toFixed(2)}s</p>
+                    </div>
+                  )}
+                </div>
+
+                 {/* Results Table */}
+                 {scrapingResults.success && scrapingResults.results_preview && scrapingResults.results_preview.length > 0 && (
+                   <div className="mt-6">
+                     <div className="flex items-center justify-between mb-4">
+                       <h4 className={`text-lg font-semibold ${
+                         isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                       }`}>
+                         {scrapingResults.total_results} adet karar bulundu.
+                       </h4>
+                       <div className="flex items-center space-x-2">
+                         <select 
+                           value={pageSize}
+                           onChange={(e) => {
+                             setPageSize(Number(e.target.value));
+                             setCurrentPage(1);
+                           }}
+                           className={`px-2 py-1 text-sm border rounded ${
+                             isDarkMode 
+                               ? 'bg-gray-700 border-gray-600 text-white' 
+                               : 'bg-white border-gray-300 text-gray-900'
+                           }`}
+                         >
+                           <option value="10">10 kayıt göster</option>
+                           <option value="25">25 kayıt göster</option>
+                           <option value="50">50 kayıt göster</option>
+                           <option value="100">100 kayıt göster</option>
+                         </select>
+                       </div>
+                     </div>
+                     
+                     {/* Table */}
+                     <div className={`border rounded-lg overflow-hidden ${
+                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                     }`}>
+                       {/* Table Header */}
+                       <div className={`grid grid-cols-6 gap-4 p-3 font-semibold text-sm border-b ${
+                         isDarkMode 
+                           ? 'bg-gray-700 border-gray-600 text-gray-300' 
+                           : 'bg-gray-50 border-gray-200 text-gray-700'
+                       }`}>
+                         <div>Daire</div>
+                         <div>Esas</div>
+                         <div>Karar</div>
+                         <div>Karar Tarihi</div>
+                         <div>Karar Durumu</div>
+                         <div>Karar Metni</div>
+                       </div>
+                       
+                       {/* Table Rows */}
+                       <div className="max-h-96 overflow-y-auto">
+                         {allResults && allResults.length > 0 ? (() => {
+                           const startIndex = (currentPage - 1) * pageSize;
+                           const endIndex = startIndex + pageSize;
+                           const currentPageResults = allResults.slice(startIndex, endIndex);
+                           
+                           return currentPageResults.map((result: any, index: number) => (
+                           <div 
+                             key={index} 
+                             className={`grid grid-cols-6 gap-4 p-3 text-sm border-b cursor-pointer transition-colors ${
+                               index === 0 
+                                 ? isDarkMode 
+                                   ? 'bg-blue-900/20 border-blue-500/30' 
+                                   : 'bg-blue-50 border-blue-200'
+                                 : isDarkMode
+                                   ? 'bg-gray-800/50 border-gray-600 hover:bg-gray-700/50'
+                                   : 'bg-white border-gray-200 hover:bg-gray-50'
+                             }`}
+                             onClick={() => showDecisionDetail(result)}
+                           >
+                             <div className={`font-medium ${
+                               isDarkMode ? 'text-gray-300' : 'text-gray-900'
+                             }`}>
+                               {result.court || 'Mahkeme'}
+                             </div>
+                             <div className={`${
+                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                             }`}>
+                               {result.esas_no || result.case_number || '-'}
+                             </div>
+                             <div className={`${
+                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                             }`}>
+                               {result.karar_no || '-'}
+                             </div>
+                             <div className={`${
+                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                             }`}>
+                               {result.karar_tarihi || result.decision_date || '-'}
+                             </div>
+                             <div className={`${
+                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                             }`}>
+                               {result.karar_durumu || 'KESİNLEŞTİ'}
+                             </div>
+                             <div className={`${
+                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                             }`}>
+                               {result.content ? 
+                                 (result.content.length > 100 ? 
+                                   result.content.substring(0, 100) + '...' : 
+                                   result.content
+                                 ) : 
+                                 'Karar metni bulunamadı'
+                               }
+                             </div>
+                           </div>
+                           ));
+                         })() : (
+                           <div className={`p-8 text-center ${
+                             isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                           }`}>
+                             <p>Henüz veri çekilmedi. Lütfen yukarıdaki formu doldurup "Veri Çekmeyi Başlat" butonuna tıklayın.</p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                     
+                     {/* Pagination */}
+                     {allResults && allResults.length > 0 && (
+                       <div className="flex items-center justify-between mt-4">
+                         <div className={`text-sm ${
+                           isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                         }`}>
+                           {allResults.length} kayıt arasından {((currentPage - 1) * pageSize) + 1} ile {Math.min(currentPage * pageSize, allResults.length)} arasındaki kayıtlar gösteriliyor
+                         </div>
+                         <div className="flex items-center space-x-2">
+                           <button 
+                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                             disabled={currentPage === 1}
+                             className={`px-3 py-1 text-sm border rounded ${
+                               isDarkMode 
+                                 ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 disabled:opacity-50' 
+                                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                             }`}
+                           >
+                             &lt;
+                           </button>
+                           
+                           {(() => {
+                             const totalPages = Math.ceil(allResults.length / pageSize);
+                             const pages = [];
+                             
+                             // İlk sayfa
+                             if (currentPage > 3) {
+                               pages.push(
+                                 <button 
+                                   key={1}
+                                   onClick={() => setCurrentPage(1)}
+                                   className={`px-3 py-1 text-sm border rounded ${
+                                     isDarkMode 
+                                       ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' 
+                                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                   }`}
+                                 >
+                                   1
+                                 </button>
+                               );
+                               if (currentPage > 4) {
+                                 pages.push(
+                                   <span key="ellipsis1" className={`px-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                     ...
+                                   </span>
+                                 );
+                               }
+                             }
+                             
+                             // Mevcut sayfa etrafındaki sayfalar
+                             for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                               pages.push(
+                                 <button 
+                                   key={i}
+                                   onClick={() => setCurrentPage(i)}
+                                   className={`px-3 py-1 text-sm border rounded ${
+                                     i === currentPage
+                                       ? isDarkMode 
+                                         ? 'bg-blue-600 border-blue-600 text-white' 
+                                         : 'bg-blue-600 border-blue-600 text-white'
+                                       : isDarkMode 
+                                         ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' 
+                                         : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                   }`}
+                                 >
+                                   {i}
+                                 </button>
+                               );
+                             }
+                             
+                             // Son sayfa
+                             if (currentPage < totalPages - 2) {
+                               if (currentPage < totalPages - 3) {
+                                 pages.push(
+                                   <span key="ellipsis2" className={`px-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                     ...
+                                   </span>
+                                 );
+                               }
+                               pages.push(
+                                 <button 
+                                   key={totalPages}
+                                   onClick={() => setCurrentPage(totalPages)}
+                                   className={`px-3 py-1 text-sm border rounded ${
+                                     isDarkMode 
+                                       ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' 
+                                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                   }`}
+                                 >
+                                   {totalPages}
+                                 </button>
+                               );
+                             }
+                             
+                             return pages;
+                           })()}
+                           
+                           <button 
+                             onClick={() => setCurrentPage(p => Math.min(Math.ceil(allResults.length / pageSize), p + 1))}
+                             disabled={currentPage >= Math.ceil(allResults.length / pageSize)}
+                             className={`px-3 py-1 text-sm border rounded ${
+                               isDarkMode 
+                                 ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 disabled:opacity-50' 
+                                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                             }`}
+                           >
+                             &gt;
+                           </button>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+              </div>
+            )}
+
+
+            {/* Uyarı Mesajı */}
+            <div className={`backdrop-blur-sm rounded-2xl p-6 border ${
+              isDarkMode 
+                ? 'bg-amber-900/20 border-amber-700/50' 
+                : 'bg-amber-50 border-amber-200'
+            }`}>
+              <div className="flex items-start space-x-3">
+                <AlertCircle className={`w-6 h-6 flex-shrink-0 ${
+                  isDarkMode ? 'text-amber-400' : 'text-amber-600'
+                }`} />
+                <div>
+                  <h4 className={`font-semibold mb-2 ${
+                    isDarkMode ? 'text-amber-300' : 'text-amber-800'
+                  }`}>
+                    Önemli Uyarı
+                  </h4>
+                  <p className={`text-sm leading-relaxed ${
+                    isDarkMode ? 'text-amber-200' : 'text-amber-700'
+                  }`}>
+                    Bu sistem yasal sınırlar içinde çalışmaktadır. Veri çekme işlemi sırasında 
+                    rate limiting uygulanır ve site kullanım koşullarına uyulur. 
+                    Kişisel veri koruma kurallarına dikkat edilmelidir.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Emotion Analysis Tab */}
       {activeTab === 'emotion' && (
         <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
@@ -1279,6 +1730,174 @@ const AdvancedSearch: React.FC = () => {
                 </div>
             </div>
           )}
+
+        {/* UYAP Style Karar Detay Modal */}
+        {showDecisionModal && selectedDecision && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`w-full max-w-6xl max-h-[95vh] rounded-lg shadow-2xl border overflow-hidden ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-white border-gray-200'
+            }`}>
+              {/* UYAP Style Header */}
+              <div className={`flex items-center justify-between p-4 border-b ${
+                isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
+              }`}>
+                <div className="flex items-center space-x-4">
+                  <div className={`px-3 py-1 rounded font-bold text-white ${
+                    isDarkMode ? 'bg-blue-600' : 'bg-blue-600'
+                  }`}>
+                    UYAP
+                  </div>
+                  <h2 className={`text-lg font-semibold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Karar Detayı
+                  </h2>
+                </div>
+                <button
+                  onClick={closeDecisionModal}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDarkMode
+                      ? 'hover:bg-gray-600 text-gray-400 hover:text-white'
+                      : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* UYAP Style Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(95vh-140px)]">
+                <div className="space-y-6">
+                  {/* Karar Başlık Bilgileri - UYAP Format */}
+                  <div className={`p-4 rounded-lg border ${
+                    isDarkMode 
+                      ? 'bg-gray-700/50 border-gray-600' 
+                      : 'bg-white border-gray-300'
+                  }`}>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          MAHKEME
+                        </div>
+                        <div className={`text-base ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {selectedDecision.daire || selectedDecision.court || 'Mahkeme Bilgisi'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          KARAR TARİHİ
+                        </div>
+                        <div className={`text-base ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {selectedDecision.karar_tarihi || selectedDecision.decision_date || '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          ESAS NO
+                        </div>
+                        <div className={`text-base ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {selectedDecision.esas_no || selectedDecision.case_number || '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          KARAR NO
+                        </div>
+                        <div className={`text-base ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {selectedDecision.karar_no || '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          KARAR DURUMU
+                        </div>
+                        <div className={`text-base ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {selectedDecision.karar_durumu || 'KESİNLEŞTİ'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Karar Metni - UYAP Format */}
+                  {(selectedDecision.karar_metni || selectedDecision.content) && (
+                    <div className={`p-6 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-gray-700/30 border-gray-600' 
+                        : 'bg-white border-gray-300'
+                    }`}>
+                      <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`} style={{ fontFamily: 'Arial, sans-serif' }}>
+                        {selectedDecision.karar_metni || selectedDecision.content}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* UYAP Style Footer */}
+              <div className={`flex items-center justify-between p-4 border-t ${
+                isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
+              }`}>
+                <div className={`text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  UYAP - Ulusal Yargı Ağı Bilişim Sistemi
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      const textToCopy = selectedDecision.karar_metni || selectedDecision.content;
+                      if (textToCopy) {
+                        navigator.clipboard.writeText(textToCopy);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                      isDarkMode
+                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    <Copy className="w-4 h-4 mr-2 inline" />
+                    Kopyala
+                  </button>
+                  <button
+                    onClick={closeDecisionModal}
+                    className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                      isDarkMode
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    Kapat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

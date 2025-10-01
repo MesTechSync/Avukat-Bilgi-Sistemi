@@ -133,4 +133,4 @@ async def health_check():
 # decision_to_dict fonksiyonu artık gerekli değil
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=4000)
