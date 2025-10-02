@@ -33,8 +33,12 @@ function App() {
     return savedTab || 'dashboard';
   });
   const [sidebarOpen, setSidebarOpen] = useState(() => {
-    // Mobilde başlangıçta kapalı, masaüstünde açık
+    // localStorage'dan sidebar durumunu al, yoksa mobilde kapalı masaüstünde açık
     if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarOpen');
+      if (saved !== null) {
+        return JSON.parse(saved);
+      }
       return window.innerWidth >= 768;
     }
     return true;
@@ -571,7 +575,15 @@ function App() {
         {/* Header */}
         <div className="p-3 md:p-4 border-b border-white/20 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-lg shadow-lg backdrop-blur-sm">
+            <div 
+              onClick={() => {
+                const newState = !sidebarOpen;
+                setSidebarOpen(newState);
+                localStorage.setItem('sidebarOpen', JSON.stringify(newState));
+              }}
+              className="p-2 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-lg shadow-lg backdrop-blur-sm cursor-pointer hover:from-blue-700/90 hover:to-purple-700/90 transition-all duration-200"
+              title={sidebarOpen ? "Menüyü kapat" : "Menüyü aç"}
+            >
               <Scale className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             {sidebarOpen && (
@@ -584,13 +596,6 @@ function App() {
                 </p>
               </div>
             )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              title={sidebarOpen ? 'Menüyü daralt' : 'Menüyü genişlet'}
-              className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm flex-shrink-0"
-            >
-              <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
           </div>
         </div>
 
@@ -605,7 +610,7 @@ function App() {
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
                 title={item.label}
-                className={`w-full flex items-center justify-start gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-3 rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center ${sidebarOpen ? 'justify-start' : 'justify-center'} gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-3 rounded-lg transition-all duration-200 group relative ${
                   isActive
                     ? 'bg-blue-50/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/50'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:backdrop-blur-sm'
@@ -629,14 +634,20 @@ function App() {
                     )}
                   </>
                 )}
+                {/* Tooltip when sidebar is closed */}
+                {!sidebarOpen && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 text-xs rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
               </button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        {sidebarOpen && (
-          <div className="p-3 md:p-4 border-t border-white/20 dark:border-gray-700/50">
+        <div className="p-3 md:p-4 border-t border-white/20 dark:border-gray-700/50">
+          {sidebarOpen ? (
             <div className="bg-gradient-to-r from-blue-50/70 to-purple-50/70 dark:from-blue-900/30 dark:to-purple-900/30 p-3 rounded-lg backdrop-blur-sm border border-blue-200/30 dark:border-blue-800/30 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -651,8 +662,14 @@ function App() {
                 Build: {COMMIT_SHA.slice(0,7)}{BUILD_TIME ? ` · ${BUILD_TIME}` : ''}
               </p>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="p-2 bg-gradient-to-r from-blue-600/90 to-purple-600/90 rounded-lg shadow-lg">
+                <Bot className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
@@ -674,7 +691,11 @@ function App() {
             activeTab === 'profile' ? 'Profil bilgilerinizi yönetin' : undefined
           }
           sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onToggleSidebar={() => {
+            const newState = !sidebarOpen;
+            setSidebarOpen(newState);
+            localStorage.setItem('sidebarOpen', JSON.stringify(newState));
+          }}
           showBackButton={activeTab !== 'dashboard'}
           onBack={() => setActiveTab('dashboard')}
           right={

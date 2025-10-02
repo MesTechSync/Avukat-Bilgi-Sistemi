@@ -24,176 +24,108 @@ class SeleniumScraper:
         self.headless = headless
         self.driver = None
         
-        # Logging ayarları - Encoding güvenli
+        # Logging ayarları
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler('selenium_scraper.log', encoding='utf-8', errors='replace'),
+                logging.FileHandler('selenium_scraper.log', encoding='utf-8'),
                 logging.StreamHandler()
             ]
         )
         self.logger = logging.getLogger(__name__)
         
     def _setup_driver(self):
-        """WebDriver'ı kurar - İyileştirilmiş"""
+        """WebDriver'ı kurar"""
         chrome_options = Options()
         if self.headless:
-            chrome_options.add_argument("--headless=new")  # Yeni headless mode
-        
-        # Temel güvenlik ve stabilite
+            chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--disable-software-rasterizer")
-        
-        # Bot detection bypass
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        
-        # Window size ve user agent
         chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        
-        # Performance
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--disable-infobars")
-        chrome_options.add_argument("--disable-notifications")
-        
-        # Logging
-        chrome_options.add_argument("--log-level=3")  # FATAL only
-        chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
         
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.implicitly_wait(15)  # 10 -> 15 saniye
-        self.driver.set_page_load_timeout(30)  # 30 saniye timeout
+        self.driver.implicitly_wait(10)
         
-    def _wait_for_element(self, by, value, timeout=15, clickable=True):
-        """Element için akıllı bekleme"""
+    def _wait_for_element(self, by, value, timeout=10):
+        """Elementin yüklenmesini bekler"""
         try:
-            if clickable:
-                element = WebDriverWait(self.driver, timeout).until(
-                    EC.element_to_be_clickable((by, value))
-                )
-            else:
-                element = WebDriverWait(self.driver, timeout).until(
-                    EC.presence_of_element_located((by, value))
-                )
-            
-            # Element görünür mü kontrol et
-            if not element.is_displayed():
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
-                time.sleep(0.5)
-            
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((by, value))
+            )
             return element
         except TimeoutException:
             self.logger.warning(f"Element bulunamadı: {by}={value}")
             return None
     
-    def _safe_click(self, element):
-        """Güvenli tıklama - Retry mekanizması"""
-        max_retries = 3
-        for i in range(max_retries):
-            try:
-                # JavaScript ile scroll
-                self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element)
-                time.sleep(0.5)
-                
-                # Normal click
-                element.click()
-                return True
-            except Exception as e:
-                if i < max_retries - 1:
-                    self.logger.warning(f"Click başarısız, yeniden deneniyor ({i+1}/{max_retries}): {e}")
-                    time.sleep(1)
-                    # JavaScript ile click
-                    try:
-                        self.driver.execute_script("arguments[0].click();", element)
-                        return True
-                    except:
-                        pass
-                else:
-                    self.logger.error(f"Click başarısız oldu: {e}")
-                    return False
-        return False
+    def _wait_for_clickable(self, by, value, timeout=10):
+        """Elementin tıklanabilir olmasını bekler"""
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((by, value))
+            )
+            return element
+        except TimeoutException:
+            self.logger.warning(f"Element tıklanabilir değil: {by}={value}")
+            return None
 
 class UYAPScraper(SeleniumScraper):
     def __init__(self, headless=True):
         super().__init__(headless)
         self.base_url = "https://emsal.uyap.gov.tr/"
         
-    def search_decisions(self, keyword="", date_from="", date_to="", limit=100, max_retries=3):
+    def search_decisions(self, keyword="", date_from="", date_to="", limit=100):
         """
-        UYAP'ta karar arama - Retry mekanizması ile
+        UYAP'ta karar arama
         
         Args:
             keyword: Aranacak kelime
             date_from: Başlangıç tarihi (DD-MM-YYYY)
             date_to: Bitiş tarihi (DD-MM-YYYY)
             limit: Maksimum sonuç sayısı
-            max_retries: Maksimum deneme sayısı
         """
-        for attempt in range(max_retries):
-            try:
-                self.logger.info(f"UYAP arama denemesi {attempt + 1}/{max_retries}: {keyword}")
-                
-                self._setup_driver()
-                self.driver.get(self.base_url)
-                
-                # Sayfa yüklenmesini bekle
-                time.sleep(3)
-                
-                # Arama kutusunu bul
-                search_input = self._wait_for_element(By.ID, "arananDetail", clickable=False)
-                if not search_input:
-                    self.logger.error("Arama kutusu bulunamadı")
-                    raise Exception("Arama kutusu bulunamadı")
-                
-                # Arama yap
-                search_input.clear()
-                search_input.send_keys(keyword)
-                
-                # Arama butonunu bul ve tıkla
-                search_button = self._wait_for_element(By.XPATH, "//button[contains(text(), 'Ara')]", clickable=True)
-                if search_button:
-                    if not self._safe_click(search_button):
-                        raise Exception("Arama butonu tıklanamadı")
-                else:
-                    # Enter tuşu ile arama yap
-                    search_input.send_keys(Keys.RETURN)
-                
-                # Sonuçların yüklenmesini bekle
-                time.sleep(5)
-                
-                # Sonuçları topla
-                results = self._collect_search_results(limit)
-                
-                # Başarılı
-                self.logger.info(f"UYAP arama tamamlandı: {len(results)} sonuç")
-                return results
-                
-            except Exception as e:
-                self.logger.error(f"UYAP arama hatası (deneme {attempt + 1}): {e}")
-                
-                # Driver'ı temizle
-                if self.driver:
-                    try:
-                        self.driver.quit()
-                    except:
-                        pass
-                    self.driver = None
-                
-                # Son deneme değilse bekle
-                if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 5  # Exponential backoff
-                    self.logger.info(f"{wait_time} saniye bekleniyor...")
-                    time.sleep(wait_time)
-                else:
-                    self.logger.error(f"Tüm denemeler başarısız: {keyword}")
-                    return []
+        self.logger.info(f"UYAP karar arama başlatılıyor: {keyword}")
         
-        return []
+        try:
+            self._setup_driver()
+            self.driver.get(self.base_url)
+            
+            # Sayfa yüklenmesini bekle
+            time.sleep(3)
+            
+            # Arama kutusunu bul
+            search_input = self._wait_for_element(By.ID, "arananDetail")
+            if not search_input:
+                self.logger.error("Arama kutusu bulunamadı")
+                return []
+            
+            # Arama yap
+            search_input.clear()
+            search_input.send_keys(keyword)
+            
+            # Arama butonunu bul ve tıkla
+            search_button = self._wait_for_clickable(By.XPATH, "//button[contains(text(), 'Ara')]")
+            if search_button:
+                search_button.click()
+            else:
+                # Enter tuşu ile arama yap
+                search_input.send_keys(Keys.RETURN)
+            
+            # Sonuçların yüklenmesini bekle
+            time.sleep(5)
+            
+            # Sonuçları topla
+            results = self._collect_search_results(limit)
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Arama sırasında hata: {e}")
+            return []
+        finally:
+            if self.driver:
+                self.driver.quit()
     
     def _collect_search_results(self, limit):
         """Arama sonuçlarını toplar"""
@@ -340,9 +272,9 @@ class YargitayScraper(SeleniumScraper):
         super().__init__(headless)
         self.base_url = "https://karararama.yargitay.gov.tr/"
         
-    def search_decisions(self, keyword="", department="", date_from="", date_to="", limit=100, max_retries=3):
+    def search_decisions(self, keyword="", department="", date_from="", date_to="", limit=100):
         """
-        Yargıtay'da karar arama - Retry mekanizması ile
+        Yargıtay'da karar arama
         
         Args:
             keyword: Aranacak kelime
@@ -350,68 +282,50 @@ class YargitayScraper(SeleniumScraper):
             date_from: Başlangıç tarihi (DD-MM-YYYY)
             date_to: Bitiş tarihi (DD-MM-YYYY)
             limit: Maksimum sonuç sayısı
-            max_retries: Maksimum deneme sayısı
         """
-        for attempt in range(max_retries):
-            try:
-                self.logger.info(f"Yargıtay arama denemesi {attempt + 1}/{max_retries}: {keyword}")
-                
-                self._setup_driver()
-                self.driver.get(self.base_url)
-                
-                # Sayfa yüklenmesini bekle
-                time.sleep(3)
-                
-                # Arama kutusunu bul
-                search_input = self._wait_for_element(By.ID, "aranan", clickable=False)
-                if not search_input:
-                    self.logger.error("Arama kutusu bulunamadı")
-                    raise Exception("Arama kutusu bulunamadı")
-                
-                # Arama yap
-                search_input.clear()
-                search_input.send_keys(keyword)
-                
-                # Arama butonunu bul ve tıkla
-                search_button = self._wait_for_element(By.XPATH, "//button[contains(text(), 'Ara')]", clickable=True)
-                if search_button:
-                    if not self._safe_click(search_button):
-                        raise Exception("Arama butonu tıklanamadı")
-                else:
-                    # Enter tuşu ile arama yap
-                    search_input.send_keys(Keys.RETURN)
-                
-                # Sonuçların yüklenmesini bekle
-                time.sleep(5)
-                
-                # Sonuçları topla
-                results = self._collect_search_results(limit)
-                
-                # Başarılı
-                self.logger.info(f"Yargıtay arama tamamlandı: {len(results)} sonuç")
-                return results
-                
-            except Exception as e:
-                self.logger.error(f"Yargıtay arama hatası (deneme {attempt + 1}): {e}")
-                
-                # Driver'ı temizle
-                if self.driver:
-                    try:
-                        self.driver.quit()
-                    except:
-                        pass
-                    self.driver = None
-                
-                # Son deneme değilse bekle
-                if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 5  # Exponential backoff
-                    self.logger.info(f"{wait_time} saniye bekleniyor...")
-                    time.sleep(wait_time)
-                else:
-                    self.logger.error(f"Tüm denemeler başarısız: {keyword}")
-                    return []
+        self.logger.info(f"Yargıtay karar arama başlatılıyor: {keyword}")
         
-        return []
+        try:
+            self._setup_driver()
+            self.driver.get(self.base_url)
+            
+            # Sayfa yüklenmesini bekle
+            time.sleep(3)
+            
+            # Arama kutusunu bul
+            search_input = self._wait_for_element(By.ID, "arananDetail")
+            if not search_input:
+                self.logger.error("Arama kutusu bulunamadı")
+                return []
+            
+            # Daire seçimi (eğer belirtilmişse)
+            if department:
+                self._select_department(department)
+            
+            # Arama yap
+            search_input.clear()
+            search_input.send_keys(keyword)
+            
+            # Arama butonunu bul ve tıkla
+            search_button = self._wait_for_clickable(By.XPATH, "//button[contains(text(), 'Ara')]")
+            if search_button:
+                search_button.click()
+            else:
+                search_input.send_keys(Keys.RETURN)
+            
+            # Sonuçların yüklenmesini bekle
+            time.sleep(5)
+            
+            # Sonuçları topla
+            results = self._collect_search_results(limit)
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Arama sırasında hata: {e}")
+            return []
+        finally:
+            if self.driver:
+                self.driver.quit()
     
     def _select_department(self, department):
         """Daire seçimi yapar"""

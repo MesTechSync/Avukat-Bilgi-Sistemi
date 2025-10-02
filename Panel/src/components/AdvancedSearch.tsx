@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Mic, MicOff, X, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon, Sparkles, Download } from 'lucide-react';
+import { Send, Mic, MicOff, X, Copy, CheckCircle, AlertCircle, Clock, Brain, FileText, Users, Target, BarChart3, Heart, Calendar, TrendingUp, BookOpen, Scale, Gavel, Sun, Moon, Sparkles, Download, Search } from 'lucide-react';
 import { useDictation } from '../hooks/useDictation';
 import { searchIctihat, searchMevzuat } from '../lib/yargiApi';
 import { useTheme } from '../contexts/ThemeContext';
 import { geminiService } from '../services/geminiService';
+import SeleniumDataScraping from './SeleniumDataScraping';
 
 interface SearchResult {
   id: string;
@@ -278,7 +279,8 @@ const AdvancedSearch: React.FC = () => {
 
     setIsScraping(true);
     try {
-      const response = await fetch('http://localhost:9000/api/data-scraping/start', {
+      // Çalışan selenium web panel'e proxy üzerinden bağlan (CORS sorunu için)
+      const response = await fetch('http://localhost:9000/api/selenium/start_search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -286,9 +288,7 @@ const AdvancedSearch: React.FC = () => {
         body: JSON.stringify({
           keyword: scrapingKeyword,
           system: scrapingSystem,
-          limit: scrapingLimit,
-          save_format: 'none', // Kaydetme devre dışı - baştan arama
-          headless: true
+          limit: scrapingLimit
         })
       });
 
@@ -298,6 +298,46 @@ const AdvancedSearch: React.FC = () => {
 
       const result = await response.json();
       setScrapingResults(result);
+      
+      // Çalışan selenium web panel status tracking
+      const statusInterval = setInterval(async () => {
+        try {
+          const statusResponse = await fetch('http://localhost:9000/api/selenium/status');
+          const statusData = await statusResponse.json();
+          
+          console.log('Status update:', statusData);
+          
+          if (statusData.results) {
+            setAllResults(statusData.results);
+            setCurrentPage(1);
+          }
+          
+          // Progress update
+          if (statusData.progress !== undefined) {
+            console.log('Progress:', statusData.progress);
+          }
+          
+          if (!statusData.is_running) {
+            clearInterval(statusInterval);
+            setIsScraping(false);
+            
+            // Final results update
+            setScrapingResults({
+              success: true,
+              message: `✅ ${statusData.total_results || 0} karar çekildi`,
+              total_results: statusData.total_results || 0
+            });
+            
+            if (statusData.results) {
+              setAllResults(statusData.results);
+            }
+          }
+        } catch (statusError) {
+          console.error('Status tracking error:', statusError);
+          clearInterval(statusInterval);
+          setIsScraping(false);
+        }
+      }, 2000);
       
       // Tüm sonuçları sakla ve sayfalama için hazırla
       if (result.success && result.results_preview) {
@@ -999,6 +1039,17 @@ const AdvancedSearch: React.FC = () => {
 
       {/* Data Scraping Tab */}
       {activeTab === 'data-scraping' && (
+        <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
+          isDarkMode 
+            ? 'bg-gray-800/80 border-gray-700/50' 
+            : 'bg-white/80 border-white/20'
+        }`}>
+          <SeleniumDataScraping isDarkMode={isDarkMode} />
+        </div>
+      )}
+
+      {/* Eski data scraping tab'ı backup için - kullanılmıyor */}
+      {false && activeTab === 'data-scraping-backup' && (
         <div className={`backdrop-blur-sm rounded-2xl shadow-2xl border p-8 ${
           isDarkMode 
             ? 'bg-gray-800/80 border-gray-700/50' 

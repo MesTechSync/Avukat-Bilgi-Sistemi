@@ -2160,8 +2160,253 @@ async def root():
     })
 
 # ============================================================================
+# SELENIUM ENTEGRASYONU - GERÇEK VERİ ÇEKME SİSTEMİ
+# ============================================================================
+
+# Global real scraping durumu
+real_scraping_status = {
+    "is_running": False,
+    "progress": 0,
+    "status": "Hazır",
+    "results": [],
+    "logs": [],
+    "total_results": 0,
+    "current_page": 1,
+    "current_decision": 0,
+    "pagination_size": 10,
+    "file_path": None,
+    "start_time": None
+}
+
+@app.post("/api/data-scraping/real-start", tags=["Gerçek Veri Çekme"])
+async def start_real_data_scraping(request: DataScrapingRequest):
+    """Gerçek selenium veri çekme başlat"""
+    global real_scraping_status
+    
+    try:
+        if real_scraping_status["is_running"]:
+            raise HTTPException(status_code=400, detail="Veri çekme zaten çalışıyor")
+        
+        logger.info(f"🔍 Gerçek veri çekme başlatılıyor: {request.system} - '{request.keyword}'")
+        
+        real_scraping_status.update({
+            "is_running": True,
+            "progress": 0,
+            "status": f"Arama başlatılıyor: '{request.keyword}' ({request.system})",
+            "results": [],
+            "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] 🔍 Gerçek veri çekme başlatıldı"],
+            "total_results": 0,
+            "current_page": 1,
+            "current_decision": 0,
+            "file_path": None,
+            "start_time": time.time()
+        })
+        
+        import threading
+        real_scraping_thread = threading.Thread(
+            target=run_real_scraping_thread,
+            args=(request.keyword, request.system, request.limit, request.headless)
+        )
+        real_scraping_thread.daemon = True
+        real_scraping_thread.start()
+        
+        return {"success": True, "message": "✅ Gerçek selenium veri çekme başlatıldı"}
+        
+    except Exception as e:
+        logger.error(f"Gerçek veri çekme başlatma hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Veri çekme başlatılamadı: {str(e)}")
+
+@app.get("/api/data-scraping/real-status", tags=["Gerçek Veri Çekme"])
+async def get_real_scraping_status():
+    """Gerçek selenium veri çekme durumunu döndür"""
+    global real_scraping_status
+    
+    if real_scraping_status["start_time"]:
+        processing_time = time.time() - real_scraping_status["start_time"]
+    else:
+        processing_time = 0
+    
+    return {
+        "is_running": real_scraping_status["is_running"],
+        "progress": real_scraping_status["progress"],
+        "status": real_scraping_status["status"],
+        "results": real_scraping_status["results"],
+        "logs": real_scraping_status["logs"],
+        "total_results": real_scraping_status["total_results"],
+        "current_page": real_scraping_status["current_page"],
+        "current_decision": real_scraping_status["current_decision"],
+        "file_path": real_scraping_status["file_path"],
+        "processing_time": processing_time
+    }
+
+def run_real_scraping_thread(keyword: str, system: str, limit: int, headless: bool):
+    """Gerçek selenium veri çekme thread'i"""
+    global real_scraping_status
+    
+    try:
+        logger.info(f"🔄 Gerçek selenium scraping başlatıldı: {keyword} ({system})")
+        
+        # Selenium klasöründeki scraper'ı kullan
+        import sys
+        import os
+        current_dir = os.path.dirname(__file__)
+        selenium_dir = os.path.join(current_dir, 'selenium')
+        
+        if os.path.exists(selenium_dir):
+            if selenium_dir not in sys.path:
+                sys.path.append(selenium_dir)
+            
+            try:
+                from selenium_scraper import UYAPScraper, YargitayScraper
+                
+                real_scraping_status["status"] = f"📄 {system.upper()} scraper başlatılıyor..."
+                real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] 🔧 {system.upper()} scraper başlatılıyor...")
+                
+                if system == "uyap":
+                    scraper = UYAPScraper(headless=headless)
+                elif system == "yargitay":
+                    scraper = YargitayScraper(headless=headless)
+                else:
+                    raise ValueError(f"Desteklenmeyen sistem: {system}")
+                
+                results = scraper.search_decisions(keyword, limit=limit)
+                
+                if results:
+                    real_scraping_status["results"] = results
+                    real_scraping_status["total_results"] = len(results)
+                    real_scraping_status["status"] = f"✅ {len(results)} karar çekildi"
+                    real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Toplam {len(results)} karar çekildi")
+                    
+                    # Excel kaydetme
+                    try:
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"{system}_real_sonuclar_{timestamp}.xlsx"
+                        scraper.save_to_excel(results, filename)
+                        real_scraping_status["file_path"] = f"selenium/{filename}"
+                        real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] 💾 {filename} dosyasına kaydedildi")
+                    except Exception as save_error:
+                        real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Excel kaydetme hatası: {save_error}")
+                else:
+                    real_scraping_status["status"] = "⚠️ Sonuç bulunamadı"
+                    real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Sonuç bulunamadı")
+                    
+            except ImportError as ie:
+                real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Selenium scraper import hatası: {ie}")
+                real_scraping_status["status"] = "❌ Scraper bulunamadı"
+        else:
+            real_scraping_status["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Selenium klasörü bulunamadı")
+            real_scraping_status["status"] = "❌ Selenium sistemi bulunamadı"
+        
+        real_scraping_status.update({
+            "is_running": False,
+            "progress": 100,
+            "status": f"✅ Tamamlandı - {len(real_scraping_status['results'])} sonuç"
+        })
+        
+        logger.info(f"🎉 Gerçek selenium scraping tamamlandı: {len(real_scraping_status['results'])} sonuç")
+        
+    except Exception as e:
+        real_scraping_status.update({
+            "is_running": False,
+            "status": f"❌ Hata: {str(e)}",
+            "logs": real_scraping_status["logs"] + [f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Scraping hatası: {str(e)}"]
+        })
+        logger.error(f"❌ Gerçek selenium scraping hatası: {e}")
+
+# ============================================================================
 # APPLICATION ENTRY POINT
 # ============================================================================
+
+# ============================================================================
+# SELENIUM PROXY ENDPOINTS - CORS SORUNU İÇİN
+# ============================================================================
+
+@app.post("/api/selenium/start_search", tags=["Selenium Proxy"])
+async def selenium_start_search(request: DataScrapingRequest):
+    """Selenium web panel'e proxy - CORS sorunu için"""
+    try:
+        import requests
+        
+        selenium_response = requests.post(
+            "http://localhost:2000/api/start_search",
+            json={
+                "keyword": request.keyword,
+                "limit": request.limit,
+                "system": request.system,
+                "headless": True
+            },
+            timeout=30
+        )
+        
+        if selenium_response.status_code == 200:
+            return selenium_response.json()
+        else:
+            return {"success": False, "message": f"Selenium panel hatası: {selenium_response.status_code}"}
+            
+    except Exception as e:
+        logger.error(f"Selenium proxy hatası: {e}")
+        return {"success": False, "message": f"Proxy hatası: {str(e)}"}
+
+@app.get("/api/selenium/status", tags=["Selenium Proxy"])
+async def selenium_status():
+    """Selenium web panel status proxy"""
+    try:
+        import requests
+        
+        selenium_response = requests.get("http://localhost:2000/api/status", timeout=10)
+        
+        if selenium_response.status_code == 200:
+            return selenium_response.json()
+        else:
+            return {"success": False, "message": f"Selenium status hatası: {selenium_response.status_code}"}
+            
+    except Exception as e:
+        logger.error(f"Selenium status proxy hatası: {e}")
+        return {"success": False, "message": f"Status proxy hatası: {str(e)}"}
+
+@app.post("/api/selenium/continue_search", tags=["Selenium Proxy"])
+async def selenium_continue_search(request: DataScrapingRequest):
+    """Selenium web panel continue search proxy"""
+    try:
+        import requests
+        
+        selenium_response = requests.post(
+            "http://localhost:2000/api/continue_search",
+            json={
+                "keyword": request.keyword,
+                "limit": request.limit,
+                "system": request.system,
+                "headless": True,
+                "continue_search": True
+            },
+            timeout=30
+        )
+        
+        if selenium_response.status_code == 200:
+            return selenium_response.json()
+        else:
+            return {"success": False, "message": f"Selenium continue hatası: {selenium_response.status_code}"}
+            
+    except Exception as e:
+        logger.error(f"Selenium continue proxy hatası: {e}")
+        return {"success": False, "message": f"Continue proxy hatası: {str(e)}"}
+
+@app.post("/api/selenium/stop_search", tags=["Selenium Proxy"])
+async def selenium_stop_search():
+    """Selenium web panel stop proxy"""
+    try:
+        import requests
+        
+        selenium_response = requests.post("http://localhost:2000/api/stop_search", timeout=10)
+        
+        if selenium_response.status_code == 200:
+            return selenium_response.json()
+        else:
+            return {"success": False, "message": f"Selenium stop hatası: {selenium_response.status_code}"}
+            
+    except Exception as e:
+        logger.error(f"Selenium stop proxy hatası: {e}")
+        return {"success": False, "message": f"Stop proxy hatası: {str(e)}"}
 
 if __name__ == "__main__":
     print("Health: http://localhost:9000/health")
